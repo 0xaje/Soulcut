@@ -32,6 +32,19 @@
 - [x] Add rate limiting, per-user usage quotas, and cleanup for expired or revoked shared PDF files.
 - [x] Keep current autoscaling hosting and use a scheduled durable-worker approach rather than always-on hosting.
 - [x] Verify the landing page after a clean server restart; the authenticated workspace is registered at `/app`.
-- [ ] Publish the checkpoint through the Management UI, then register the production Heartbeat analysis-worker and report-cleanup schedules.
+- [ ] Confirm checkpoint `01068278` is published to production, then resume the currently paused schedules and confirm successful callbacks. The prior production callbacks returned 404 and the resumed worker’s next-run state did not advance.
 - [x] Ensure rate-limit or quota rejection cannot leave an unusable pending job record.
 - [x] Add focused automated coverage for rejected queue-submission behavior.
+- [x] Audit SoulCut’s current architecture, authentication, data model, analysis flow, UI, environment contract, and the official Minds API boundary.
+- [ ] Add a server-only Minds adapter with a truthful unavailable state and secure `MINDS_API_KEY` configuration boundary.
+- [ ] Add one user-owned SoulCut Creative Mind plus evidence-backed memory, preferences, feedback events, and activity persistence without altering existing jobs.
+- [ ] Add protected Mind, Creative DNA, activity, teaching, feedback, evidence, and Mind-stat API procedures with ownership isolation.
+- [ ] Build first-run Mind introduction and lightweight creator-preference onboarding that writes initial explicit memories.
+- [ ] Build a prominent Creative DNA and Mind activity experience with evidence, source, confidence, and last-updated detail.
+- [ ] Add real teaching and recommendation-feedback controls that persist events and update Creative DNA without fabricated evidence.
+- [ ] Inject bounded Creative Mind context into video analysis and present personalized recommendation fit and evidence explanations.
+- [ ] Reposition SoulCut’s landing page and authenticated workspace around the Mind → Analyze → Recommend → Learn loop while retaining reports, exports, and history as supporting controls.
+- [ ] Add and run tests for Mind lifecycle, memory evidence, feedback learning, personalization context, user isolation, and existing workflow regression coverage.
+- [ ] Configure and verify an official Minds API key for external Mind synchronization when the user provides one.
+- [x] Verify the server-side `MINDS_BUILDER_API_KEY` against the live Animoca Brands Minds Builder API and confirm Mind `8208493e-f36b-1410-8466-00039ce7df11` without mock fallback.
+- [x] Keep optional external Minds credential checks isolated from the default SoulCut test suite unless their documented credential is configured.

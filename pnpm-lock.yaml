@@ -14,6 +14,9 @@ importers:
 
   .:
     dependencies:
+      '@animocabrands/minds-client-lib':
+        specifier: ^0.1.3
+        version: 0.1.3
       '@aws-sdk/client-s3':
         specifier: ^3.693.0
         version: 3.907.0
@@ -284,6 +287,10 @@ importers:
         version: 2.1.9(@types/node@24.7.0)(lightningcss@1.30.1)
 
 packages:
+
+  '@animocabrands/minds-client-lib@0.1.3':
+    resolution: {integrity: sha512-tPWdcg67C0/OKBhDsFkeU3RDHFzK+hrXKCk3hIMYcZQz+q08NfT/8GPj9UpDsA8ag675AaZjH5NIYNmYSyViqQ==}
+    engines: {node: '>=22'}
 
   '@antfu/install-pkg@1.1.0':
     resolution: {integrity: sha512-MGQsmw10ZyI+EJo45CdSER4zEb+p31LpDAFp2Z3gkSd1yqVZGi0Ebx++YTEMonJy4oChEMLsxZ64j8FH6sSqtQ==}
@@ -4418,6 +4425,8 @@ packages:
     resolution: {integrity: sha512-bXE4cR/kVZhKZX/RjPEflHaKVhUVl85noU3v6b8apfQEc1x4A+zBxjZ4lN8LqGd6WZ3dl98pY4o717VFmoPp+A==}
 
 snapshots:
+
+  '@animocabrands/minds-client-lib@0.1.3': {}
 
   '@antfu/install-pkg@1.1.0':
     dependencies:
