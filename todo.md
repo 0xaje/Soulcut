@@ -16,3 +16,4 @@
 - [x] Add an accessible animated loading experience while AI video analysis is processing.
 - [x] Stream user-owned analysis progress events from the server and bind the workspace loading state to those live stages.
 - [x] Let users reopen completed jobs and view their persisted analysis-stage timeline.
+- [x] Add a history filter toggle for successful and failed job runs.

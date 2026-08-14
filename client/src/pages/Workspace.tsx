@@ -1,6 +1,7 @@
 import { startLogin } from "@/const";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { type AnalysisProgressEvent, type AnalysisProgressStage, useAnalysisProgress } from "@/hooks/useAnalysisProgress";
+import { filterJobHistory, type HistoryFilter } from "@/lib/jobHistory";
 import { trpc } from "@/lib/trpc";
 import {
   ArrowLeft,
@@ -77,6 +78,11 @@ function StatusPill({ status }: { status: "pending" | "processing" | "done" | "f
 }
 
 const progressStageOrder: AnalysisProgressStage[] = ["reading", "analyzing", "clips"];
+const historyFilterOptions: Array<{ value: HistoryFilter; label: string }> = [
+  { value: "all", label: "All" },
+  { value: "done", label: "Successful" },
+  { value: "failed", label: "Failed" },
+];
 
 function AnalysisLoadingCard({
   progress,
@@ -187,6 +193,7 @@ export default function Workspace() {
   const [pendingFromLandingLoaded, setPendingFromLandingLoaded] = useState(false);
   const [processingJobId, setProcessingJobId] = useState<string | null>(null);
   const [timelineJobId, setTimelineJobId] = useState<string | null>(null);
+  const [historyFilter, setHistoryFilter] = useState<HistoryFilter>("all");
   const jobsQuery = trpc.videoJobs.list.useQuery(undefined, { enabled: isAuthenticated });
   const createJob = trpc.videoJobs.create.useMutation();
   const runJob = trpc.videoJobs.run.useMutation();
@@ -198,9 +205,13 @@ export default function Workspace() {
   });
 
   const jobs = jobsQuery.data ?? [];
+  const filteredJobs = useMemo(
+    () => filterJobHistory(jobs, historyFilter),
+    [historyFilter, jobs]
+  );
   const activeJob = useMemo(
-    () => jobs.find((job) => job.id === activeId) ?? jobs[0] ?? null,
-    [activeId, jobs]
+    () => jobs.find((job) => job.id === activeId) ?? filteredJobs[0] ?? null,
+    [activeId, filteredJobs, jobs]
   );
 
   useEffect(() => {
@@ -216,6 +227,16 @@ export default function Workspace() {
   useEffect(() => {
     if (timelineJobId && timelineJobId !== activeJob?.id) setTimelineJobId(null);
   }, [activeJob?.id, timelineJobId]);
+
+  useEffect(() => {
+    if (!filteredJobs.length) {
+      setActiveId(null);
+      return;
+    }
+    if (!activeId || !filteredJobs.some(job => job.id === activeId)) {
+      setActiveId(filteredJobs[0].id);
+    }
+  }, [activeId, filteredJobs]);
 
   const submitAnalysis = async () => {
     if (!videoUrl.trim()) {
@@ -285,14 +306,30 @@ export default function Workspace() {
                 <p className="eyebrow text-[9px]">Archive</p>
                 <h2 className="mt-1 font-display text-2xl tracking-[-.05em]">Your briefs</h2>
               </div>
-              <span className="rounded-full bg-white/[.07] px-2 py-1 font-mono text-[10px] text-white/45">{jobs.length}</span>
+              <span className="rounded-full bg-white/[.07] px-2 py-1 font-mono text-[10px] text-white/45">{filteredJobs.length}/{jobs.length}</span>
+            </div>
+            <div className="mb-3 grid grid-cols-3 gap-1 rounded-xl border border-white/8 bg-black/20 p-1" role="group" aria-label="Filter job history">
+              {historyFilterOptions.map(option => (
+                <button
+                  key={option.value}
+                  type="button"
+                  onClick={() => setHistoryFilter(option.value)}
+                  aria-pressed={historyFilter === option.value}
+                  className={`rounded-lg px-1 py-1.5 text-[10px] font-medium transition ${historyFilter === option.value ? "bg-white text-black shadow-sm" : "text-white/45 hover:bg-white/[.07] hover:text-white"}`}
+                >
+                  {option.label}
+                </button>
+              ))}
             </div>
             <div className="max-h-[calc(100vh-12rem)] space-y-1 overflow-y-auto pr-0.5">
               {jobsQuery.isLoading && <p className="px-2 py-5 text-xs text-white/38">Loading your archive…</p>}
               {!jobsQuery.isLoading && jobs.length === 0 && (
                 <div className="rounded-2xl border border-dashed border-white/10 px-3 py-5 text-center text-xs leading-relaxed text-white/38">Your completed video briefs will live here.</div>
               )}
-              {jobs.map((job) => (
+              {!jobsQuery.isLoading && jobs.length > 0 && filteredJobs.length === 0 && (
+                <div className="rounded-2xl border border-dashed border-white/10 px-3 py-5 text-center text-xs leading-relaxed text-white/38">No {historyFilter === "done" ? "successful" : "failed"} runs yet. Switch filters to review the rest of your archive.</div>
+              )}
+              {filteredJobs.map((job) => (
                 <button
                   type="button"
                   key={job.id}
