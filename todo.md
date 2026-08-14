@@ -12,3 +12,4 @@
 - [x] Add and run focused Vitest coverage for validation, authorization, and analysis-output handling.
 - [x] Verify functional flows and visual layout in the running application.
 - [x] Rename Short It AI to SoulCut across user-facing copy, browser metadata, and project settings.
+- [ ] Publish the SoulCut project to github.com/0xaje/Soulcut with the requested initial commit.
