@@ -1,4 +1,4 @@
-import { index, int, json, mysqlEnum, mysqlTable, text, timestamp, varchar } from "drizzle-orm/mysql-core";
+import { date, index, int, json, mysqlEnum, mysqlTable, primaryKey, text, timestamp, varchar } from "drizzle-orm/mysql-core";
 
 /**
  * Core user table backing auth flow.
@@ -42,7 +42,7 @@ export const videoJobs = mysqlTable(
       .references(() => users.id, { onDelete: "cascade" }),
     videoUrl: varchar("videoUrl", { length: 2048 }).notNull(),
     videoTitle: varchar("videoTitle", { length: 512 }),
-    status: mysqlEnum("status", ["pending", "processing", "done", "failed"])
+    status: mysqlEnum("status", ["pending", "processing", "retrying", "done", "failed", "cancelled"])
       .default("pending")
       .notNull(),
     summary: text("summary"),
@@ -54,9 +54,20 @@ export const videoJobs = mysqlTable(
     createdAt: timestamp("createdAt").defaultNow().notNull(),
     startedAt: timestamp("startedAt"),
     completedAt: timestamp("completedAt"),
+    archivedAt: timestamp("archivedAt"),
+    cancelledAt: timestamp("cancelledAt"),
+    attemptCount: int("attemptCount").default(0).notNull(),
+    maxAttempts: int("maxAttempts").default(3).notNull(),
+    nextAttemptAt: timestamp("nextAttemptAt"),
+    workerToken: varchar("workerToken", { length: 64 }),
+    workerClaimedAt: timestamp("workerClaimedAt"),
+    lastAttemptAt: timestamp("lastAttemptAt"),
     updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
   },
-  table => [index("video_jobs_user_created_idx").on(table.userId, table.createdAt)]
+  table => [
+    index("video_jobs_user_created_idx").on(table.userId, table.createdAt),
+    index("video_jobs_queue_idx").on(table.status, table.nextAttemptAt, table.createdAt),
+  ]
 );
 
 export type VideoJob = typeof videoJobs.$inferSelect;
@@ -72,7 +83,7 @@ export const videoJobProgressEvents = mysqlTable(
     userId: int("userId")
       .notNull()
       .references(() => users.id, { onDelete: "cascade" }),
-    stage: mysqlEnum("stage", ["queued", "reading", "analyzing", "clips", "complete", "failed"])
+    stage: mysqlEnum("stage", ["queued", "reading", "analyzing", "clips", "retrying", "complete", "failed", "cancelled"])
       .notNull(),
     message: varchar("message", { length: 512 }).notNull(),
     createdAt: timestamp("createdAt").defaultNow().notNull(),
@@ -121,3 +132,30 @@ export const pdfReportBranding = mysqlTable("pdf_report_branding", {
 });
 
 export type PdfReportBranding = typeof pdfReportBranding.$inferSelect;
+
+export const analysisUsage = mysqlTable(
+  "analysis_usage",
+  {
+    userId: int("userId")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    usageDate: date("usageDate").notNull(),
+    analysisCount: int("analysisCount").default(0).notNull(),
+    updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+  },
+  table => [primaryKey({ columns: [table.userId, table.usageDate] })]
+);
+
+export const requestRateLimits = mysqlTable(
+  "request_rate_limits",
+  {
+    userId: int("userId")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    scope: varchar("scope", { length: 64 }).notNull(),
+    windowKey: varchar("windowKey", { length: 32 }).notNull(),
+    requestCount: int("requestCount").default(0).notNull(),
+    updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+  },
+  table => [primaryKey({ columns: [table.userId, table.scope, table.windowKey] })]
+);

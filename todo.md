@@ -25,3 +25,13 @@
 - [x] Restore the development server and repair the PDF report implementation until type checks and tests pass.
 - [x] Add a branded PDF cover page, support PDF reports for failed jobs, and create secure shareable report links.
 - [x] Add expiring and revocable report-share links plus custom logo and cover-title preferences for PDF reports.
+- [x] Prepare and deliver a comprehensive A-to-Z product overview of SoulCut.
+- [x] Choose and implement a durable background queue with retries and cancellation for analysis jobs.
+- [x] Add job archiving, deletion, search, and date-filtering across the protected backend and workspace.
+- [x] Allow users to restore an archived brief back to their active history.
+- [x] Add rate limiting, per-user usage quotas, and cleanup for expired or revoked shared PDF files.
+- [x] Keep current autoscaling hosting and use a scheduled durable-worker approach rather than always-on hosting.
+- [x] Verify the landing page after a clean server restart; the authenticated workspace is registered at `/app`.
+- [ ] Publish the checkpoint through the Management UI, then register the production Heartbeat analysis-worker and report-cleanup schedules.
+- [x] Ensure rate-limit or quota rejection cannot leave an unusable pending job record.
+- [x] Add focused automated coverage for rejected queue-submission behavior.

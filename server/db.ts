@@ -1,4 +1,4 @@
-import { and, asc, desc, eq, gt, isNull, or } from "drizzle-orm";
+import { and, asc, desc, eq, gt, gte, isNotNull, isNull, like, lte, or } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
 import {
   type ClipSuggestion,
@@ -6,8 +6,10 @@ import {
   type InsertVideoJob,
   type VideoJob,
   type VideoJobProgressStage,
+  analysisUsage,
   pdfReportBranding,
   pdfReportShares,
+  requestRateLimits,
   users,
   videoJobs,
   videoJobProgressEvents,
@@ -100,7 +102,7 @@ export async function getUserByOpenId(openId: string) {
   return result.length > 0 ? result[0] : undefined;
 }
 
-type VideoJobStatus = "pending" | "processing" | "done" | "failed";
+export type VideoJobStatus = "pending" | "processing" | "retrying" | "done" | "failed" | "cancelled";
 
 type VideoJobUpdate = Partial<{
   status: VideoJobStatus;
@@ -113,6 +115,12 @@ type VideoJobUpdate = Partial<{
   failureReason: string | null;
   startedAt: Date | null;
   completedAt: Date | null;
+  archivedAt: Date | null;
+  cancelledAt: Date | null;
+  nextAttemptAt: Date | null;
+  workerToken: string | null;
+  workerClaimedAt: Date | null;
+  lastAttemptAt: Date | null;
 }>;
 
 export async function createVideoJob(input: {
@@ -141,14 +149,29 @@ export async function getVideoJobForUser(id: string, userId: number) {
   return result[0];
 }
 
-export async function listVideoJobsForUser(userId: number): Promise<VideoJob[]> {
+export type VideoJobListFilters = {
+  includeArchived?: boolean;
+  search?: string;
+  startDate?: Date;
+  endDate?: Date;
+  statuses?: VideoJobStatus[];
+};
+
+export async function listVideoJobsForUser(userId: number, filters: VideoJobListFilters = {}): Promise<VideoJob[]> {
   const db = await getDb();
   if (!db) throw new Error("Database is not available");
+
+  const predicates = [eq(videoJobs.userId, userId)];
+  if (!filters.includeArchived) predicates.push(isNull(videoJobs.archivedAt));
+  if (filters.search?.trim()) predicates.push(like(videoJobs.videoUrl, `%${filters.search.trim()}%`));
+  if (filters.startDate) predicates.push(gte(videoJobs.createdAt, filters.startDate));
+  if (filters.endDate) predicates.push(lte(videoJobs.createdAt, filters.endDate));
+  if (filters.statuses?.length) predicates.push(or(...filters.statuses.map(status => eq(videoJobs.status, status)))!);
 
   return db
     .select()
     .from(videoJobs)
-    .where(eq(videoJobs.userId, userId))
+    .where(and(...predicates))
     .orderBy(desc(videoJobs.createdAt))
     .limit(50);
 }
@@ -180,6 +203,107 @@ export async function updateVideoJobForUser(
   const job = await getVideoJobForUser(id, userId);
   if (!job) throw new Error("Video job was not found");
   return job;
+}
+
+export async function archiveVideoJobForUser(id: string, userId: number): Promise<VideoJob> {
+  return updateVideoJobForUser(id, userId, { archivedAt: new Date() });
+}
+
+export async function deleteVideoJobForUser(id: string, userId: number): Promise<boolean> {
+  const db = await getDb();
+  if (!db) throw new Error("Database is not available");
+  const result = await db.delete(videoJobs).where(and(eq(videoJobs.id, id), eq(videoJobs.userId, userId)));
+  return Number((result as { rowsAffected?: number }).rowsAffected ?? 0) > 0;
+}
+
+export async function cancelVideoJobForUser(id: string, userId: number): Promise<VideoJob | undefined> {
+  const job = await getVideoJobForUser(id, userId);
+  if (!job || ["done", "failed", "cancelled"].includes(job.status)) return undefined;
+  return updateVideoJobForUser(id, userId, {
+    status: "cancelled",
+    cancelledAt: new Date(),
+    completedAt: new Date(),
+    workerToken: null,
+    workerClaimedAt: null,
+  });
+}
+
+export async function claimNextVideoJob(workerToken: string): Promise<VideoJob | undefined> {
+  const db = await getDb();
+  if (!db) throw new Error("Database is not available");
+  const now = new Date();
+  const candidate = await db
+    .select()
+    .from(videoJobs)
+    .where(and(
+      isNull(videoJobs.archivedAt),
+      isNull(videoJobs.cancelledAt),
+      or(eq(videoJobs.status, "pending"), eq(videoJobs.status, "retrying")),
+      or(isNull(videoJobs.nextAttemptAt), lte(videoJobs.nextAttemptAt, now))
+    ))
+    .orderBy(asc(videoJobs.createdAt))
+    .limit(1);
+  const job = candidate[0];
+  if (!job) return undefined;
+
+  await db
+    .update(videoJobs)
+    .set({ status: "processing", workerToken, workerClaimedAt: now, lastAttemptAt: now, attemptCount: job.attemptCount + 1, updatedAt: now })
+    .where(and(eq(videoJobs.id, job.id), or(eq(videoJobs.status, "pending"), eq(videoJobs.status, "retrying")), isNull(videoJobs.cancelledAt)));
+  const claimed = await db.select().from(videoJobs).where(and(eq(videoJobs.id, job.id), eq(videoJobs.workerToken, workerToken))).limit(1);
+  return claimed[0];
+}
+
+export async function updateClaimedVideoJob(id: string, workerToken: string, changes: VideoJobUpdate): Promise<VideoJob | undefined> {
+  const db = await getDb();
+  if (!db) throw new Error("Database is not available");
+  await db.update(videoJobs).set({ ...changes, updatedAt: new Date() } as Partial<InsertVideoJob>)
+    .where(and(eq(videoJobs.id, id), eq(videoJobs.workerToken, workerToken)));
+  const jobs = await db.select().from(videoJobs).where(and(eq(videoJobs.id, id), eq(videoJobs.workerToken, workerToken))).limit(1);
+  return jobs[0];
+}
+
+export async function isVideoJobCancelled(id: string): Promise<boolean> {
+  const db = await getDb();
+  if (!db) throw new Error("Database is not available");
+  const jobs = await db.select({ status: videoJobs.status }).from(videoJobs).where(eq(videoJobs.id, id)).limit(1);
+  return jobs[0]?.status === "cancelled";
+}
+
+function todayUtc(): Date {
+  const now = new Date();
+  return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+}
+
+export async function consumeAnalysisQuota(userId: number, maximum: number): Promise<{ allowed: boolean; used: number }> {
+  const db = await getDb();
+  if (!db) throw new Error("Database is not available");
+  const usageDate = todayUtc();
+  const rows = await db.select().from(analysisUsage).where(and(eq(analysisUsage.userId, userId), eq(analysisUsage.usageDate, usageDate))).limit(1);
+  const current = rows[0];
+  if (current && current.analysisCount >= maximum) return { allowed: false, used: current.analysisCount };
+  if (current) {
+    await db.update(analysisUsage).set({ analysisCount: current.analysisCount + 1, updatedAt: new Date() }).where(and(eq(analysisUsage.userId, userId), eq(analysisUsage.usageDate, usageDate)));
+    return { allowed: true, used: current.analysisCount + 1 };
+  }
+  await db.insert(analysisUsage).values({ userId, usageDate, analysisCount: 1 });
+  return { allowed: true, used: 1 };
+}
+
+export async function consumeRateLimit(input: { userId: number; scope: string; maximum: number; windowMinutes: number }): Promise<boolean> {
+  const db = await getDb();
+  if (!db) throw new Error("Database is not available");
+  const bucket = Math.floor(Date.now() / (input.windowMinutes * 60_000));
+  const windowKey = `${input.windowMinutes}m-${bucket}`;
+  const rows = await db.select().from(requestRateLimits).where(and(eq(requestRateLimits.userId, input.userId), eq(requestRateLimits.scope, input.scope), eq(requestRateLimits.windowKey, windowKey))).limit(1);
+  const current = rows[0];
+  if (current && current.requestCount >= input.maximum) return false;
+  if (current) {
+    await db.update(requestRateLimits).set({ requestCount: current.requestCount + 1, updatedAt: new Date() }).where(and(eq(requestRateLimits.userId, input.userId), eq(requestRateLimits.scope, input.scope), eq(requestRateLimits.windowKey, windowKey)));
+  } else {
+    await db.insert(requestRateLimits).values({ userId: input.userId, scope: input.scope, windowKey, requestCount: 1 });
+  }
+  return true;
 }
 
 export async function createVideoJobProgressEvent(input: {
@@ -284,6 +408,16 @@ export async function revokePdfReportShareForUser(input: { token: string; userId
     .set({ revokedAt: new Date() })
     .where(and(eq(pdfReportShares.token, input.token), eq(pdfReportShares.userId, input.userId)));
   return true;
+}
+
+export async function cleanupStalePdfReportShares(now = new Date()): Promise<number> {
+  const db = await getDb();
+  if (!db) throw new Error("Database is not available");
+  const result = await db.delete(pdfReportShares).where(or(
+    isNotNull(pdfReportShares.revokedAt),
+    lte(pdfReportShares.expiresAt, now)
+  ));
+  return Number((result as { rowsAffected?: number }).rowsAffected ?? 0);
 }
 
 export async function getPdfReportBranding(userId: number) {

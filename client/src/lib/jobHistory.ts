@@ -1,7 +1,7 @@
 export type HistoryFilter = "all" | "done" | "failed";
 
-type JobWithStatus = {
-  status: "pending" | "processing" | "done" | "failed";
+export type JobWithStatus = {
+  status: "pending" | "processing" | "retrying" | "done" | "failed" | "cancelled";
 };
 
 type JobWithIdAndStatus = JobWithStatus & { id: string };

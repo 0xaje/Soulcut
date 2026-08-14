@@ -11,7 +11,7 @@ type ReportClip = {
 type ReportJob = {
   id: string;
   videoUrl: string;
-  status: "pending" | "processing" | "done" | "failed";
+  status: "pending" | "processing" | "retrying" | "done" | "failed" | "cancelled";
   createdAt: Date | string;
   startedAt: Date | string | null;
   completedAt: Date | string | null;
@@ -121,7 +121,7 @@ function drawCover(doc: InstanceType<typeof PDFDocument>, job: ReportJob, brandi
     lineGap: 4,
   });
   doc.fillColor(accent).font("Helvetica-Bold").fontSize(8).text("REPORT STATUS", pageMargin, 430, { characterSpacing: 1.1 });
-  doc.fillColor(primary).font("Helvetica-Bold").fontSize(17).text(job.status === "done" ? "READY FOR REVIEW" : job.status === "failed" ? "ERROR REPORT" : toText(job.status).toUpperCase(), pageMargin, 447);
+  doc.fillColor(primary).font("Helvetica-Bold").fontSize(17).text(job.status === "done" ? "READY FOR REVIEW" : job.status === "failed" ? "ERROR REPORT" : job.status === "cancelled" ? "CANCELLED REPORT" : toText(job.status).toUpperCase(), pageMargin, 447);
   doc.fillColor(muted).font("Helvetica").fontSize(9).text(`Created ${formatDate(job.createdAt)}`, pageMargin, 477);
   doc.fillColor("#D6D5DC").font("Helvetica").fontSize(8.5).text(toText(job.videoUrl), pageMargin, 630, {
     width: doc.page.width - pageMargin * 2,

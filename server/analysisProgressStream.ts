@@ -14,7 +14,7 @@ type ProgressPayload = {
 };
 
 type ProgressStreamUser = { id: number };
-type ProgressStreamJob = { status: "pending" | "processing" | "done" | "failed" };
+type ProgressStreamJob = { status: "pending" | "processing" | "retrying" | "done" | "failed" | "cancelled" };
 
 export type ProgressStreamDependencies = {
   authenticateRequest: (req: Request) => Promise<ProgressStreamUser | null>;
@@ -24,7 +24,7 @@ export type ProgressStreamDependencies = {
   heartbeatIntervalMs: number;
 };
 
-const terminalStages = new Set<VideoJobProgressStage>(["complete", "failed"]);
+const terminalStages = new Set<VideoJobProgressStage>(["complete", "failed", "cancelled"]);
 
 export function formatProgressSse(payload: ProgressPayload): string {
   return `event: progress\ndata: ${JSON.stringify(payload)}\n\n`;
@@ -108,8 +108,8 @@ export function registerAnalysisProgressStream(
       }
 
       if (lastEventId === 0) {
-        const stage: VideoJobProgressStage = job.status === "failed" ? "failed" : job.status === "done" ? "complete" : "queued";
-        const message = stage === "complete" ? "Your video brief is ready." : stage === "failed" ? "The analysis could not be completed." : "Analysis queued. Preparing the source.";
+        const stage: VideoJobProgressStage = job.status === "failed" ? "failed" : job.status === "done" ? "complete" : job.status === "cancelled" ? "cancelled" : job.status === "retrying" ? "retrying" : "queued";
+        const message = stage === "complete" ? "Your video brief is ready." : stage === "failed" ? "The analysis could not be completed." : stage === "cancelled" ? "This analysis was cancelled." : stage === "retrying" ? "A retry is waiting for its next attempt." : "Analysis queued. Preparing the source.";
         writeSnapshot(res, stage, message);
         if (terminalStages.has(stage)) {
           res.end();

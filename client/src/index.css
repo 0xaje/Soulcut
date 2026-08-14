@@ -59,8 +59,10 @@ a { color: inherit; text-decoration: none; }
 .status-pill { display: inline-flex; align-items: center; gap: .34rem; border-radius: 999px; padding: .28rem .48rem; font-family: "DM Mono", ui-monospace, monospace; font-size: .58rem; letter-spacing: .07em; text-transform: uppercase; }
 .status-pill--pending { background: rgba(255,255,255,.07); color: rgba(255,255,255,.5); }
 .status-pill--processing { background: rgba(199,255,75,.12); color: #d8ff83; }
+.status-pill--retrying { background: rgba(255,210,94,.12); color: #ffe09a; }
 .status-pill--done { background: rgba(145,225,184,.12); color: #a5efc3; }
 .status-pill--failed { background: rgba(255,118,118,.12); color: #ffaeae; }
+.status-pill--cancelled { background: rgba(255,255,255,.08); color: rgba(255,255,255,.52); }
 .icon-button { display: inline-grid; place-items: center; height: 2.25rem; width: 2.25rem; border-radius: .85rem; border: 1px solid rgba(255,255,255,.1); background: rgba(255,255,255,.045); color: rgba(255,255,255,.6); transition: color 160ms ease, background 160ms ease, transform 160ms ease; }
 .icon-button:hover { color: #fff; background: rgba(255,255,255,.11); }
 .icon-button:active { transform: scale(.94); }

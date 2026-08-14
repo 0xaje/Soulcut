@@ -1,7 +1,7 @@
 type CsvJob = {
   id: string;
   videoUrl: string;
-  status: "pending" | "processing" | "done" | "failed";
+  status: "pending" | "processing" | "retrying" | "done" | "failed" | "cancelled";
   createdAt: Date | string;
   startedAt: Date | string | null;
   completedAt: Date | string | null;

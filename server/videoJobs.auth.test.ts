@@ -21,5 +21,9 @@ describe("videoJobs authorization", () => {
     await expect(caller.videoJobs.getPdfBranding()).rejects.toMatchObject({ code: "UNAUTHORIZED" });
     await expect(caller.videoJobs.setPdfCoverTitle({ coverTitle: "Custom title" })).rejects.toMatchObject({ code: "UNAUTHORIZED" });
     await expect(caller.videoJobs.uploadPdfLogo({ dataUrl: "data:image/png;base64,iVBORw0KGgo=" })).rejects.toMatchObject({ code: "UNAUTHORIZED" });
+    await expect(caller.videoJobs.archive({ id: "sample-job" })).rejects.toMatchObject({ code: "UNAUTHORIZED" });
+    await expect(caller.videoJobs.restore({ id: "sample-job" })).rejects.toMatchObject({ code: "UNAUTHORIZED" });
+    await expect(caller.videoJobs.cancel({ id: "sample-job" })).rejects.toMatchObject({ code: "UNAUTHORIZED" });
+    await expect(caller.videoJobs.delete({ id: "sample-job" })).rejects.toMatchObject({ code: "UNAUTHORIZED" });
   });
 });

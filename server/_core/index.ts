@@ -8,6 +8,7 @@ import { registerStorageProxy } from "./storageProxy";
 import { appRouter } from "../routers";
 import { registerAnalysisProgressStream } from "../analysisProgressStream";
 import { registerReportShareRoute } from "../reportShareRoute";
+import { registerScheduledWorkerRoutes } from "../scheduledWorkers";
 import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
 
@@ -40,6 +41,7 @@ async function startServer() {
   registerOAuthRoutes(app);
   registerAnalysisProgressStream(app);
   registerReportShareRoute(app);
+  registerScheduledWorkerRoutes(app);
   // tRPC API
   app.use(
     "/api/trpc",

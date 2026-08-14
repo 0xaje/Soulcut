@@ -4,6 +4,7 @@ import { type AnalysisProgressEvent, type AnalysisProgressStage, useAnalysisProg
 import { filterJobHistory, getVisibleHistorySelection, type HistoryFilter } from "@/lib/jobHistory";
 import { trpc } from "@/lib/trpc";
 import {
+  Archive,
   ArrowLeft,
   Check,
   ChevronRight,
@@ -17,11 +18,14 @@ import {
   LoaderCircle,
   LogOut,
   Play,
+  RotateCcw,
   Scissors,
+  Search,
   Send,
   Share2,
   Sparkles,
   Tag,
+  Trash2,
   X,
 } from "lucide-react";
 import { type CSSProperties, useEffect, useMemo, useState } from "react";
@@ -68,11 +72,11 @@ async function shareText(title: string, text: string) {
   await copyText(text, "Copied to clipboard instead.");
 }
 
-function StatusPill({ status }: { status: "pending" | "processing" | "done" | "failed" }) {
-  const label = status === "done" ? "Ready" : status === "processing" ? "Analyzing" : status === "failed" ? "Needs attention" : "Queued";
+function StatusPill({ status }: { status: "pending" | "processing" | "retrying" | "done" | "failed" | "cancelled" }) {
+  const label = status === "done" ? "Ready" : status === "processing" ? "Analyzing" : status === "retrying" ? "Retrying" : status === "failed" ? "Needs attention" : status === "cancelled" ? "Cancelled" : "Queued";
   return (
     <span className={`status-pill status-pill--${status}`}>
-      {status === "processing" && <LoaderCircle size={12} className="animate-spin" />}
+      {(status === "processing" || status === "retrying") && <LoaderCircle size={12} className="animate-spin" />}
       {status === "done" && <Check size={12} />}
       {label}
     </span>
@@ -154,8 +158,10 @@ const timelineLabels: Record<AnalysisProgressStage, string> = {
   reading: "Reading source",
   analyzing: "Finding signal",
   clips: "Shaping clips",
+  retrying: "Retry scheduled",
   complete: "Brief ready",
   failed: "Stopped",
+  cancelled: "Cancelled",
 };
 
 function CompletedJobTimeline({
@@ -202,12 +208,26 @@ export default function Workspace() {
   const [processingJobId, setProcessingJobId] = useState<string | null>(null);
   const [timelineJobId, setTimelineJobId] = useState<string | null>(null);
   const [historyFilter, setHistoryFilter] = useState<HistoryFilter>("all");
+  const [historySearch, setHistorySearch] = useState("");
+  const [historyStartDate, setHistoryStartDate] = useState("");
+  const [historyEndDate, setHistoryEndDate] = useState("");
+  const [includeArchived, setIncludeArchived] = useState(false);
   const [shareExpiryHours, setShareExpiryHours] = useState(24 * 7);
   const [reportSettingsOpen, setReportSettingsOpen] = useState(false);
   const [coverTitleInput, setCoverTitleInput] = useState("");
-  const jobsQuery = trpc.videoJobs.list.useQuery(undefined, { enabled: isAuthenticated });
+  const listFilters = useMemo(() => ({
+    includeArchived,
+    search: historySearch.trim() || undefined,
+    startDate: historyStartDate || undefined,
+    endDate: historyEndDate || undefined,
+  }), [historyEndDate, historySearch, historyStartDate, includeArchived]);
+  const jobsQuery = trpc.videoJobs.list.useQuery(listFilters, { enabled: isAuthenticated });
   const createJob = trpc.videoJobs.create.useMutation();
   const runJob = trpc.videoJobs.run.useMutation();
+  const archiveJob = trpc.videoJobs.archive.useMutation();
+  const restoreJob = trpc.videoJobs.restore.useMutation();
+  const cancelJob = trpc.videoJobs.cancel.useMutation();
+  const deleteJob = trpc.videoJobs.delete.useMutation();
   const exportCsv = trpc.videoJobs.exportCsv.useMutation();
   const exportPdf = trpc.videoJobs.exportPdf.useMutation();
   const createPdfShare = trpc.videoJobs.createPdfShare.useMutation();
@@ -259,6 +279,16 @@ export default function Workspace() {
     if (pdfBrandingQuery.data?.coverTitle) setCoverTitleInput(pdfBrandingQuery.data.coverTitle);
   }, [pdfBrandingQuery.data?.coverTitle]);
 
+  useEffect(() => {
+    const stage = progress.latestEvent?.stage;
+    if (!processingJobId || !stage || !["complete", "failed", "cancelled"].includes(stage)) return;
+    setProcessingJobId(null);
+    void utils.videoJobs.list.invalidate();
+    toast[stage === "complete" ? "success" : "message"](
+      stage === "complete" ? "Your video brief is ready." : stage === "cancelled" ? "Analysis cancelled." : "Analysis stopped after its final attempt."
+    );
+  }, [processingJobId, progress.latestEvent?.id, progress.latestEvent?.stage, utils.videoJobs.list]);
+
   const submitAnalysis = async () => {
     if (!videoUrl.trim()) {
       toast.error("Paste a public video URL first.");
@@ -269,16 +299,57 @@ export default function Workspace() {
       setActiveId(created.id);
       setProcessingJobId(created.id);
       await utils.videoJobs.list.invalidate();
-      const completed = await runJob.mutateAsync({ id: created.id });
-      setActiveId(completed.id);
-      await utils.videoJobs.list.invalidate();
       setVideoUrl("");
-      toast.success("Your video brief is ready.");
+      toast.success("Analysis queued. We’ll update this brief as the worker progresses.");
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "We could not analyze that video.");
       await utils.videoJobs.list.invalidate();
-    } finally {
       setProcessingJobId(null);
+    }
+  };
+
+  const archiveSelectedJob = async (jobId: string) => {
+    try {
+      await archiveJob.mutateAsync({ id: jobId });
+      if (activeId === jobId) setActiveId(null);
+      await utils.videoJobs.list.invalidate();
+      toast.success("Brief archived. Turn on “Show archived” to view it again.");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "We could not archive that brief.");
+    }
+  };
+
+  const cancelSelectedJob = async (jobId: string) => {
+    if (!window.confirm("Cancel this analysis? Any completed work already saved will remain unavailable.")) return;
+    try {
+      await cancelJob.mutateAsync({ id: jobId });
+      if (processingJobId === jobId) setProcessingJobId(null);
+      await utils.videoJobs.list.invalidate();
+      toast.success("Analysis cancelled.");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "We could not cancel that analysis.");
+    }
+  };
+
+  const restoreSelectedJob = async (jobId: string) => {
+    try {
+      await restoreJob.mutateAsync({ id: jobId });
+      await utils.videoJobs.list.invalidate();
+      toast.success("Brief restored to your active history.");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "We could not restore that brief.");
+    }
+  };
+
+  const deleteSelectedJob = async (jobId: string) => {
+    if (!window.confirm("Permanently delete this brief and its timeline? This action cannot be undone.")) return;
+    try {
+      await deleteJob.mutateAsync({ id: jobId });
+      if (activeId === jobId) setActiveId(null);
+      await utils.videoJobs.list.invalidate();
+      toast.success("Brief permanently deleted.");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "We could not delete that brief.");
     }
   };
 
@@ -392,7 +463,7 @@ export default function Workspace() {
     );
   }
 
-  const isWorking = createJob.isPending || runJob.isPending;
+  const isWorking = createJob.isPending || runJob.isPending || Boolean(processingJobId);
   const activeClips = (activeJob?.clips ?? []) as Clip[];
 
   return (
@@ -435,6 +506,17 @@ export default function Workspace() {
                 </button>
               ))}
             </div>
+            <div className="mb-3 space-y-2 border-b border-white/8 pb-3">
+              <label className="flex items-center gap-2 rounded-xl border border-white/8 bg-black/20 px-2.5 py-2 text-white/45 focus-within:border-[#c7ff4b]/55" htmlFor="history-search">
+                <Search size={13} aria-hidden="true" />
+                <input id="history-search" value={historySearch} onChange={event => setHistorySearch(event.target.value)} className="min-w-0 flex-1 bg-transparent text-xs text-white outline-none placeholder:text-white/28" placeholder="Search source URL" />
+              </label>
+              <div className="grid grid-cols-2 gap-2">
+                <label className="text-[9px] uppercase tracking-[.1em] text-white/35">From<input type="date" value={historyStartDate} onChange={event => setHistoryStartDate(event.target.value)} className="mt-1 block w-full rounded-lg border border-white/8 bg-black/20 px-2 py-1.5 text-[10px] text-white/70 outline-none focus:border-[#c7ff4b]/55" /></label>
+                <label className="text-[9px] uppercase tracking-[.1em] text-white/35">To<input type="date" value={historyEndDate} onChange={event => setHistoryEndDate(event.target.value)} className="mt-1 block w-full rounded-lg border border-white/8 bg-black/20 px-2 py-1.5 text-[10px] text-white/70 outline-none focus:border-[#c7ff4b]/55" /></label>
+              </div>
+              <label className="flex items-center gap-2 px-1 text-[10px] text-white/46"><input type="checkbox" checked={includeArchived} onChange={event => setIncludeArchived(event.target.checked)} className="accent-[#c7ff4b]" /> Show archived briefs</label>
+            </div>
             <div className="max-h-[calc(100vh-12rem)] space-y-1 overflow-y-auto pr-0.5">
               {jobsQuery.isLoading && <p className="px-2 py-5 text-xs text-white/38">Loading your archive…</p>}
               {!jobsQuery.isLoading && jobs.length === 0 && (
@@ -443,23 +525,24 @@ export default function Workspace() {
               {!jobsQuery.isLoading && jobs.length > 0 && filteredJobs.length === 0 && (
                 <div className="rounded-2xl border border-dashed border-white/10 px-3 py-5 text-center text-xs leading-relaxed text-white/38">No {historyFilter === "done" ? "successful" : "failed"} runs yet. Switch filters to review the rest of your archive.</div>
               )}
-              {filteredJobs.map((job) => (
-                <button
-                  type="button"
-                  key={job.id}
-                  onClick={() => setActiveId(job.id)}
-                  className={`group w-full rounded-2xl px-3 py-3 text-left transition ${activeJob?.id === job.id ? "bg-white/[.09]" : "hover:bg-white/[.045]"}`}
-                >
-                  <div className="flex items-start justify-between gap-2">
-                    <p className="line-clamp-2 text-xs font-medium leading-relaxed text-white/78">{job.videoTitle ?? new URL(job.videoUrl).hostname.replace("www.", "")}</p>
-                    <ChevronRight size={14} className="mt-0.5 shrink-0 text-white/23 transition group-hover:translate-x-0.5" />
+              {filteredJobs.map((job) => {
+                const jobIsActive = ["pending", "processing", "retrying"].includes(job.status);
+                return <div key={job.id} className={`group rounded-2xl px-3 py-3 transition ${activeJob?.id === job.id ? "bg-white/[.09]" : "hover:bg-white/[.045]"}`}>
+                  <button type="button" onClick={() => setActiveId(job.id)} className="w-full text-left">
+                    <div className="flex items-start justify-between gap-2">
+                      <p className="line-clamp-2 text-xs font-medium leading-relaxed text-white/78">{job.videoTitle ?? new URL(job.videoUrl).hostname.replace("www.", "")}</p>
+                      <ChevronRight size={14} className="mt-0.5 shrink-0 text-white/23 transition group-hover:translate-x-0.5" />
+                    </div>
+                    <div className="mt-2 flex items-center justify-between gap-2">
+                      <StatusPill status={job.status} />
+                      <span className="text-[10px] text-white/28">{new Date(job.createdAt).toLocaleDateString(undefined, { month: "short", day: "numeric" })}</span>
+                    </div>
+                  </button>
+                  <div className="mt-2 flex justify-end gap-1 opacity-100 transition sm:opacity-0 sm:group-hover:opacity-100">
+                    {jobIsActive ? <button type="button" onClick={() => void cancelSelectedJob(job.id)} disabled={cancelJob.isPending} className="inline-flex items-center gap-1 rounded-md px-1.5 py-1 text-[10px] text-amber-100/70 transition hover:bg-amber-100/10 hover:text-amber-100 disabled:opacity-50"><X size={11} /> Cancel</button> : <>{job.archivedAt ? <button type="button" onClick={() => void restoreSelectedJob(job.id)} disabled={restoreJob.isPending} className="inline-flex items-center gap-1 rounded-md px-1.5 py-1 text-[10px] text-[#d8ff83]/70 transition hover:bg-[#c7ff4b]/10 hover:text-[#d8ff83] disabled:opacity-50"><RotateCcw size={11} /> Restore</button> : <button type="button" onClick={() => void archiveSelectedJob(job.id)} disabled={archiveJob.isPending} className="inline-flex items-center gap-1 rounded-md px-1.5 py-1 text-[10px] text-white/42 transition hover:bg-white/[.08] hover:text-white disabled:opacity-50"><Archive size={11} /> Archive</button>}<button type="button" onClick={() => void deleteSelectedJob(job.id)} disabled={deleteJob.isPending} className="inline-flex items-center gap-1 rounded-md px-1.5 py-1 text-[10px] text-red-200/50 transition hover:bg-red-300/10 hover:text-red-100 disabled:opacity-50"><Trash2 size={11} /> Delete</button></>}
                   </div>
-                  <div className="mt-2 flex items-center justify-between gap-2">
-                    <StatusPill status={job.status} />
-                    <span className="text-[10px] text-white/28">{new Date(job.createdAt).toLocaleDateString(undefined, { month: "short", day: "numeric" })}</span>
-                  </div>
-                </button>
-              ))}
+                </div>;
+              })}
             </div>
             <div className="mt-3 border-t border-white/8 pt-3">
               <button type="button" onClick={() => setReportSettingsOpen(current => !current)} aria-expanded={reportSettingsOpen} className="flex w-full items-center justify-between rounded-xl px-2 py-2 text-left text-xs text-white/56 transition hover:bg-white/[.05] hover:text-white">

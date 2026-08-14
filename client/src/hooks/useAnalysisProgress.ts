@@ -1,7 +1,7 @@
 import { COOKIE_NAME } from "@shared/const";
 import { useEffect, useMemo, useState } from "react";
 
-export type AnalysisProgressStage = "queued" | "reading" | "analyzing" | "clips" | "complete" | "failed";
+export type AnalysisProgressStage = "queued" | "reading" | "analyzing" | "clips" | "retrying" | "complete" | "failed" | "cancelled";
 
 export type AnalysisProgressEvent = {
   id: number;
