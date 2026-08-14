@@ -28,6 +28,8 @@ export async function processNextAnalysisJob() {
     await addEvent("analyzing", mindContext ? "Distilling the story through your Creative Mind preferences." : "Distilling the core story and key topics.");
     const analysis = await analyzeVideoUrl(job.videoUrl, mindContext);
     if (await cancelled()) return { processed: true as const, status: "cancelled" as const };
+    const contextApplied = await updateClaimedVideoJob(job.id, workerToken, { mindContextSnapshot: mindContext });
+    if (!contextApplied || await cancelled()) return { processed: true as const, status: "cancelled" as const };
     await addEvent("clips", "Shaping grounded short-form clip recommendations.");
     const completed = await updateClaimedVideoJob(job.id, workerToken, {
       status: "done",

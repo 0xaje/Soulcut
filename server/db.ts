@@ -5,6 +5,7 @@ import {
   type CreativeMind,
   type MindMemory,
   type MindActivity,
+  type MindContextSnapshot,
   type ClipSuggestion,
   type InsertUser,
   type InsertVideoJob,
@@ -117,6 +118,12 @@ export type MindMemorySource = NonNullable<MindMemory["source"]>;
 export type MindEvidenceSource = "onboarding" | "teaching" | "feedback" | "analysis" | "selection";
 export type MindActivityType = NonNullable<MindActivity["activityType"]>;
 
+export type FeedbackSignalSummary = {
+  keepCount: number;
+  notMyStyleCount: number;
+  totalCount: number;
+};
+
 function clampConfidence(value: number) {
   return Math.max(1, Math.min(100, Math.round(value)));
 }
@@ -219,6 +226,8 @@ export async function upsertMindMemoryForUser(input: {
     sourceReference: input.evidence.sourceReference ?? null,
     detail: input.evidence.detail,
     weight: input.evidence.weight ?? 1,
+    confidenceBefore: previous?.confidence ?? null,
+    confidenceAfter: confidence,
   });
   await db.insert(creativePreferences).values({
     mindId: mind.id,
@@ -253,6 +262,27 @@ export async function listMemoryEvidenceForUser(input: { userId: number; memoryI
   return db.select().from(memoryEvidence).where(eq(memoryEvidence.memoryId, input.memoryId)).orderBy(desc(memoryEvidence.createdAt));
 }
 
+export async function listMindConfidenceEvolutionForUser(userId: number) {
+  const mind = await ensureCreativeMindForUser(userId);
+  const db = await getDb();
+  if (!db) throw new Error("Database is not available");
+  const evidence = await db.select({
+    memoryId: memoryEvidence.memoryId,
+    confidenceBefore: memoryEvidence.confidenceBefore,
+    confidenceAfter: memoryEvidence.confidenceAfter,
+    createdAt: memoryEvidence.createdAt,
+    id: memoryEvidence.id,
+  }).from(memoryEvidence)
+    .innerJoin(mindMemories, eq(memoryEvidence.memoryId, mindMemories.id))
+    .where(eq(mindMemories.mindId, mind.id))
+    .orderBy(desc(memoryEvidence.createdAt), desc(memoryEvidence.id));
+  const latestByMemory = new Map<number, typeof evidence[number]>();
+  evidence.forEach(item => {
+    if (!latestByMemory.has(item.memoryId)) latestByMemory.set(item.memoryId, item);
+  });
+  return latestByMemory;
+}
+
 export async function listMindActivityForUser(userId: number, limit = 12) {
   const mind = await ensureCreativeMindForUser(userId);
   const db = await getDb();
@@ -269,6 +299,9 @@ export async function createFeedbackEventForUser(input: {
   feedbackType: "keep" | "not_my_style" | "teach";
   reason?: string | null;
   feedbackText?: string | null;
+  signalCategory?: string | null;
+  signalKey?: string | null;
+  signalValue?: string | null;
 }) {
   const mind = await ensureCreativeMindForUser(input.userId);
   const db = await getDb();
@@ -277,6 +310,21 @@ export async function createFeedbackEventForUser(input: {
   const rows = await db.select().from(feedbackEvents).where(and(eq(feedbackEvents.mindId, mind.id), eq(feedbackEvents.userId, input.userId))).orderBy(desc(feedbackEvents.id)).limit(1);
   if (!rows[0]) throw new Error("Feedback event could not be saved");
   return rows[0];
+}
+
+export async function getFeedbackSignalSummaryForUser(input: { userId: number; signalKey: string }): Promise<FeedbackSignalSummary> {
+  const mind = await ensureCreativeMindForUser(input.userId);
+  const db = await getDb();
+  if (!db) throw new Error("Database is not available");
+  const rows = await db.select({ feedbackType: feedbackEvents.feedbackType }).from(feedbackEvents)
+    .where(and(
+      eq(feedbackEvents.mindId, mind.id),
+      eq(feedbackEvents.userId, input.userId),
+      eq(feedbackEvents.signalKey, input.signalKey)
+    ));
+  const keepCount = rows.filter(row => row.feedbackType === "keep").length;
+  const notMyStyleCount = rows.filter(row => row.feedbackType === "not_my_style").length;
+  return { keepCount, notMyStyleCount, totalCount: rows.length };
 }
 
 export async function getMindStatsForUser(userId: number) {
@@ -301,6 +349,7 @@ type VideoJobUpdate = Partial<{
   topics: string[] | null;
   clips: ClipSuggestion[] | null;
   sourceNote: string | null;
+  mindContextSnapshot: MindContextSnapshot | null;
   model: string | null;
   failureReason: string | null;
   startedAt: Date | null;

@@ -78,6 +78,11 @@ describe("durable analysis worker", () => {
 
     expect(mocks.getCreativeMindAnalysisContextForUser).toHaveBeenCalledWith(42);
     expect(mocks.analyzeVideoUrl).toHaveBeenCalledWith(queuedJob.videoUrl, mindContext);
+    expect(mocks.updateClaimedVideoJob).toHaveBeenCalledWith(
+      queuedJob.id,
+      expect.any(String),
+      expect.objectContaining({ mindContextSnapshot: mindContext })
+    );
   });
 
   it("schedules a retry instead of failing on a transient analysis error", async () => {

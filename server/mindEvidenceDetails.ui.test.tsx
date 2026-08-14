@@ -13,6 +13,7 @@ const memory = {
   evidenceCount: 3,
   source: "explicit_creator_instruction",
   updatedAt: "2026-08-14T12:00:00.000Z",
+  confidenceEvolution: { confidenceBefore: 76, confidenceAfter: 84, createdAt: "2026-08-14T12:00:00.000Z" },
 };
 
 describe("Creative DNA evidence interface", () => {
@@ -22,6 +23,7 @@ describe("Creative DNA evidence interface", () => {
     render(<MindEvidenceDetails memories={[memory]} selectedMemoryId={null} onSelectMemory={onSelectMemory} onCloseEvidence={vi.fn()} evidence={undefined} isLoadingEvidence={false} />);
 
     expect(screen.getByText("3 evidence signals · explicit creator instruction")).toBeTruthy();
+    expect(screen.getByText("Confidence +8 after latest signal")).toBeTruthy();
     expect(screen.getByText(/^Updated Aug 14$/)).toBeTruthy();
     await user.click(screen.getByRole("button", { name: "View evidence" }));
     expect(onSelectMemory).toHaveBeenCalledWith(44);

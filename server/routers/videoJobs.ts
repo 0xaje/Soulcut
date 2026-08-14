@@ -124,7 +124,7 @@ export const videoJobsRouter = router({
       const job = await getVideoJobForUser(input.id, ctx.user.id);
       if (!job) throw new TRPCError({ code: "NOT_FOUND", message: "Video job not found." });
       const events = await listVideoJobProgressEventsForUser({ jobId: job.id, userId: ctx.user.id });
-      const pdf = await buildJobPdfReport(job, events, await loadPdfBranding(ctx.user.id));
+      const pdf = await buildJobPdfReport(job, events, await loadPdfBranding(ctx.user.id), job.mindContextSnapshot);
       return {
         filename: `soulcut-report-${job.id}.pdf`,
         base64: pdf.toString("base64"),

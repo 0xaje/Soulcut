@@ -60,3 +60,15 @@
 - [x] Remove unreachable template component-showcase code that contains demo and simulated responses from the SoulCut codebase.
 - [x] Add an automated shipped-source guard that fails if demo, fake, mock, synthetic, or simulated runtime code is introduced outside tests.
 - [x] Add behavioral tests proving Mind activity and recommendation evidence originate only from persisted owner-scoped onboarding, teaching, feedback, or job data.
+- [x] Map every applicable requirement in the supplied Minds-native specification against the current verified SoulCut implementation.
+- [x] Add a dedicated protected Creative DNA destination with visible workspace navigation, evidence drill-down, confidence evolution, and private Mind activity.
+- [x] Add grounded per-recommendation "Why this?" explanations that cite only the authenticated creator’s persisted memories and evidence.
+- [x] Expand recommendation feedback to capture the specified rejection reasons and optional free-form corrections, then persist them as Mind learning signals.
+- [x] Add conservative behavioral-pattern detection from repeated real recommendation choices, persist selection evidence, evolve confidence from observed counts, and create detected Mind activity only after the threshold is met.
+- [x] Improve Mind activity and Creative DNA presentation with truthful relative-time grouping and clear evidence/confidence evolution.
+- [x] Make the analysis and results flow show the Mind applying real learned preferences, prioritize creative opportunities over reports, and present Creative Evolution alongside preserved job history.
+- [x] Include optional evidence-backed Creative DNA and Mind insight context in exported PDF reports without exposing private information in public report links.
+- [x] Add focused tests for behavioral detection, explanation grounding, feedback detail, activity grouping, Creative DNA routing, PDF Mind context, ownership boundaries, and the second-video memory loop.
+- [x] Add an evidence-grounded Creative DNA confidence-evolution indicator that shows the current confidence change when a preference is reinforced.
+- [x] Add focused coverage that detailed rejection reasons and free-form feedback text persist and become the expected Mind learning signal.
+- [x] Add an end-to-end regression test for the second-video memory loop from persisted preference through bounded analysis context, result snapshot, and grounded explanation.

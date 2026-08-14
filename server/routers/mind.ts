@@ -2,6 +2,8 @@ import { z } from "zod";
 import {
   createFeedbackEventForUser,
   ensureCreativeMindForUser,
+  getFeedbackSignalSummaryForUser,
+  listMindConfidenceEvolutionForUser,
   getCreativeMindForUser,
   getMindStatsForUser,
   getVideoJobForUser,
@@ -50,9 +52,29 @@ function feedbackMemory(reason: (typeof feedbackReasons)[number] | undefined, te
 
 function whyItFits(memory: Awaited<ReturnType<typeof listMindMemoriesForUser>>, clip: { hook: string; reason: string }) {
   const clipText = `${clip.hook} ${clip.reason}`.toLowerCase();
-  const matching = memory.filter(item => item.value.toLowerCase().split(/\s+/).some(word => word.length > 4 && clipText.includes(word))).slice(0, 3);
-  const evidence = matching.length ? matching : memory.slice(0, 3);
-  return evidence.map(item => ({ memoryId: item.id, statement: item.value, confidence: item.confidence, evidenceCount: item.evidenceCount }));
+  return memory
+    .filter(item => item.value.toLowerCase().split(/[^a-z0-9]+/).some(word => word.length > 4 && clipText.includes(word)))
+    .slice(0, 3)
+    .map(item => ({ memoryId: item.id, statement: item.value, confidence: item.confidence, evidenceCount: item.evidenceCount, source: item.source }));
+}
+
+function recommendationSignal(job: { clips: Array<{ hook: string; reason: string }> | null } | null | undefined, recommendationId: string | undefined) {
+  if (!job || !recommendationId) return null;
+  const match = recommendationId.match(/^clip-(\d+)$/);
+  const clipIndex = match ? Number(match[1]) - 1 : -1;
+  const clip = clipIndex >= 0 ? job.clips?.[clipIndex] : undefined;
+  if (!clip) return null;
+  const hook = `${clip.hook} ${clip.reason}`.toLowerCase();
+  if (hook.includes("?")) return { category: "hook" as const, key: "hook-question-first", value: "Question-first hooks" };
+  if (/(problem|mistake|wrong|struggling|challenge)/.test(hook)) return { category: "hook" as const, key: "hook-problem-first", value: "Problem-first hooks" };
+  if (/(curious|curiosity|wonder|surprising|unexpected)/.test(hook)) return { category: "hook" as const, key: "hook-curiosity-driven", value: "Curiosity-driven hooks" };
+  return null;
+}
+
+function behavioralConfidence(keepCount: number, notMyStyleCount: number) {
+  const total = keepCount + notMyStyleCount;
+  if (!total) return 0;
+  return Math.min(96, Math.round(55 + (Math.max(keepCount, notMyStyleCount) / total) * 35 + Math.min(8, total * 2)));
 }
 
 export const mindRouter = router({
@@ -63,12 +85,17 @@ export const mindRouter = router({
   }),
 
   getCreativeDNA: protectedProcedure.query(async ({ ctx }) => {
-    const [mind, memories, stats] = await Promise.all([
+    const [mind, memories, stats, confidenceEvolution] = await Promise.all([
       ensureCreativeMindForUser(ctx.user.id),
       listMindMemoriesForUser(ctx.user.id),
       getMindStatsForUser(ctx.user.id),
+      listMindConfidenceEvolutionForUser(ctx.user.id),
     ]);
-    return { mind, memories, stats };
+    return {
+      mind,
+      memories: memories.map(memory => ({ ...memory, confidenceEvolution: confidenceEvolution.get(memory.id) ?? null })),
+      stats,
+    };
   }),
 
   getMindMemories: protectedProcedure.query(({ ctx }) => listMindMemoriesForUser(ctx.user.id)),
@@ -142,11 +169,19 @@ export const mindRouter = router({
       feedbackText: z.string().trim().max(500).optional(),
     }))
     .mutation(async ({ ctx, input }) => {
+      let job: Awaited<ReturnType<typeof getVideoJobForUser>> | undefined;
       if (input.jobId) {
-        const job = await getVideoJobForUser(input.jobId, ctx.user.id);
+        job = await getVideoJobForUser(input.jobId, ctx.user.id);
         if (!job) throw new Error("Video job not found.");
       }
-      const feedbackEvent = await createFeedbackEventForUser({ userId: ctx.user.id, ...input });
+      const signal = recommendationSignal(job, input.recommendationId);
+      const feedbackEvent = await createFeedbackEventForUser({
+        userId: ctx.user.id,
+        ...input,
+        signalCategory: signal?.category,
+        signalKey: signal?.key,
+        signalValue: signal?.value,
+      });
       const learned = input.feedbackType === "keep"
         ? inferTeaching(input.feedbackText || "The creator approved this recommendation style.", "format")
         : feedbackMemory(input.reason, input.feedbackText);
@@ -160,7 +195,39 @@ export const mindRouter = router({
         evidence: { source: "feedback", sourceReference: `feedback:${feedbackEvent.id}${input.jobId ? `:job:${input.jobId}` : ""}`, detail: learned.value, weight: input.feedbackType === "keep" ? 1 : 3 },
         activity: { type: input.feedbackType === "keep" ? "reinforced" : "updated", message: `${input.feedbackType === "keep" ? "Reinforced" : "Updated"}: ${learned.value}` },
       });
-      return { memory, message: input.feedbackType === "keep" ? "Your Mind reinforced this preference." : "Your Mind updated your Creative DNA." };
+      let behavioralMemory = null;
+      if (signal) {
+        const summary = await getFeedbackSignalSummaryForUser({ userId: ctx.user.id, signalKey: signal.key });
+        const dominantType = summary.keepCount > summary.notMyStyleCount ? "keep" : summary.notMyStyleCount > summary.keepCount ? "not_my_style" : null;
+        const dominantCount = dominantType === "keep" ? summary.keepCount : dominantType === "not_my_style" ? summary.notMyStyleCount : 0;
+        if (dominantType && dominantCount >= 2) {
+          const value = dominantType === "keep" ? `Frequently keeps ${signal.value.toLowerCase()}.` : `Frequently rejects ${signal.value.toLowerCase()}.`;
+          behavioralMemory = await upsertMindMemoryForUser({
+            userId: ctx.user.id,
+            category: signal.category,
+            memoryKey: `behavioral-${signal.key}-${dominantType}`,
+            value,
+            confidence: behavioralConfidence(summary.keepCount, summary.notMyStyleCount),
+            source: "behavioral_pattern",
+            evidence: {
+              source: "selection",
+              sourceReference: `feedback:${feedbackEvent.id}:signal:${signal.key}`,
+              detail: `${summary.keepCount} kept and ${summary.notMyStyleCount} rejected recommendations with ${signal.value.toLowerCase()}.`,
+              weight: 1,
+            },
+            activity: { type: "detected", message: `Detected: ${value}` },
+          });
+        }
+      }
+      return {
+        memory,
+        behavioralMemory,
+        message: behavioralMemory
+          ? "Your Mind detected a pattern from your repeated choices."
+          : input.feedbackType === "keep"
+            ? "Your Mind reinforced this preference."
+            : "Your Mind updated your Creative DNA.",
+      };
     }),
 
   getPersonalizedRecommendations: protectedProcedure
@@ -175,6 +242,20 @@ export const mindRouter = router({
         clip,
         fit: whyItFits(memories, clip),
         mindConfidence: averageConfidence,
-      }));
+      })).map(recommendation => {
+        const explanationConfidence = recommendation.fit.length
+          ? Math.round(recommendation.fit.reduce((sum, item) => sum + item.confidence, 0) / recommendation.fit.length)
+          : 0;
+        return {
+          ...recommendation,
+          explanation: {
+            confidence: explanationConfidence,
+            summary: recommendation.fit.length
+              ? `This recommendation matches ${recommendation.fit.length} documented Creative DNA preference${recommendation.fit.length === 1 ? "" : "s"}.`
+              : "Your Mind does not yet have a documented preference that directly matches this recommendation.",
+            evidence: recommendation.fit,
+          },
+        };
+      });
     }),
 });

@@ -83,6 +83,8 @@ export const memoryEvidence = mysqlTable(
     sourceReference: varchar("sourceReference", { length: 128 }),
     detail: text("detail").notNull(),
     weight: int("weight").default(1).notNull(),
+    confidenceBefore: int("confidenceBefore"),
+    confidenceAfter: int("confidenceAfter"),
     createdAt: timestamp("createdAt").defaultNow().notNull(),
   },
   table => [index("memory_evidence_memory_created_idx").on(table.memoryId, table.createdAt)]
@@ -132,11 +134,15 @@ export const feedbackEvents = mysqlTable(
     feedbackType: mysqlEnum("feedbackType", ["keep", "not_my_style", "teach"]).notNull(),
     reason: varchar("reason", { length: 80 }),
     feedbackText: text("feedbackText"),
+    signalCategory: varchar("signalCategory", { length: 32 }),
+    signalKey: varchar("signalKey", { length: 128 }),
+    signalValue: varchar("signalValue", { length: 240 }),
     createdAt: timestamp("createdAt").defaultNow().notNull(),
   },
   table => [
     index("feedback_events_mind_created_idx").on(table.mindId, table.createdAt),
     index("feedback_events_user_created_idx").on(table.userId, table.createdAt),
+    index("feedback_events_mind_signal_idx").on(table.mindId, table.signalKey, table.createdAt),
   ]
 );
 
@@ -173,6 +179,15 @@ export type ClipSuggestion = {
   reason: string;
 };
 
+export type MindContextSnapshot = {
+  preferences: Array<{
+    category: string;
+    value: string;
+    confidence: number;
+    evidenceCount: number;
+  }>;
+};
+
 export const videoJobs = mysqlTable(
   "video_jobs",
   {
@@ -189,6 +204,7 @@ export const videoJobs = mysqlTable(
     topics: json("topics").$type<string[]>(),
     clips: json("clips").$type<ClipSuggestion[]>(),
     sourceNote: text("sourceNote"),
+    mindContextSnapshot: json("mindContextSnapshot").$type<MindContextSnapshot | null>(),
     model: varchar("model", { length: 128 }),
     failureReason: text("failureReason"),
     createdAt: timestamp("createdAt").defaultNow().notNull(),

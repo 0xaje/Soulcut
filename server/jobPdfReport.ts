@@ -35,6 +35,15 @@ export type ReportBranding = {
   logoBuffer?: Buffer | null;
 };
 
+export type ReportMindContext = {
+  preferences: Array<{
+    category: string;
+    value: string;
+    confidence: number;
+    evidenceCount: number;
+  }>;
+};
+
 export function orderReportEvents<T extends Pick<ReportEvent, "id">>(events: T[]): T[] {
   return [...events].sort((a, b) => a.id - b.id);
 }
@@ -130,7 +139,7 @@ function drawCover(doc: InstanceType<typeof PDFDocument>, job: ReportJob, brandi
   doc.restore();
 }
 
-export async function buildJobPdfReport(job: ReportJob, events: ReportEvent[], branding?: ReportBranding): Promise<Buffer> {
+export async function buildJobPdfReport(job: ReportJob, events: ReportEvent[], branding?: ReportBranding, mindContext?: ReportMindContext | null): Promise<Buffer> {
   return new Promise((resolve, reject) => {
     const doc = new PDFDocument({ size: "A4", margin: pageMargin, compress: false, info: {
       Title: `SoulCut report — ${job.id}`,
@@ -169,6 +178,13 @@ export async function buildJobPdfReport(job: ReportJob, events: ReportEvent[], b
     if (job.topics?.length) {
       sectionTitle(doc, "Key topics");
       bodyText(doc, job.topics.map(topic => `• ${toText(topic)}`).join("\n"), { color: "#D6D5DC" });
+    }
+
+    if (mindContext?.preferences.length) {
+      sectionTitle(doc, "Creative DNA applied");
+      bodyText(doc, mindContext.preferences.map(preference => `• ${toText(preference.category)}: ${toText(preference.value)} (${preference.confidence}% confidence, ${preference.evidenceCount} evidence signal${preference.evidenceCount === 1 ? "" : "s"})`).join("\n"), { color: "#D6D5DC" });
+      doc.moveDown(0.35);
+      bodyText(doc, `Mind insight: This analysis used ${mindContext.preferences.length} documented Creative DNA preference${mindContext.preferences.length === 1 ? "" : "s"} available when the job was processed.`, { color: muted });
     }
 
     if (job.clips?.length) {

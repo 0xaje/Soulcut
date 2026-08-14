@@ -9,6 +9,11 @@ export type CreativeDnaMemory = {
   evidenceCount: number;
   source: string;
   updatedAt: Date | string;
+  confidenceEvolution?: {
+    confidenceBefore: number | null;
+    confidenceAfter: number | null;
+    createdAt: Date | string;
+  } | null;
 };
 
 export type CreativeDnaEvidence = {
@@ -43,6 +48,7 @@ export function MindEvidenceDetails({
       <div className="flex items-center justify-between gap-2"><span className="text-[10px] uppercase tracking-[.12em] text-[#d8ff83]">{memory.category}</span><span className="font-mono text-[10px] text-white/38">{memory.confidence}%</span></div>
       <p className="mt-2 text-sm text-white/80">{memory.value}</p>
       <p className="mt-2 text-[10px] text-white/37">{describeMindEvidence(memory)}</p>
+      {memory.confidenceEvolution && <p className="mt-1 text-[10px] text-[#d8ff83]/72">{memory.confidenceEvolution.confidenceBefore === null ? `Initial confidence ${memory.confidenceEvolution.confidenceAfter ?? memory.confidence}%` : memory.confidenceEvolution.confidenceAfter !== null && memory.confidenceEvolution.confidenceAfter > memory.confidenceEvolution.confidenceBefore ? `Confidence +${memory.confidenceEvolution.confidenceAfter - memory.confidenceEvolution.confidenceBefore} after latest signal` : "Confidence reconfirmed by latest signal"}</p>}
       <div className="mt-3 flex items-center justify-between gap-2"><time className="text-[10px] text-white/30">{formatMindLastUpdated(memory.updatedAt)}</time><button type="button" onClick={() => onSelectMemory(memory.id)} className="text-[10px] text-[#d8ff83] transition hover:text-[#c7ff4b]">View evidence</button></div>
     </article>)}
     {selectedMemoryId !== null && <section className="sm:col-span-2 rounded-2xl border border-[#c7ff4b]/16 bg-[#c7ff4b]/[.045] p-4" aria-live="polite">

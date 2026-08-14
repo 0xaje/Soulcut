@@ -4,6 +4,7 @@ import type { TrpcContext } from "./_core/context";
 const dbMocks = vi.hoisted(() => ({
   createFeedbackEventForUser: vi.fn(),
   ensureCreativeMindForUser: vi.fn(),
+  getFeedbackSignalSummaryForUser: vi.fn(),
   getCreativeMindForUser: vi.fn(),
   getMindStatsForUser: vi.fn(),
   getVideoJobForUser: vi.fn(),
@@ -29,6 +30,7 @@ describe("Mind router", () => {
     dbMocks.getMindStatsForUser.mockResolvedValue({ preferenceCount: 0, feedbackCount: 0, strongPatterns: 0, averageConfidence: 0 });
     dbMocks.upsertMindMemoryForUser.mockResolvedValue({ id: 12, category: "caption", value: "Do not use emojis", confidence: 92, evidenceCount: 1 });
     dbMocks.createFeedbackEventForUser.mockResolvedValue({ id: 1 });
+    dbMocks.getFeedbackSignalSummaryForUser.mockResolvedValue({ keepCount: 0, notMyStyleCount: 0, totalCount: 0 });
     dbMocks.markCreativeMindOnboarded.mockResolvedValue({ id: "mind-7", userId: 7, onboardedAt: new Date() });
   });
 
@@ -99,6 +101,30 @@ describe("Mind router", () => {
     expect(result.message).toContain("updated your Creative DNA");
   });
 
+  it("persists a detailed correction and learns from its free-form content", async () => {
+    dbMocks.getVideoJobForUser.mockResolvedValue({ id: "job-owned", clips: [] });
+    const caller = mindRouter.createCaller(context);
+
+    await caller.submitFeedback({
+      jobId: "job-owned",
+      recommendationId: "clip-1",
+      feedbackType: "not_my_style",
+      reason: "other",
+      feedbackText: "Make these hooks less clickbaity and more conversational.",
+    });
+
+    expect(dbMocks.createFeedbackEventForUser).toHaveBeenCalledWith(expect.objectContaining({
+      reason: "other",
+      feedbackText: "Make these hooks less clickbaity and more conversational.",
+    }));
+    expect(dbMocks.upsertMindMemoryForUser).toHaveBeenCalledWith(expect.objectContaining({
+      category: "hook",
+      value: "Make these hooks less clickbaity and more conversational.",
+      source: "feedback",
+      evidence: expect.objectContaining({ detail: "Make these hooks less clickbaity and more conversational." }),
+    }));
+  });
+
   it("returns preference evidence only through the requesting user’s owner-scoped helper", async () => {
     dbMocks.listMemoryEvidenceForUser.mockResolvedValue([{ id: 6, memoryId: 12, detail: "Creator chose a question-led opening.", source: "onboarding", weight: 3 }]);
     const caller = mindRouter.createCaller(context);
@@ -117,7 +143,7 @@ describe("Mind router", () => {
       clips: [{ startSeconds: 0, endSeconds: 12, title: "Question opening", hook: "A question for beginners", reason: "Fast payoff" }],
     });
     dbMocks.listMindMemoriesForUser.mockResolvedValue([
-      { id: 44, value: "Question-first hooks", confidence: 84, evidenceCount: 3 },
+      { id: 44, value: "Question-first hooks", confidence: 84, evidenceCount: 3, source: "behavioral_pattern" },
     ]);
     const caller = mindRouter.createCaller(context);
     const results = await caller.getPersonalizedRecommendations({ jobId: "job-owned" });
@@ -125,5 +151,48 @@ describe("Mind router", () => {
     expect(dbMocks.getVideoJobForUser).toHaveBeenCalledWith("job-owned", 7);
     expect(results[0]?.fit).toEqual([expect.objectContaining({ memoryId: 44, evidenceCount: 3 })]);
     expect(results[0]?.mindConfidence).toBe(84);
+    expect(results[0]?.explanation).toEqual(expect.objectContaining({ confidence: 84, evidence: [expect.objectContaining({ source: "behavioral_pattern" })] }));
+  });
+
+  it("detects a behavioral hook pattern only after repeated persisted choices for an owned recommendation", async () => {
+    dbMocks.getVideoJobForUser.mockResolvedValue({
+      id: "job-owned",
+      clips: [{ startSeconds: 0, endSeconds: 12, title: "Question opening", hook: "Are you using AI wrong?", reason: "Fast payoff" }],
+    });
+    dbMocks.createFeedbackEventForUser.mockResolvedValue({ id: 18 });
+    dbMocks.getFeedbackSignalSummaryForUser.mockResolvedValue({ keepCount: 2, notMyStyleCount: 0, totalCount: 2 });
+    const caller = mindRouter.createCaller(context);
+
+    const result = await caller.submitFeedback({ jobId: "job-owned", recommendationId: "clip-1", feedbackType: "keep" });
+
+    expect(dbMocks.createFeedbackEventForUser).toHaveBeenCalledWith(expect.objectContaining({
+      signalCategory: "hook",
+      signalKey: "hook-question-first",
+      signalValue: "Question-first hooks",
+    }));
+    expect(dbMocks.getFeedbackSignalSummaryForUser).toHaveBeenCalledWith({ userId: 7, signalKey: "hook-question-first" });
+    expect(dbMocks.upsertMindMemoryForUser).toHaveBeenCalledWith(expect.objectContaining({
+      source: "behavioral_pattern",
+      category: "hook",
+      activity: expect.objectContaining({ type: "detected" }),
+      evidence: expect.objectContaining({ source: "selection", sourceReference: "feedback:18:signal:hook-question-first" }),
+    }));
+    expect(result.message).toContain("detected a pattern");
+  });
+
+  it("does not invent a fit explanation when stored preferences do not match the recommendation", async () => {
+    dbMocks.getVideoJobForUser.mockResolvedValue({
+      id: "job-owned",
+      clips: [{ startSeconds: 0, endSeconds: 12, title: "Statement opening", hook: "AI is changing everything", reason: "A decisive framing" }],
+    });
+    dbMocks.listMindMemoriesForUser.mockResolvedValue([
+      { id: 91, value: "Question-first hooks", confidence: 88, evidenceCount: 4, source: "behavioral_pattern" },
+    ]);
+    const caller = mindRouter.createCaller(context);
+
+    const results = await caller.getPersonalizedRecommendations({ jobId: "job-owned" });
+
+    expect(results[0]?.fit).toEqual([]);
+    expect(results[0]?.explanation).toEqual(expect.objectContaining({ confidence: 0, evidence: [] }));
   });
 });
