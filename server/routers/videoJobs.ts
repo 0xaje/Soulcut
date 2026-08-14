@@ -5,6 +5,7 @@ import {
   createVideoJobProgressEvent,
   createVideoJob,
   getVideoJobForUser,
+  listVideoJobProgressEventsForUser,
   listVideoJobsForUser,
   updateVideoJobForUser,
 } from "../db";
@@ -27,6 +28,14 @@ export const videoJobsRouter = router({
       const job = await getVideoJobForUser(input.id, ctx.user.id);
       if (!job) throw new TRPCError({ code: "NOT_FOUND", message: "Video job not found." });
       return job;
+    }),
+
+  timeline: protectedProcedure
+    .input(z.object({ id: z.string().min(8).max(32) }))
+    .query(async ({ ctx, input }) => {
+      const job = await getVideoJobForUser(input.id, ctx.user.id);
+      if (!job) throw new TRPCError({ code: "NOT_FOUND", message: "Video job not found." });
+      return listVideoJobProgressEventsForUser({ jobId: job.id, userId: ctx.user.id });
     }),
 
   create: protectedProcedure

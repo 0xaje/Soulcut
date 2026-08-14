@@ -10,6 +10,7 @@ import {
   Copy,
   ExternalLink,
   FileText,
+  History,
   Link2,
   LoaderCircle,
   LogOut,
@@ -134,6 +135,48 @@ function AnalysisLoadingCard({
   );
 }
 
+const timelineLabels: Record<AnalysisProgressStage, string> = {
+  queued: "Queued",
+  reading: "Reading source",
+  analyzing: "Finding signal",
+  clips: "Shaping clips",
+  complete: "Brief ready",
+  failed: "Stopped",
+};
+
+function CompletedJobTimeline({
+  events,
+  isLoading,
+}: {
+  events: Array<Omit<AnalysisProgressEvent, "createdAt"> & { createdAt: Date | string }> | undefined;
+  isLoading: boolean;
+}) {
+  if (isLoading) {
+    return <p className="mt-5 text-sm text-white/40">Loading the recorded analysis stages…</p>;
+  }
+
+  if (!events?.length) {
+    return <p className="mt-5 rounded-2xl border border-dashed border-white/12 p-4 text-sm leading-relaxed text-white/42">This saved brief does not have a stage history. New SoulCut analyses record each processing step here.</p>;
+  }
+
+  return (
+    <ol className="timeline-list mt-6 space-y-0">
+      {events.map((event, index) => (
+        <li key={event.id} className="timeline-list__item relative grid grid-cols-[1.6rem_minmax(0,1fr)_auto] gap-3 pb-5 last:pb-0">
+          <span className={`timeline-list__marker timeline-list__marker--${event.stage}`} aria-hidden="true">{index + 1}</span>
+          <div className="min-w-0 pb-1">
+            <p className="text-sm font-medium text-white/83">{timelineLabels[event.stage]}</p>
+            <p className="mt-1 text-xs leading-relaxed text-white/43">{event.message}</p>
+          </div>
+          <time className="pt-0.5 text-right font-mono text-[10px] text-white/30" dateTime={new Date(event.createdAt).toISOString()}>
+            {new Date(event.createdAt).toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" })}
+          </time>
+        </li>
+      ))}
+    </ol>
+  );
+}
+
 export default function Workspace() {
   const [, setLocation] = useLocation();
   const { user, loading, isAuthenticated, logout } = useAuth({ redirectOnUnauthenticated: true });
@@ -143,10 +186,16 @@ export default function Workspace() {
   const [copiedClip, setCopiedClip] = useState<number | null>(null);
   const [pendingFromLandingLoaded, setPendingFromLandingLoaded] = useState(false);
   const [processingJobId, setProcessingJobId] = useState<string | null>(null);
+  const [timelineJobId, setTimelineJobId] = useState<string | null>(null);
   const jobsQuery = trpc.videoJobs.list.useQuery(undefined, { enabled: isAuthenticated });
   const createJob = trpc.videoJobs.create.useMutation();
   const runJob = trpc.videoJobs.run.useMutation();
   const progress = useAnalysisProgress(processingJobId);
+  const timelineInput = useMemo(() => (timelineJobId ? { id: timelineJobId } : { id: "__inactive__" }), [timelineJobId]);
+  const timelineQuery = trpc.videoJobs.timeline.useQuery(timelineInput, {
+    enabled: Boolean(timelineJobId),
+    refetchOnWindowFocus: false,
+  });
 
   const jobs = jobsQuery.data ?? [];
   const activeJob = useMemo(
@@ -163,6 +212,10 @@ export default function Workspace() {
     }
     setPendingFromLandingLoaded(true);
   }, [isAuthenticated, pendingFromLandingLoaded]);
+
+  useEffect(() => {
+    if (timelineJobId && timelineJobId !== activeJob?.id) setTimelineJobId(null);
+  }, [activeJob?.id, timelineJobId]);
 
   const submitAnalysis = async () => {
     if (!videoUrl.trim()) {
@@ -362,6 +415,18 @@ export default function Workspace() {
                     ) : (
                       <div className="mt-7 rounded-2xl border border-dashed border-white/12 p-5 text-sm leading-relaxed text-white/44">No timestamp suggestions were returned because reliable public timing context was not available for this source. The video brief and topics are still ready to use.</div>
                     )}
+                  </article>
+                  <article className="overflow-hidden rounded-3xl border border-white/9 bg-white/[.025]">
+                    <button
+                      type="button"
+                      onClick={() => setTimelineJobId(timelineJobId === activeJob.id ? null : activeJob.id)}
+                      aria-expanded={timelineJobId === activeJob.id}
+                      className="flex w-full items-center justify-between gap-4 p-5 text-left transition hover:bg-white/[.035] sm:p-6"
+                    >
+                      <span className="flex items-center gap-3"><span className="grid h-10 w-10 place-items-center rounded-xl border border-white/10 bg-black/20 text-[#c7ff4b]"><History size={18} /></span><span><span className="eyebrow text-[9px]">Recorded process</span><span className="mt-1 block font-display text-2xl tracking-[-.045em] text-white">View stage timeline</span></span></span>
+                      <ChevronRight size={18} className={`shrink-0 text-white/40 transition-transform ${timelineJobId === activeJob.id ? "rotate-90" : ""}`} />
+                    </button>
+                    {timelineJobId === activeJob.id && <div className="border-t border-white/8 px-5 pb-5 sm:px-6 sm:pb-6"><CompletedJobTimeline events={timelineQuery.data} isLoading={timelineQuery.isLoading} /></div>}
                   </article>
                   {activeJob.sourceNote && <p className="px-2 text-xs leading-relaxed text-white/32"><span className="font-medium text-white/48">Analysis note:</span> {activeJob.sourceNote}</p>}
                 </>

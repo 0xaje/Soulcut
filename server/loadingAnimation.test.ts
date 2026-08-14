@@ -28,4 +28,10 @@ describe("AI analysis loading animation", () => {
     expect(styleSource).toContain("@media (prefers-reduced-motion: reduce)");
     expect(styleSource).toContain("animation: none !important");
   });
+
+  it("includes a reopenable completed-job timeline in the workspace", () => {
+    expect(workspaceSource).toContain("function CompletedJobTimeline");
+    expect(workspaceSource).toContain("trpc.videoJobs.timeline.useQuery");
+    expect(workspaceSource).toContain("View stage timeline");
+  });
 });
