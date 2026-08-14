@@ -13,5 +13,6 @@ describe("videoJobs authorization", () => {
 
     await expect(caller.videoJobs.list()).rejects.toMatchObject({ code: "UNAUTHORIZED" });
     await expect(caller.videoJobs.timeline({ id: "sample-job" })).rejects.toMatchObject({ code: "UNAUTHORIZED" });
+    await expect(caller.videoJobs.exportCsv()).rejects.toMatchObject({ code: "UNAUTHORIZED" });
   });
 });

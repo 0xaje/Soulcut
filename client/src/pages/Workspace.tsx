@@ -9,6 +9,7 @@ import {
   ChevronRight,
   Clock3,
   Copy,
+  Download,
   ExternalLink,
   FileText,
   History,
@@ -197,6 +198,7 @@ export default function Workspace() {
   const jobsQuery = trpc.videoJobs.list.useQuery(undefined, { enabled: isAuthenticated });
   const createJob = trpc.videoJobs.create.useMutation();
   const runJob = trpc.videoJobs.run.useMutation();
+  const exportCsv = trpc.videoJobs.exportCsv.useMutation();
   const progress = useAnalysisProgress(processingJobId);
   const timelineInput = useMemo(() => (timelineJobId ? { id: timelineJobId } : { id: "__inactive__" }), [timelineJobId]);
   const timelineQuery = trpc.videoJobs.timeline.useQuery(timelineInput, {
@@ -265,6 +267,25 @@ export default function Workspace() {
     toast.success("Signed out successfully.");
   };
 
+  const downloadHistoryCsv = async () => {
+    try {
+      const result = await exportCsv.mutateAsync();
+      const blob = new Blob(["\ufeff", result.csv], { type: "text/csv;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const anchor = document.createElement("a");
+      anchor.href = url;
+      anchor.download = result.filename;
+      anchor.style.display = "none";
+      document.body.appendChild(anchor);
+      anchor.click();
+      anchor.remove();
+      window.setTimeout(() => URL.revokeObjectURL(url), 0);
+      toast.success("Your job history CSV is downloading.");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "We could not export your history.");
+    }
+  };
+
   if (loading || !isAuthenticated) {
     return (
       <main className="workspace-bg grid min-h-screen place-items-center px-6">
@@ -304,7 +325,7 @@ export default function Workspace() {
                 <p className="eyebrow text-[9px]">Archive</p>
                 <h2 className="mt-1 font-display text-2xl tracking-[-.05em]">Your briefs</h2>
               </div>
-              <span className="rounded-full bg-white/[.07] px-2 py-1 font-mono text-[10px] text-white/45">{filteredJobs.length}/{jobs.length}</span>
+              <div className="flex items-center gap-1.5"><button type="button" onClick={() => void downloadHistoryCsv()} disabled={exportCsv.isPending} className="inline-flex items-center gap-1 rounded-full border border-white/10 bg-white/[.04] px-2 py-1 text-[10px] font-medium text-white/58 transition hover:bg-white/10 hover:text-white disabled:opacity-50" title="Download job history as CSV"><Download size={12} /> {exportCsv.isPending ? "Preparing" : "CSV"}</button><span className="rounded-full bg-white/[.07] px-2 py-1 font-mono text-[10px] text-white/45">{filteredJobs.length}/{jobs.length}</span></div>
             </div>
             <div className="mb-3 grid grid-cols-3 gap-1 rounded-xl border border-white/8 bg-black/20 p-1" role="group" aria-label="Filter job history">
               {historyFilterOptions.map(option => (

@@ -19,3 +19,4 @@
 - [x] Add a history filter toggle for successful and failed job runs.
 - [x] Package the validated SoulCut implementation workflow as a reusable skill.
 - [x] Add automated integration tests for authenticated progress streaming and successful/failed job-history filters.
+- [x] Add a secure CSV export for job history and recorded analysis stages.

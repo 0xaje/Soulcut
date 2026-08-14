@@ -5,10 +5,13 @@ import {
   createVideoJobProgressEvent,
   createVideoJob,
   getVideoJobForUser,
+  listAllVideoJobProgressEventsForUser,
+  listAllVideoJobsForUser,
   listVideoJobProgressEventsForUser,
   listVideoJobsForUser,
   updateVideoJobForUser,
 } from "../db";
+import { buildJobHistoryCsv } from "../jobHistoryCsv";
 import { analyzeVideoUrl, isPublicVideoUrl } from "../videoAnalysis";
 import { protectedProcedure, router } from "../_core/trpc";
 
@@ -37,6 +40,18 @@ export const videoJobsRouter = router({
       if (!job) throw new TRPCError({ code: "NOT_FOUND", message: "Video job not found." });
       return listVideoJobProgressEventsForUser({ jobId: job.id, userId: ctx.user.id });
     }),
+
+  exportCsv: protectedProcedure.mutation(async ({ ctx }) => {
+    const [jobs, events] = await Promise.all([
+      listAllVideoJobsForUser(ctx.user.id),
+      listAllVideoJobProgressEventsForUser(ctx.user.id),
+    ]);
+    const dateStamp = new Date().toISOString().slice(0, 10);
+    return {
+      filename: `soulcut-job-history-${dateStamp}.csv`,
+      csv: buildJobHistoryCsv(jobs, events),
+    };
+  }),
 
   create: protectedProcedure
     .input(z.object({ videoUrl: videoUrlInput }))

@@ -151,6 +151,17 @@ export async function listVideoJobsForUser(userId: number): Promise<VideoJob[]> 
     .limit(50);
 }
 
+export async function listAllVideoJobsForUser(userId: number): Promise<VideoJob[]> {
+  const db = await getDb();
+  if (!db) throw new Error("Database is not available");
+
+  return db
+    .select()
+    .from(videoJobs)
+    .where(eq(videoJobs.userId, userId))
+    .orderBy(desc(videoJobs.createdAt));
+}
+
 export async function updateVideoJobForUser(
   id: string,
   userId: number,
@@ -202,4 +213,15 @@ export async function listVideoJobProgressEventsForUser(input: {
     .from(videoJobProgressEvents)
     .where(and(...filters))
     .orderBy(asc(videoJobProgressEvents.id));
+}
+
+export async function listAllVideoJobProgressEventsForUser(userId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database is not available");
+
+  return db
+    .select()
+    .from(videoJobProgressEvents)
+    .where(eq(videoJobProgressEvents.userId, userId))
+    .orderBy(asc(videoJobProgressEvents.createdAt), asc(videoJobProgressEvents.id));
 }
