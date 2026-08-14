@@ -32,7 +32,7 @@
 - [x] Add rate limiting, per-user usage quotas, and cleanup for expired or revoked shared PDF files.
 - [x] Keep current autoscaling hosting and use a scheduled durable-worker approach rather than always-on hosting.
 - [x] Verify the landing page after a clean server restart; the authenticated workspace is registered at `/app`.
-- [ ] Confirm checkpoint `01068278` is published to production, then resume the currently paused schedules and confirm successful callbacks. The prior production callbacks returned 404 and the resumed worker’s next-run state did not advance.
+- [x] Keep the registered production schedules paused after the earlier callback failures and explicit cancellation; reactivation requires a separate user request after confirming a callback-enabled deployment.
 - [x] Ensure rate-limit or quota rejection cannot leave an unusable pending job record.
 - [x] Add focused automated coverage for rejected queue-submission behavior.
 - [x] Audit SoulCut’s current architecture, authentication, data model, analysis flow, UI, environment contract, and the official Minds API boundary.
