@@ -6,6 +6,7 @@ import {
   type InsertVideoJob,
   type VideoJob,
   type VideoJobProgressStage,
+  pdfReportShares,
   users,
   videoJobs,
   videoJobProgressEvents,
@@ -224,4 +225,22 @@ export async function listAllVideoJobProgressEventsForUser(userId: number) {
     .from(videoJobProgressEvents)
     .where(eq(videoJobProgressEvents.userId, userId))
     .orderBy(asc(videoJobProgressEvents.createdAt), asc(videoJobProgressEvents.id));
+}
+
+export async function createPdfReportShare(input: {
+  token: string;
+  jobId: string;
+  userId: number;
+  storageKey: string;
+}) {
+  const db = await getDb();
+  if (!db) throw new Error("Database is not available");
+  await db.insert(pdfReportShares).values(input);
+}
+
+export async function getPdfReportShareByToken(token: string) {
+  const db = await getDb();
+  if (!db) throw new Error("Database is not available");
+  const results = await db.select().from(pdfReportShares).where(eq(pdfReportShares.token, token)).limit(1);
+  return results[0];
 }

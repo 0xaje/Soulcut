@@ -85,3 +85,25 @@ export const videoJobProgressEvents = mysqlTable(
 
 export type VideoJobProgressEvent = typeof videoJobProgressEvents.$inferSelect;
 export type VideoJobProgressStage = NonNullable<VideoJobProgressEvent["stage"]>;
+
+export const pdfReportShares = mysqlTable(
+  "pdf_report_shares",
+  {
+    id: int("id").autoincrement().primaryKey(),
+    token: varchar("token", { length: 64 }).notNull().unique(),
+    jobId: varchar("jobId", { length: 32 })
+      .notNull()
+      .references(() => videoJobs.id, { onDelete: "cascade" }),
+    userId: int("userId")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    storageKey: varchar("storageKey", { length: 1024 }).notNull(),
+    createdAt: timestamp("createdAt").defaultNow().notNull(),
+  },
+  table => [
+    index("pdf_report_shares_job_user_idx").on(table.jobId, table.userId),
+    index("pdf_report_shares_token_idx").on(table.token),
+  ]
+);
+
+export type PdfReportShare = typeof pdfReportShares.$inferSelect;

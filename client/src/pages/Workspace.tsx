@@ -200,6 +200,7 @@ export default function Workspace() {
   const runJob = trpc.videoJobs.run.useMutation();
   const exportCsv = trpc.videoJobs.exportCsv.useMutation();
   const exportPdf = trpc.videoJobs.exportPdf.useMutation();
+  const createPdfShare = trpc.videoJobs.createPdfShare.useMutation();
   const progress = useAnalysisProgress(processingJobId);
   const timelineInput = useMemo(() => (timelineJobId ? { id: timelineJobId } : { id: "__inactive__" }), [timelineJobId]);
   const timelineQuery = trpc.videoJobs.timeline.useQuery(timelineInput, {
@@ -305,6 +306,16 @@ export default function Workspace() {
       toast.success("Your formatted report is downloading.");
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "We could not create that PDF report.");
+    }
+  };
+
+  const shareJobPdf = async (jobId: string) => {
+    try {
+      const result = await createPdfShare.mutateAsync({ id: jobId });
+      const shareUrl = `${window.location.origin}${result.sharePath}`;
+      await copyText(shareUrl, "Shareable report link copied.");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "We could not create a share link.");
     }
   };
 
@@ -439,7 +450,7 @@ export default function Workspace() {
                   <div className="flex flex-wrap items-center gap-2.5"><StatusPill status={activeJob.status} /><span className="font-mono text-[10px] uppercase tracking-[.14em] text-white/32">{activeJob.model ?? "Video research"}</span></div>
                   <p className="mt-4 break-all text-sm leading-relaxed text-white/65">{activeJob.videoUrl}</p>
                 </div>
-                <div className="flex shrink-0 flex-wrap gap-2"><button type="button" onClick={() => void downloadJobPdf(activeJob.id)} disabled={exportPdf.isPending} className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[.04] px-3.5 py-2 text-xs text-white/60 transition hover:bg-white/8 hover:text-white disabled:opacity-50"><FileText size={13} /> {exportPdf.isPending ? "Preparing PDF" : "PDF report"}</button><a href={activeJob.videoUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 rounded-full border border-white/10 px-3.5 py-2 text-xs text-white/60 transition hover:bg-white/8 hover:text-white"><ExternalLink size={13} /> Source</a></div>
+                <div className="flex shrink-0 flex-wrap gap-2"><button type="button" onClick={() => void downloadJobPdf(activeJob.id)} disabled={exportPdf.isPending} className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[.04] px-3.5 py-2 text-xs text-white/60 transition hover:bg-white/8 hover:text-white disabled:opacity-50"><FileText size={13} /> {exportPdf.isPending ? "Preparing PDF" : activeJob.status === "failed" ? "Error report" : "PDF report"}</button><button type="button" onClick={() => void shareJobPdf(activeJob.id)} disabled={createPdfShare.isPending} className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[.04] px-3.5 py-2 text-xs text-white/60 transition hover:bg-white/8 hover:text-white disabled:opacity-50"><Share2 size={13} /> {createPdfShare.isPending ? "Creating link" : "Share link"}</button><a href={activeJob.videoUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 rounded-full border border-white/10 px-3.5 py-2 text-xs text-white/60 transition hover:bg-white/8 hover:text-white"><ExternalLink size={13} /> Source</a></div>
               </div>
 
               {activeJob.status === "failed" && (

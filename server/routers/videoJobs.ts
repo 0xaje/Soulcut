@@ -3,6 +3,7 @@ import { nanoid } from "nanoid";
 import { z } from "zod";
 import {
   createVideoJobProgressEvent,
+  createPdfReportShare,
   createVideoJob,
   getVideoJobForUser,
   listAllVideoJobProgressEventsForUser,
@@ -13,6 +14,7 @@ import {
 } from "../db";
 import { buildJobHistoryCsv } from "../jobHistoryCsv";
 import { buildJobPdfReport } from "../jobPdfReport";
+import { storagePut } from "../storage";
 import { analyzeVideoUrl, isPublicVideoUrl } from "../videoAnalysis";
 import { protectedProcedure, router } from "../_core/trpc";
 
@@ -65,6 +67,28 @@ export const videoJobsRouter = router({
         filename: `soulcut-report-${job.id}.pdf`,
         base64: pdf.toString("base64"),
       };
+    }),
+
+  createPdfShare: protectedProcedure
+    .input(z.object({ id: z.string().min(8).max(32) }))
+    .mutation(async ({ ctx, input }) => {
+      const job = await getVideoJobForUser(input.id, ctx.user.id);
+      if (!job) throw new TRPCError({ code: "NOT_FOUND", message: "Video job not found." });
+      const events = await listVideoJobProgressEventsForUser({ jobId: job.id, userId: ctx.user.id });
+      const pdf = await buildJobPdfReport(job, events);
+      const token = nanoid(40);
+      const stored = await storagePut(
+        `report-shares/${ctx.user.id}/${job.id}-${token}.pdf`,
+        pdf,
+        "application/pdf"
+      );
+      await createPdfReportShare({
+        token,
+        jobId: job.id,
+        userId: ctx.user.id,
+        storageKey: stored.key,
+      });
+      return { sharePath: `/share/report/${token}` };
     }),
 
   create: protectedProcedure

@@ -29,6 +29,13 @@
       "when": 1786677978547,
       "tag": "0003_fixed_stature",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "5",
+      "when": 1786680860908,
+      "tag": "0004_smiling_harpoon",
+      "breakpoints": true
     }
   ]
 }

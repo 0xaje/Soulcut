@@ -29,6 +29,7 @@ describe("job PDF report", () => {
     const pdfText = pdf.toString("latin1");
     expect(pdfText).toContain("/Type /Catalog");
     expect(pdfText).toContain("SoulCut");
+    expect(pdfText).toContain("/Count 2");
   });
 
   it("orders recorded stages by persistent event ID before rendering", () => {

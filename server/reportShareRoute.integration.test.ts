@@ -1,0 +1,45 @@
+import express from "express";
+import { createServer, type Server } from "node:http";
+import { afterEach, describe, expect, it } from "vitest";
+import { registerReportShareRoute } from "./reportShareRoute";
+
+const servers: Server[] = [];
+
+async function startShareServer() {
+  const app = express();
+  registerReportShareRoute(app, {
+    getShareByToken: async token => token === "valid_share_token_1234567890" ? { storageKey: "report-shares/report.pdf" } : undefined,
+    getReportUrl: async key => ({ url: `/manus-storage/${key}` }),
+  });
+  const server = createServer(app);
+  servers.push(server);
+  await new Promise<void>((resolve, reject) => {
+    server.once("error", reject);
+    server.listen(0, "127.0.0.1", () => resolve());
+  });
+  const address = server.address();
+  if (!address || typeof address === "string") throw new Error("Share test server did not bind.");
+  return `http://127.0.0.1:${address.port}`;
+}
+
+afterEach(async () => {
+  await Promise.all(servers.splice(0).map(server => new Promise<void>(resolve => server.close(() => resolve()))));
+});
+
+describe("PDF report share links", () => {
+  it("redirects a valid opaque token to its stored report without requiring authentication", async () => {
+    const url = await startShareServer();
+    const response = await fetch(`${url}/share/report/valid_share_token_1234567890`, { redirect: "manual" });
+    expect(response.status).toBe(302);
+    expect(response.headers.get("location")).toBe("/manus-storage/report-shares/report.pdf");
+    expect(response.headers.get("cache-control")).toBe("no-store");
+  });
+
+  it("does not disclose records for invalid or malformed tokens", async () => {
+    const url = await startShareServer();
+    const unknown = await fetch(`${url}/share/report/unknown_share_token_1234567890`);
+    const malformed = await fetch(`${url}/share/report/short`);
+    expect(unknown.status).toBe(404);
+    expect(malformed.status).toBe(404);
+  });
+});
