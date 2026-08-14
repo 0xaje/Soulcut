@@ -65,20 +65,22 @@ export default function Home() {
         </header>
 
         <div className="relative z-10 mx-auto flex max-w-6xl flex-col items-center px-5 pb-24 pt-24 text-center sm:pt-32">
-          <div className="mb-7 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.045] px-3.5 py-1.5 text-xs font-medium text-white/65 backdrop-blur-md"><span className="h-1.5 w-1.5 rounded-full bg-[#c7ff4b] shadow-[0_0_12px_#c7ff4b]" />Your AI Creative Director for video</div>
-          <h1 className="max-w-5xl font-display text-[clamp(4.4rem,11vw,9.7rem)] leading-[0.78] tracking-[-0.075em] text-white">Make ideas that<span className="block text-white/35 italic">sound like you.</span></h1>
-          <p className="mt-9 max-w-xl text-base leading-relaxed text-white/55 sm:text-lg">SoulCut learns your Creative DNA, analyzes public video with grounded context, and explains the opportunities that fit your audience.</p>
+          <div className="mb-7 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.045] px-3.5 py-1.5 text-xs font-medium text-white/65 backdrop-blur-md"><Brain size={13} className="text-[#c7ff4b]" />Your AI Creative Director</div>
+          <h1 className="max-w-5xl font-display text-[clamp(4.2rem,10.5vw,9.2rem)] leading-[0.78] tracking-[-0.075em] text-white">AI can edit a video.<span className="block text-white/35 italic">SoulCut learns how you create.</span></h1>
+          <p className="mt-9 max-w-2xl text-base leading-relaxed text-white/55 sm:text-lg">Your Creative Mind remembers the choices you teach, what you keep, what you correct, and what you do not like—then applies that evidence to the next video.</p>
+          <div className="mt-8 flex flex-wrap items-center justify-center gap-3"><button type="button" onClick={openWorkspace} className="group inline-flex items-center justify-center gap-2 rounded-full bg-[#e9ffe2] px-5 py-3 text-sm font-semibold text-[#111710] transition hover:bg-[#c7ff4b] active:scale-[0.97]">Meet your Creative Mind <ArrowRight size={16} className="transition-transform group-hover:translate-x-0.5" /></button><button type="button" onClick={openWorkspace} className="rounded-full border border-white/12 bg-white/[.035] px-5 py-3 text-sm font-medium text-white/72 transition hover:border-[#c7ff4b]/45 hover:text-[#d8ff83]">Analyze a video</button></div>
+          <p className="mt-4 text-[11px] font-medium tracking-[.08em] text-[#d8ff83]/72">POWERED BY MINDS <span className="px-1.5 text-white/25">•</span> PERSISTENT CREATIVE MEMORY</p>
 
           <div className="mt-10 w-full max-w-2xl rounded-[1.7rem] border border-white/12 bg-[#121216]/85 p-2 shadow-[0_24px_100px_rgba(0,0,0,.42)] backdrop-blur-2xl">
             <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
               <div className="flex min-w-0 flex-1 items-center gap-3 px-3.5 py-2.5"><Link2 className="shrink-0 text-white/35" size={19} /><input value={videoUrl} onChange={(event) => setVideoUrl(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter") openWorkspace(); }} className="min-w-0 flex-1 bg-transparent text-sm text-white outline-none placeholder:text-white/30" placeholder="Paste a YouTube, Vimeo, or public video URL" aria-label="Public video URL" /></div>
-              <button type="button" onClick={openWorkspace} className="group flex items-center justify-center gap-2 rounded-[1.15rem] bg-[#e9ffe2] px-5 py-3 text-sm font-semibold text-[#111710] transition hover:bg-[#c7ff4b] active:scale-[0.97]">Meet your Mind<ArrowRight size={17} className="transition-transform group-hover:translate-x-0.5" /></button>
+              <button type="button" onClick={openWorkspace} className="group flex items-center justify-center gap-2 rounded-[1.15rem] bg-[#e9ffe2] px-5 py-3 text-sm font-semibold text-[#111710] transition hover:bg-[#c7ff4b] active:scale-[0.97]">Analyze a video<ArrowRight size={17} className="transition-transform group-hover:translate-x-0.5" /></button>
             </div>
           </div>
           <p className="mt-3 text-xs text-white/32">Public URLs only. Your Mind and Creative DNA remain private to your workspace.</p>
 
-          <div className="mt-16 grid w-full max-w-3xl grid-cols-3 gap-2 border-y border-white/10 py-5 sm:gap-8">
-            {[["01", "Mind it"], ["02", "Analyze"], ["03", "Learn"]].map(([number, label]) => <div key={number} className="text-left"><p className="font-mono text-[10px] tracking-[0.16em] text-[#c7ff4b]">{number}</p><p className="mt-1 font-display text-xl tracking-[-0.04em] text-white/78 sm:text-2xl">{label}</p></div>)}
+          <div className="mt-16 grid w-full max-w-3xl grid-cols-2 gap-2 border-y border-white/10 py-5 sm:grid-cols-4 sm:gap-8">
+            {[["01", "Teach"], ["02", "Create"], ["03", "Correct"], ["04", "Remember"]].map(([number, label]) => <div key={number} className="text-left"><p className="font-mono text-[10px] tracking-[0.16em] text-[#c7ff4b]">{number}</p><p className="mt-1 font-display text-xl tracking-[-0.04em] text-white/78 sm:text-2xl">{label}</p></div>)}
           </div>
         </div>
       </section>

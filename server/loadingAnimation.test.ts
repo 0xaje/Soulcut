@@ -18,9 +18,9 @@ describe("AI analysis loading animation", () => {
     expect(workspaceSource).toContain("progress={progress.latestEvent}");
     expect(workspaceSource).toContain('role="status"');
     expect(workspaceSource).toContain('aria-live="polite"');
-    expect(workspaceSource).toContain("Reading source");
-    expect(workspaceSource).toContain("Finding signal");
-    expect(workspaceSource).toContain("Shaping clips");
+    expect(workspaceSource).toContain("Understanding the story");
+    expect(workspaceSource).toContain("Mind at work");
+    expect(workspaceSource).toContain("Preparing creative opportunities");
   });
 
   it("includes a reduced-motion fallback for the processing animation", () => {

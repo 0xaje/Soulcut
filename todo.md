@@ -76,3 +76,10 @@
 - [x] Add owner-scoped preference editing and retirement controls that preserve evidence history and prevent retired preferences from influencing future analysis.
 - [x] Add an evidence-based multi-video recommendation comparison view that uses only persisted job snapshots, recommendation feedback, and Mind evidence.
 - [x] Add focused tests for transcript ingestion, preference lifecycle controls, comparison ownership, and truthful comparison metrics.
+- [x] Prepare and deliver a complete A-to-Z overview of the current verified SoulCut product and implementation.
+- [x] Map every applicable requirement in the supplied hackathon-readiness specification against the verified SoulCut release.
+- [x] Reframe the landing and authenticated Mind introduction around SoulCut as the AI Creative Director, with a visible but restrained real Minds intelligence-layer explanation and Mind-first calls to action.
+- [x] Translate only real analysis stages into a clearer “Mind at work” experience, strengthen the persisted second-video memory proof and result hierarchy, and clarify the transcript fallback message without unsupported caption claims.
+- [x] Reframe Creative DNA and Creative Evolution as a memorable evidence-backed creative portrait and learning history, including real confidence-evolution detail without fabricating performance metrics.
+- [x] Add a clean authenticated hackathon demo guide driven solely by the creator’s actual Mind, job, feedback, evidence, and comparison state.
+- [x] Add focused regression coverage for the Mind-first landing story, real-stage demo language, Minds architecture explanation, confidence-evolution display, and demo guide truthfulness.

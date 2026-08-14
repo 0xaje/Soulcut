@@ -25,10 +25,11 @@ import CreativeEvolution from "../client/src/pages/CreativeEvolution";
 describe("Creative Evolution route", () => {
   it("renders only recorded analysis-time context, opportunities, and explicit feedback instead of a fabricated quality score", () => {
     render(<CreativeEvolution />);
-    expect(screen.getByRole("heading", { name: /see what changed/i })).toBeTruthy();
-    expect(screen.getByText(/evidence view, not a performance score/i)).toBeTruthy();
+    expect(screen.getByRole("heading", { name: /your creative evolution/i })).toBeTruthy();
+    expect(screen.getByText(/mind is not static/i)).toBeTruthy();
     expect(screen.getAllByText("Question-first hooks")).toHaveLength(2);
     expect(screen.getByText("Creator-provided VTT transcript")).toBeTruthy();
-    expect(screen.getAllByText("Applied Creative DNA")).toHaveLength(2);
+    expect(screen.getByText("Applied Creative DNA")).toBeTruthy();
+    expect(screen.getAllByText("Applied DNA at analysis time")).toHaveLength(2);
   });
 });
