@@ -1,0 +1,178 @@
+import PDFDocument from "pdfkit";
+
+type ReportClip = {
+  startSeconds?: number;
+  endSeconds?: number;
+  title?: string;
+  hook?: string;
+  reason?: string;
+};
+
+type ReportJob = {
+  id: string;
+  videoUrl: string;
+  status: "pending" | "processing" | "done" | "failed";
+  createdAt: Date | string;
+  startedAt: Date | string | null;
+  completedAt: Date | string | null;
+  summary: string | null;
+  topics: string[] | null;
+  clips: ReportClip[] | null;
+  sourceNote: string | null;
+  model: string | null;
+  failureReason: string | null;
+};
+
+type ReportEvent = {
+  id: number;
+  stage: string;
+  message: string;
+  createdAt: Date | string;
+};
+
+export function orderReportEvents<T extends Pick<ReportEvent, "id">>(events: T[]): T[] {
+  return [...events].sort((a, b) => a.id - b.id);
+}
+
+const pageMargin = 52;
+const pageFill = "#0B0B0F";
+const primary = "#F7F7F0";
+const muted = "#A5A3AC";
+const accent = "#C7FF4B";
+
+function toText(value: unknown): string {
+  return value == null ? "—" : String(value).replace(/[\u0000-\u001F\u007F]/g, " ").trim() || "—";
+}
+
+function formatDate(value: Date | string | null): string {
+  if (!value) return "—";
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? "—" : date.toLocaleString("en-US", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  });
+}
+
+function formatTime(seconds?: number): string {
+  if (typeof seconds !== "number" || !Number.isFinite(seconds)) return "—";
+  const whole = Math.max(0, Math.floor(seconds));
+  return `${Math.floor(whole / 60)}:${String(whole % 60).padStart(2, "0")}`;
+}
+
+function drawPageChrome(doc: InstanceType<typeof PDFDocument>) {
+  doc.save();
+  doc.rect(0, 0, doc.page.width, doc.page.height).fill(pageFill);
+  doc.fillColor(accent).font("Helvetica-Bold").fontSize(8).text("SOULCUT / ANALYSIS REPORT", pageMargin, 28, {
+    characterSpacing: 1.4,
+  });
+  doc.moveTo(pageMargin, 43).lineTo(doc.page.width - pageMargin, 43).strokeColor("#2A2A30").lineWidth(0.5).stroke();
+  doc.restore();
+  doc.y = 68;
+}
+
+function ensureSpace(doc: InstanceType<typeof PDFDocument>, height: number) {
+  if (doc.y + height < doc.page.height - pageMargin) return;
+  doc.addPage();
+}
+
+function sectionTitle(doc: InstanceType<typeof PDFDocument>, text: string) {
+  ensureSpace(doc, 42);
+  doc.moveDown(0.8);
+  doc.fillColor(accent).font("Helvetica-Bold").fontSize(8).text(text.toUpperCase(), { characterSpacing: 1.1 });
+  doc.moveDown(0.45);
+}
+
+function bodyText(doc: InstanceType<typeof PDFDocument>, text: string, options: { size?: number; color?: string; leading?: number } = {}) {
+  doc.font("Helvetica").fontSize(options.size ?? 10.5).fillColor(options.color ?? primary).text(toText(text), {
+    width: doc.page.width - pageMargin * 2,
+    lineGap: options.leading ?? 3,
+  });
+}
+
+function metadataLine(doc: InstanceType<typeof PDFDocument>, label: string, value: string) {
+  ensureSpace(doc, 28);
+  doc.font("Helvetica-Bold").fontSize(7.5).fillColor(muted).text(label.toUpperCase(), { characterSpacing: 0.8, continued: true });
+  doc.font("Helvetica").fontSize(9).fillColor(primary).text(`  ${toText(value)}`);
+}
+
+export async function buildJobPdfReport(job: ReportJob, events: ReportEvent[]): Promise<Buffer> {
+  return new Promise((resolve, reject) => {
+    const doc = new PDFDocument({ size: "A4", margin: pageMargin, compress: false, info: {
+      Title: `SoulCut report — ${job.id}`,
+      Author: "SoulCut",
+      Subject: "Video analysis report and recorded processing timeline",
+    } });
+    const chunks: Buffer[] = [];
+    doc.on("data", chunk => chunks.push(Buffer.from(chunk)));
+    doc.on("error", reject);
+    doc.on("end", () => resolve(Buffer.concat(chunks)));
+    doc.on("pageAdded", () => drawPageChrome(doc));
+
+    drawPageChrome(doc);
+    doc.fillColor(primary).font("Helvetica-Bold").fontSize(27).text("Video analysis brief");
+    doc.moveDown(0.25);
+    doc.font("Helvetica").fontSize(10).fillColor(muted).text("A structured record of the video result and the SoulCut analysis process.");
+    doc.moveDown(1.5);
+
+    metadataLine(doc, "Status", job.status === "done" ? "Ready" : job.status === "failed" ? "Needs attention" : job.status);
+    metadataLine(doc, "Created", formatDate(job.createdAt));
+    metadataLine(doc, "Completed", formatDate(job.completedAt));
+    metadataLine(doc, "Model", job.model ?? "Video research");
+    doc.moveDown(0.7);
+    doc.fillColor("#2A2A30").rect(pageMargin, doc.y, doc.page.width - pageMargin * 2, 1).fill();
+    doc.moveDown(1);
+
+    sectionTitle(doc, "Source");
+    bodyText(doc, job.videoUrl, { size: 9.5, color: "#D6D5DC" });
+
+    if (job.summary) {
+      sectionTitle(doc, "The brief");
+      bodyText(doc, job.summary, { size: 11, leading: 4 });
+    }
+
+    if (job.topics?.length) {
+      sectionTitle(doc, "Key topics");
+      bodyText(doc, job.topics.map(topic => `• ${toText(topic)}`).join("\n"), { color: "#D6D5DC" });
+    }
+
+    if (job.clips?.length) {
+      sectionTitle(doc, "Short-form moments");
+      job.clips.forEach((clip, index) => {
+        ensureSpace(doc, 76);
+        doc.font("Helvetica-Bold").fontSize(10.5).fillColor(primary).text(`${index + 1}. ${toText(clip.title ?? "Clip suggestion")}`);
+        doc.font("Helvetica-Bold").fontSize(8).fillColor(accent).text(`${formatTime(clip.startSeconds)} — ${formatTime(clip.endSeconds)}`);
+        if (clip.hook) bodyText(doc, `Hook: ${clip.hook}`, { size: 9.5, color: "#D6D5DC" });
+        if (clip.reason) bodyText(doc, `Why it works: ${clip.reason}`, { size: 9.5, color: muted });
+        doc.moveDown(0.6);
+      });
+    }
+
+    if (job.failureReason) {
+      sectionTitle(doc, "Analysis note");
+      bodyText(doc, job.failureReason, { color: "#FFB6B6" });
+    }
+
+    if (job.sourceNote) {
+      sectionTitle(doc, "Source note");
+      bodyText(doc, job.sourceNote, { color: muted });
+    }
+
+    sectionTitle(doc, "Recorded process");
+    if (!events.length) {
+      bodyText(doc, "No recorded stages are available for this job.", { color: muted });
+    } else {
+      orderReportEvents(events).forEach((event, index) => {
+        ensureSpace(doc, 52);
+        doc.font("Helvetica-Bold").fontSize(9.5).fillColor(primary).text(`${index + 1}. ${toText(event.stage)}`);
+        doc.font("Helvetica").fontSize(8).fillColor(accent).text(formatDate(event.createdAt));
+        bodyText(doc, event.message, { size: 9.5, color: muted });
+        doc.moveDown(0.5);
+      });
+    }
+
+    doc.end();
+  });
+}

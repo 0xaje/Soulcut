@@ -199,6 +199,7 @@ export default function Workspace() {
   const createJob = trpc.videoJobs.create.useMutation();
   const runJob = trpc.videoJobs.run.useMutation();
   const exportCsv = trpc.videoJobs.exportCsv.useMutation();
+  const exportPdf = trpc.videoJobs.exportPdf.useMutation();
   const progress = useAnalysisProgress(processingJobId);
   const timelineInput = useMemo(() => (timelineJobId ? { id: timelineJobId } : { id: "__inactive__" }), [timelineJobId]);
   const timelineQuery = trpc.videoJobs.timeline.useQuery(timelineInput, {
@@ -283,6 +284,27 @@ export default function Workspace() {
       toast.success("Your job history CSV is downloading.");
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "We could not export your history.");
+    }
+  };
+
+  const downloadJobPdf = async (jobId: string) => {
+    try {
+      const result = await exportPdf.mutateAsync({ id: jobId });
+      const binary = window.atob(result.base64);
+      const bytes = Uint8Array.from(binary, character => character.charCodeAt(0));
+      const blob = new Blob([bytes], { type: "application/pdf" });
+      const url = URL.createObjectURL(blob);
+      const anchor = document.createElement("a");
+      anchor.href = url;
+      anchor.download = result.filename;
+      anchor.style.display = "none";
+      document.body.appendChild(anchor);
+      anchor.click();
+      anchor.remove();
+      window.setTimeout(() => URL.revokeObjectURL(url), 0);
+      toast.success("Your formatted report is downloading.");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "We could not create that PDF report.");
     }
   };
 
@@ -417,7 +439,7 @@ export default function Workspace() {
                   <div className="flex flex-wrap items-center gap-2.5"><StatusPill status={activeJob.status} /><span className="font-mono text-[10px] uppercase tracking-[.14em] text-white/32">{activeJob.model ?? "Video research"}</span></div>
                   <p className="mt-4 break-all text-sm leading-relaxed text-white/65">{activeJob.videoUrl}</p>
                 </div>
-                <a href={activeJob.videoUrl} target="_blank" rel="noreferrer" className="inline-flex shrink-0 items-center gap-2 rounded-full border border-white/10 px-3.5 py-2 text-xs text-white/60 transition hover:bg-white/8 hover:text-white"><ExternalLink size={13} /> Source</a>
+                <div className="flex shrink-0 flex-wrap gap-2"><button type="button" onClick={() => void downloadJobPdf(activeJob.id)} disabled={exportPdf.isPending} className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[.04] px-3.5 py-2 text-xs text-white/60 transition hover:bg-white/8 hover:text-white disabled:opacity-50"><FileText size={13} /> {exportPdf.isPending ? "Preparing PDF" : "PDF report"}</button><a href={activeJob.videoUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 rounded-full border border-white/10 px-3.5 py-2 text-xs text-white/60 transition hover:bg-white/8 hover:text-white"><ExternalLink size={13} /> Source</a></div>
               </div>
 
               {activeJob.status === "failed" && (
