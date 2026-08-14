@@ -1,5 +1,4 @@
 import { useAuth } from "@/_core/hooks/useAuth";
-import { ThemeToggle } from "@/components/ThemeToggle";
 import { trpc } from "@/lib/trpc";
 import { ArrowLeft, Brain, Film, Sparkles } from "lucide-react";
 import React, { useMemo } from "react";
@@ -34,8 +33,7 @@ export default function CreativeEvolution() {
           <span className="flex h-8 w-8 items-center justify-center rounded-full bg-white text-black"><Sparkles size={15} strokeWidth={2.7} /></span>
           <span className="font-display text-lg tracking-[-.04em]">SoulCut</span>
         </Link>
-        <div className="flex items-center gap-2.5">
-          <ThemeToggle />
+        <div className="flex items-center gap-2">
           <Link href="/dna" className="hidden rounded-full border border-white/10 px-3 py-2 text-xs text-white/55 transition hover:text-[#d8ff83] sm:block">Creative DNA</Link>
           <Link href="/app" className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[.04] px-3 py-2 text-xs text-white/65 transition hover:border-[#c7ff4b]/45 hover:text-[#d8ff83]"><ArrowLeft size={14} /> Workspace</Link>
         </div>

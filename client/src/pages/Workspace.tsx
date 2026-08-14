@@ -1,4 +1,3 @@
-import { ThemeToggle } from "@/components/ThemeToggle";
 import { startLogin } from "@/const";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { MindEvidenceDetails } from "@/components/MindEvidenceDetails";
@@ -637,7 +636,6 @@ export default function Workspace() {
             <Link href="/dna" className="hidden rounded-full border border-white/10 bg-white/[.04] px-3 py-2 text-xs text-white/55 transition hover:border-[#c7ff4b]/45 hover:text-[#d8ff83] sm:block">Creative DNA</Link>
             <Link href="/evolution" className="hidden rounded-full border border-white/10 bg-white/[.04] px-3 py-2 text-xs text-white/55 transition hover:border-[#c7ff4b]/45 hover:text-[#d8ff83] lg:block">Evolution</Link>
             <Link href="/walkthrough" className="hidden rounded-full border border-[#c7ff4b]/20 bg-[#c7ff4b]/[.07] px-3 py-2 text-xs text-[#d8ff83] transition hover:bg-[#c7ff4b]/14 xl:block">Walkthrough</Link>
-            <ThemeToggle />
             <span className="hidden max-w-48 truncate text-xs text-white/38 sm:block">{user?.name ?? "Private workspace"}</span>
             <button onClick={handleLogout} type="button" className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[.04] px-3 py-2 text-xs text-white/62 transition hover:bg-white/10 hover:text-white active:scale-[.97]">
               <LogOut size={14} /> <span className="hidden sm:inline">Sign out</span>

@@ -1,4 +1,3 @@
-import { ThemeToggle } from "@/components/ThemeToggle";
 import { startLogin } from "@/const";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { ArrowRight, Brain, Link2, Network, Scissors, Sparkles, ThumbsUp } from "lucide-react";
@@ -61,16 +60,13 @@ export default function Home() {
               <a className="transition hover:text-white" href="#features">Creative DNA</a>
               <a className="transition hover:text-white" href="#method">Workspace</a>
             </div>
-            <div className="flex items-center gap-2.5">
-              <ThemeToggle />
-              <button
-                type="button"
-                onClick={() => openWorkspace("/app")}
-                className="rounded-full border border-white/12 bg-white/[0.06] px-4 py-1.5 text-xs font-semibold text-white transition hover:bg-white hover:text-black active:scale-[0.97] dark:border-white/12 dark:bg-white/[0.06] dark:text-white"
-              >
-                {isAuthenticated ? "Open workspace" : "Sign in"}
-              </button>
-            </div>
+            <button
+              type="button"
+              onClick={() => openWorkspace("/app")}
+              className="rounded-full border border-white/12 bg-white/[0.06] px-4 py-1.5 text-xs font-semibold text-white transition hover:bg-white hover:text-black active:scale-[0.97]"
+            >
+              {isAuthenticated ? "Open workspace" : "Sign in"}
+            </button>
           </nav>
         </header>
 
