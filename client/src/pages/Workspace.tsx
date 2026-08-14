@@ -1,3 +1,4 @@
+import { ThemeToggle } from "@/components/ThemeToggle";
 import { startLogin } from "@/const";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { MindEvidenceDetails } from "@/components/MindEvidenceDetails";
@@ -607,11 +608,11 @@ export default function Workspace() {
         <div className="fixed inset-0 z-50 grid place-items-center overflow-y-auto bg-[#050507]/90 p-4 backdrop-blur-md" role="dialog" aria-modal="true" aria-labelledby="mind-onboarding-title">
           <section className="my-8 w-full max-w-3xl rounded-[2rem] border border-[#c7ff4b]/25 bg-[#101014] p-5 shadow-[0_30px_120px_rgba(0,0,0,.65)] sm:p-8">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-              <div><p className="eyebrow text-[#d8ff83]">Meet your SoulCut Mind</p><h1 id="mind-onboarding-title" className="mt-3 font-display text-4xl leading-[.86] tracking-[-.065em] sm:text-6xl">Teach it once.<br /><span className="italic text-white/40">It remembers.</span></h1></div>
+              <div><p className="eyebrow text-[#d8ff83]">Meet your SoulCut Mind</p><h1 id="mind-onboarding-title" className="mt-2.5 font-display text-3xl leading-[1.08] tracking-[-.04em] sm:text-4xl">Teach it once.<br /><span className="italic text-white/40">It remembers.</span></h1></div>
               <span className="grid h-11 w-11 place-items-center rounded-2xl border border-[#c7ff4b]/20 bg-[#c7ff4b]/10 text-[#d8ff83]"><Brain size={21} /></span>
             </div>
-            <p className="mt-5 max-w-xl text-sm leading-relaxed text-white/52">Your Creative Mind learns the choices you make, the style you prefer, and what you want it to avoid. Start with a few useful signals—never a long form.</p>
-            <div className="mt-7 grid gap-5 sm:grid-cols-3">
+            <p className="mt-4 max-w-xl text-sm leading-relaxed text-white/55">Your Creative Mind learns the choices you make, the style you prefer, and what you want it to avoid. Start with a few useful signals—never a long form.</p>
+            <div className="mt-6 grid gap-5 sm:grid-cols-3">
               {[
                 ["Voice", ["Conversational", "Direct", "Educational", "Humorous", "Energetic", "Professional"], onboardingVoice, setOnboardingVoice],
                 ["Hooks", ["Questions", "Bold statements", "Curiosity", "Contrarian", "Story-first", "Problem-first"], onboardingHooks, setOnboardingHooks],
@@ -636,6 +637,7 @@ export default function Workspace() {
             <Link href="/dna" className="hidden rounded-full border border-white/10 bg-white/[.04] px-3 py-2 text-xs text-white/55 transition hover:border-[#c7ff4b]/45 hover:text-[#d8ff83] sm:block">Creative DNA</Link>
             <Link href="/evolution" className="hidden rounded-full border border-white/10 bg-white/[.04] px-3 py-2 text-xs text-white/55 transition hover:border-[#c7ff4b]/45 hover:text-[#d8ff83] lg:block">Evolution</Link>
             <Link href="/walkthrough" className="hidden rounded-full border border-[#c7ff4b]/20 bg-[#c7ff4b]/[.07] px-3 py-2 text-xs text-[#d8ff83] transition hover:bg-[#c7ff4b]/14 xl:block">Walkthrough</Link>
+            <ThemeToggle />
             <span className="hidden max-w-48 truncate text-xs text-white/38 sm:block">{user?.name ?? "Private workspace"}</span>
             <button onClick={handleLogout} type="button" className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[.04] px-3 py-2 text-xs text-white/62 transition hover:bg-white/10 hover:text-white active:scale-[.97]">
               <LogOut size={14} /> <span className="hidden sm:inline">Sign out</span>
@@ -740,7 +742,7 @@ export default function Workspace() {
             <div className="absolute -right-16 -top-16 h-52 w-52 rounded-full bg-[#c7ff4b]/[.10] blur-3xl" aria-hidden="true" />
             <div className="relative flex flex-col gap-6">
               <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
-                <div className="max-w-2xl"><div className="flex items-center gap-2"><span className="eyebrow text-[#d8ff83]">Meet your Creative Mind</span><span className="inline-flex items-center gap-1 rounded-full border border-[#c7ff4b]/20 bg-[#c7ff4b]/10 px-2 py-1 font-mono text-[9px] uppercase tracking-[.12em] text-[#d8ff83]"><CircleDot size={10} /> {mindQuery.data?.builderAvailability === "available" ? "Powered by Minds" : "Persistent memory"}</span></div><h1 className="mt-3 font-display text-4xl leading-[.86] tracking-[-.065em] sm:text-6xl">SoulCut remembers <span className="italic text-white/42">how you create.</span></h1><p className="mt-4 max-w-xl text-sm leading-relaxed text-white/54">SoulCut is your focused creative experience. Minds supplies the persistent intelligence layer; every lesson, approval, and correction becomes evidence your Mind can use for the next creative decision.</p></div>
+                <div className="max-w-2xl"><div className="flex items-center gap-2"><span className="eyebrow text-[#d8ff83]">Meet your Creative Mind</span><span className="inline-flex items-center gap-1 rounded-full border border-[#c7ff4b]/20 bg-[#c7ff4b]/10 px-2 py-1 font-mono text-[9px] uppercase tracking-[.12em] text-[#d8ff83]"><CircleDot size={10} /> {mindQuery.data?.builderAvailability === "available" ? "Powered by Minds" : "Persistent memory"}</span></div><h1 className="mt-2.5 font-display text-2xl leading-[1.1] tracking-[-.04em] sm:text-4xl">SoulCut remembers <span className="italic text-white/42">how you create.</span></h1><p className="mt-3 max-w-xl text-sm leading-relaxed text-white/54">SoulCut is your focused creative experience. Minds supplies the persistent intelligence layer; every lesson, approval, and correction becomes evidence your Mind can use for the next creative decision.</p></div>
                 <div className="flex shrink-0 flex-wrap gap-2"><button type="button" onClick={() => setShowMindOnboarding(true)} className="inline-flex items-center justify-center gap-2 rounded-full border border-[#c7ff4b]/25 bg-[#c7ff4b]/10 px-4 py-2.5 text-xs text-[#d8ff83] transition hover:bg-[#c7ff4b]/18"><Users size={14} /> Teach your Mind</button><Link href="/dna" className="inline-flex items-center justify-center gap-2 rounded-full border border-white/12 bg-white/[.045] px-4 py-2.5 text-xs text-white/72 transition hover:border-[#c7ff4b]/45 hover:bg-[#c7ff4b]/10 hover:text-[#e1ff9f]"><Network size={14} /> Open Creative DNA</Link><Link href="/evolution" className="inline-flex items-center justify-center gap-2 rounded-full border border-white/12 bg-white/[.045] px-4 py-2.5 text-xs text-white/72 transition hover:border-[#c7ff4b]/45 hover:bg-[#c7ff4b]/10 hover:text-[#e1ff9f]"><History size={14} /> Compare videos</Link><Link href="/walkthrough" className="inline-flex items-center justify-center gap-2 rounded-full border border-[#c7ff4b]/20 bg-[#c7ff4b]/[.07] px-4 py-2.5 text-xs text-[#d8ff83] transition hover:bg-[#c7ff4b]/14"><CircleDot size={14} /> Judge walkthrough</Link><button type="button" onClick={() => setMindPanelOpen(current => !current)} aria-expanded={mindPanelOpen} className="rounded-full px-3 py-2.5 text-xs text-white/45 transition hover:text-white">{mindPanelOpen ? "Hide preview" : "Preview"}</button></div>
               </div>
               <div className="grid gap-2 sm:grid-cols-4">

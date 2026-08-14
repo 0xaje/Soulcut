@@ -1,5 +1,6 @@
 import { useAuth } from "@/_core/hooks/useAuth";
 import { MindEvidenceDetails, type CreativeDnaMemory } from "@/components/MindEvidenceDetails";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import { groupMindActivityByRecency } from "@/lib/mindPresentation";
 import { trpc } from "@/lib/trpc";
 import { ArrowLeft, Brain, CircleDot, Network, Sparkles, ThumbsUp } from "lucide-react";
@@ -64,14 +65,17 @@ export default function CreativeDNA() {
       <header className="sticky top-0 z-30 border-b border-white/8 bg-[#08080b]/85 px-4 py-3 backdrop-blur-xl sm:px-6">
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-3">
           <Link href="/" className="flex items-center gap-2.5"><span className="flex h-8 w-8 items-center justify-center rounded-full bg-white text-black"><Sparkles size={15} strokeWidth={2.7} /></span><span className="font-display text-lg tracking-[-0.04em]">SoulCut</span></Link>
-          <Link href="/app" className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[.04] px-3 py-2 text-xs text-white/65 transition hover:border-[#c7ff4b]/45 hover:text-[#d8ff83]"><ArrowLeft size={14} /> Workspace</Link>
+          <div className="flex items-center gap-2.5">
+            <ThemeToggle />
+            <Link href="/app" className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[.04] px-3 py-2 text-xs text-white/65 transition hover:border-[#c7ff4b]/45 hover:text-[#d8ff83]"><ArrowLeft size={14} /> Workspace</Link>
+          </div>
         </div>
       </header>
 
       <div className="mx-auto max-w-7xl px-4 py-7 sm:px-6 lg:py-10">
         <section className="relative overflow-hidden rounded-[2rem] border border-[#c7ff4b]/18 bg-[#10140f] p-6 sm:p-9">
           <div className="absolute -right-16 -top-20 h-64 w-64 rounded-full bg-[#c7ff4b]/10 blur-3xl" aria-hidden="true" />
-          <div className="relative max-w-3xl"><p className="eyebrow text-[#d8ff83]">Private Creative Intelligence</p><div className="mt-4 flex flex-wrap items-center gap-3"><h1 className="font-display text-5xl leading-[.86] tracking-[-.07em] sm:text-7xl">Your Creative <span className="italic text-white/42">DNA.</span></h1><span className="inline-flex items-center gap-1 rounded-full border border-[#c7ff4b]/20 bg-[#c7ff4b]/10 px-2 py-1 font-mono text-[9px] uppercase tracking-[.12em] text-[#d8ff83]"><CircleDot size={10} /> {mindQuery.data?.builderAvailability === "available" ? "Minds connected" : "Learning"}</span></div><p className="mt-5 max-w-2xl text-sm leading-relaxed text-white/55">SoulCut Creative Director keeps only evidence-backed preferences here. Direct teaching is explicit; repeated choices become behavioral patterns only after sufficient real feedback.</p></div>
+          <div className="relative max-w-3xl"><p className="eyebrow text-[#d8ff83]">Private Creative Intelligence</p><div className="mt-3 flex flex-wrap items-center gap-3"><h1 className="font-display text-3xl leading-[1.08] tracking-[-.04em] sm:text-5xl">Your Creative <span className="italic text-white/42">DNA.</span></h1><span className="inline-flex items-center gap-1 rounded-full border border-[#c7ff4b]/20 bg-[#c7ff4b]/10 px-2 py-1 font-mono text-[9px] uppercase tracking-[.12em] text-[#d8ff83]"><CircleDot size={10} /> {mindQuery.data?.builderAvailability === "available" ? "Minds connected" : "Learning"}</span></div><p className="mt-4 max-w-2xl text-sm leading-relaxed text-white/55">SoulCut Creative Director keeps only evidence-backed preferences here. Direct teaching is explicit; repeated choices become behavioral patterns only after sufficient real feedback.</p></div>
           <div className="relative mt-8 grid gap-3 sm:grid-cols-4">{[["Preferences", stats?.preferenceCount ?? 0, Brain], ["Feedback signals", stats?.feedbackCount ?? 0, ThumbsUp], ["Strong patterns", stats?.strongPatterns ?? 0, Network], ["Avg. confidence", `${stats?.averageConfidence ?? 0}%`, CircleDot]].map(([label, value, Icon]) => { const StatIcon = Icon as typeof Brain; return <div key={label as string} className="rounded-2xl border border-white/8 bg-black/20 p-4"><div className="flex items-center justify-between text-white/35"><span className="text-[10px] uppercase tracking-[.12em]">{label as string}</span><StatIcon size={14} /></div><p className="mt-3 font-display text-3xl tracking-[-.05em]">{value as string | number}</p></div>; })}</div>
         </section>
 
