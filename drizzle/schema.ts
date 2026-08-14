@@ -98,6 +98,8 @@ export const pdfReportShares = mysqlTable(
       .notNull()
       .references(() => users.id, { onDelete: "cascade" }),
     storageKey: varchar("storageKey", { length: 1024 }).notNull(),
+    expiresAt: timestamp("expiresAt"),
+    revokedAt: timestamp("revokedAt"),
     createdAt: timestamp("createdAt").defaultNow().notNull(),
   },
   table => [
@@ -107,3 +109,15 @@ export const pdfReportShares = mysqlTable(
 );
 
 export type PdfReportShare = typeof pdfReportShares.$inferSelect;
+
+export const pdfReportBranding = mysqlTable("pdf_report_branding", {
+  userId: int("userId")
+    .primaryKey()
+    .references(() => users.id, { onDelete: "cascade" }),
+  coverTitle: varchar("coverTitle", { length: 140 }).default("Video Analysis Report").notNull(),
+  logoStorageKey: varchar("logoStorageKey", { length: 1024 }),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type PdfReportBranding = typeof pdfReportBranding.$inferSelect;

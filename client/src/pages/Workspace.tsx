@@ -22,6 +22,7 @@ import {
   Share2,
   Sparkles,
   Tag,
+  X,
 } from "lucide-react";
 import { type CSSProperties, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
@@ -84,6 +85,12 @@ const historyFilterOptions: Array<{ value: HistoryFilter; label: string }> = [
   { value: "done", label: "Successful" },
   { value: "failed", label: "Failed" },
 ];
+
+function formatShareExpiry(value: Date | string) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "Unknown expiry";
+  return `Expires ${date.toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })}`;
+}
 
 function AnalysisLoadingCard({
   progress,
@@ -195,12 +202,20 @@ export default function Workspace() {
   const [processingJobId, setProcessingJobId] = useState<string | null>(null);
   const [timelineJobId, setTimelineJobId] = useState<string | null>(null);
   const [historyFilter, setHistoryFilter] = useState<HistoryFilter>("all");
+  const [shareExpiryHours, setShareExpiryHours] = useState(24 * 7);
+  const [reportSettingsOpen, setReportSettingsOpen] = useState(false);
+  const [coverTitleInput, setCoverTitleInput] = useState("");
   const jobsQuery = trpc.videoJobs.list.useQuery(undefined, { enabled: isAuthenticated });
   const createJob = trpc.videoJobs.create.useMutation();
   const runJob = trpc.videoJobs.run.useMutation();
   const exportCsv = trpc.videoJobs.exportCsv.useMutation();
   const exportPdf = trpc.videoJobs.exportPdf.useMutation();
   const createPdfShare = trpc.videoJobs.createPdfShare.useMutation();
+  const revokePdfShare = trpc.videoJobs.revokePdfShare.useMutation();
+  const setPdfCoverTitle = trpc.videoJobs.setPdfCoverTitle.useMutation();
+  const uploadPdfLogo = trpc.videoJobs.uploadPdfLogo.useMutation();
+  const pdfSharesQuery = trpc.videoJobs.listPdfShares.useQuery(undefined, { enabled: isAuthenticated && reportSettingsOpen });
+  const pdfBrandingQuery = trpc.videoJobs.getPdfBranding.useQuery(undefined, { enabled: isAuthenticated && reportSettingsOpen });
   const progress = useAnalysisProgress(processingJobId);
   const timelineInput = useMemo(() => (timelineJobId ? { id: timelineJobId } : { id: "__inactive__" }), [timelineJobId]);
   const timelineQuery = trpc.videoJobs.timeline.useQuery(timelineInput, {
@@ -239,6 +254,10 @@ export default function Workspace() {
   useEffect(() => {
     if (activeId !== visibleActiveId) setActiveId(visibleActiveId);
   }, [activeId, visibleActiveId]);
+
+  useEffect(() => {
+    if (pdfBrandingQuery.data?.coverTitle) setCoverTitleInput(pdfBrandingQuery.data.coverTitle);
+  }, [pdfBrandingQuery.data?.coverTitle]);
 
   const submitAnalysis = async () => {
     if (!videoUrl.trim()) {
@@ -311,11 +330,54 @@ export default function Workspace() {
 
   const shareJobPdf = async (jobId: string) => {
     try {
-      const result = await createPdfShare.mutateAsync({ id: jobId });
+      const result = await createPdfShare.mutateAsync({ id: jobId, expiresInHours: shareExpiryHours });
       const shareUrl = `${window.location.origin}${result.sharePath}`;
-      await copyText(shareUrl, "Shareable report link copied.");
+      await copyText(shareUrl, `Shareable report link copied. ${formatShareExpiry(result.expiresAt)}`);
+      await utils.videoJobs.listPdfShares.invalidate();
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "We could not create a share link.");
+    }
+  };
+
+  const revokeShareLink = async (token: string) => {
+    try {
+      await revokePdfShare.mutateAsync({ token });
+      await utils.videoJobs.listPdfShares.invalidate();
+      toast.success("Share link revoked.");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "We could not revoke that link.");
+    }
+  };
+
+  const saveCoverTitle = async () => {
+    try {
+      const result = await setPdfCoverTitle.mutateAsync({ coverTitle: coverTitleInput.trim() });
+      setCoverTitleInput(result.coverTitle);
+      await utils.videoJobs.getPdfBranding.invalidate();
+      toast.success("Report cover title updated.");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "We could not update the cover title.");
+    }
+  };
+
+  const uploadCoverLogo = async (file: File | undefined) => {
+    if (!file) return;
+    if (!/image\/(png|jpeg)/.test(file.type) || file.size > 2_000_000) {
+      toast.error("Choose a PNG or JPEG logo smaller than 2 MB.");
+      return;
+    }
+    try {
+      const dataUrl = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onerror = () => reject(new Error("Logo file could not be read."));
+        reader.onload = () => resolve(String(reader.result));
+        reader.readAsDataURL(file);
+      });
+      await uploadPdfLogo.mutateAsync({ dataUrl });
+      await utils.videoJobs.getPdfBranding.invalidate();
+      toast.success("Report logo uploaded.");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "We could not upload that logo.");
     }
   };
 
@@ -399,6 +461,32 @@ export default function Workspace() {
                 </button>
               ))}
             </div>
+            <div className="mt-3 border-t border-white/8 pt-3">
+              <button type="button" onClick={() => setReportSettingsOpen(current => !current)} aria-expanded={reportSettingsOpen} className="flex w-full items-center justify-between rounded-xl px-2 py-2 text-left text-xs text-white/56 transition hover:bg-white/[.05] hover:text-white">
+                <span>Report sharing & cover</span><ChevronRight size={14} className={`transition-transform ${reportSettingsOpen ? "rotate-90" : ""}`} />
+              </button>
+              {reportSettingsOpen && <div className="mt-2 space-y-4 rounded-2xl border border-white/8 bg-black/20 p-3">
+                <div>
+                  <p className="text-xs font-medium text-white/78">Cover branding</p>
+                  <p className="mt-1 text-[11px] leading-relaxed text-white/38">Applied to new PDF reports.</p>
+                  <label className="mt-3 block text-[10px] uppercase tracking-[.11em] text-white/42" htmlFor="cover-title">Cover title</label>
+                  <input id="cover-title" value={coverTitleInput} onChange={event => setCoverTitleInput(event.target.value)} maxLength={140} className="mt-1.5 w-full rounded-xl border border-white/10 bg-white/[.045] px-3 py-2 text-xs text-white outline-none placeholder:text-white/28 focus:border-[#c7ff4b]/55" placeholder="Video Analysis Report" />
+                  <button type="button" onClick={() => void saveCoverTitle()} disabled={setPdfCoverTitle.isPending || !coverTitleInput.trim()} className="mt-2 rounded-lg bg-white px-2.5 py-1.5 text-[10px] font-medium text-black transition hover:bg-[#c7ff4b] disabled:opacity-50">{setPdfCoverTitle.isPending ? "Saving" : "Save title"}</button>
+                  <div className="mt-3 flex items-center gap-2">
+                    {pdfBrandingQuery.data?.logoUrl ? <img src={pdfBrandingQuery.data.logoUrl} alt="Current report logo" className="h-9 w-9 rounded-lg border border-white/10 object-contain" /> : <span className="grid h-9 w-9 place-items-center rounded-lg border border-dashed border-white/14 text-[10px] text-white/38">Logo</span>}
+                    <label className="cursor-pointer rounded-lg border border-white/10 px-2.5 py-1.5 text-[10px] text-white/65 transition hover:bg-white/[.08] hover:text-white"><input type="file" accept="image/png,image/jpeg" className="sr-only" onChange={event => void uploadCoverLogo(event.target.files?.[0])} />{uploadPdfLogo.isPending ? "Uploading" : "Upload logo"}</label>
+                  </div>
+                </div>
+                <div className="border-t border-white/8 pt-3">
+                  <p className="text-xs font-medium text-white/78">Active share links</p>
+                  <div className="mt-2 space-y-2">
+                    {pdfSharesQuery.isLoading && <p className="text-[11px] text-white/38">Loading active links…</p>}
+                    {!pdfSharesQuery.isLoading && !pdfSharesQuery.data?.length && <p className="text-[11px] leading-relaxed text-white/38">New share links will appear here until they expire or are revoked.</p>}
+                    {pdfSharesQuery.data?.map(share => <div key={share.token} className="rounded-xl border border-white/8 bg-white/[.025] p-2.5"><p className="truncate text-[11px] text-white/70">{new URL(share.videoUrl).hostname.replace("www.", "")}</p><p className="mt-1 text-[10px] text-white/35">{share.expiresAt ? formatShareExpiry(share.expiresAt) : "No expiry"}</p><div className="mt-2 flex gap-2"><button type="button" onClick={() => void copyText(`${window.location.origin}/share/report/${share.token}`, "Shareable report link copied.")} className="text-[10px] text-[#d8ff83] hover:text-[#c7ff4b]">Copy link</button><button type="button" onClick={() => void revokeShareLink(share.token)} disabled={revokePdfShare.isPending} className="inline-flex items-center gap-1 text-[10px] text-white/45 hover:text-red-200"><X size={11} /> Revoke</button></div></div>)}
+                  </div>
+                </div>
+              </div>}
+            </div>
           </div>
         </aside>
 
@@ -450,7 +538,7 @@ export default function Workspace() {
                   <div className="flex flex-wrap items-center gap-2.5"><StatusPill status={activeJob.status} /><span className="font-mono text-[10px] uppercase tracking-[.14em] text-white/32">{activeJob.model ?? "Video research"}</span></div>
                   <p className="mt-4 break-all text-sm leading-relaxed text-white/65">{activeJob.videoUrl}</p>
                 </div>
-                <div className="flex shrink-0 flex-wrap gap-2"><button type="button" onClick={() => void downloadJobPdf(activeJob.id)} disabled={exportPdf.isPending} className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[.04] px-3.5 py-2 text-xs text-white/60 transition hover:bg-white/8 hover:text-white disabled:opacity-50"><FileText size={13} /> {exportPdf.isPending ? "Preparing PDF" : activeJob.status === "failed" ? "Error report" : "PDF report"}</button><button type="button" onClick={() => void shareJobPdf(activeJob.id)} disabled={createPdfShare.isPending} className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[.04] px-3.5 py-2 text-xs text-white/60 transition hover:bg-white/8 hover:text-white disabled:opacity-50"><Share2 size={13} /> {createPdfShare.isPending ? "Creating link" : "Share link"}</button><a href={activeJob.videoUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 rounded-full border border-white/10 px-3.5 py-2 text-xs text-white/60 transition hover:bg-white/8 hover:text-white"><ExternalLink size={13} /> Source</a></div>
+                <div className="flex shrink-0 flex-wrap gap-2"><button type="button" onClick={() => void downloadJobPdf(activeJob.id)} disabled={exportPdf.isPending} className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[.04] px-3.5 py-2 text-xs text-white/60 transition hover:bg-white/8 hover:text-white disabled:opacity-50"><FileText size={13} /> {exportPdf.isPending ? "Preparing PDF" : activeJob.status === "failed" ? "Error report" : "PDF report"}</button><label className="flex items-center rounded-full border border-white/10 bg-white/[.04] px-2 text-xs text-white/52"><span className="sr-only">Share link expiry</span><select value={shareExpiryHours} onChange={event => setShareExpiryHours(Number(event.target.value))} className="bg-transparent py-2 outline-none"><option value={24}>24h</option><option value={168}>7d</option><option value={720}>30d</option><option value={2160}>90d</option></select></label><button type="button" onClick={() => void shareJobPdf(activeJob.id)} disabled={createPdfShare.isPending} className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[.04] px-3.5 py-2 text-xs text-white/60 transition hover:bg-white/8 hover:text-white disabled:opacity-50"><Share2 size={13} /> {createPdfShare.isPending ? "Creating link" : "Share link"}</button><a href={activeJob.videoUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 rounded-full border border-white/10 px-3.5 py-2 text-xs text-white/60 transition hover:bg-white/8 hover:text-white"><ExternalLink size={13} /> Source</a></div>
               </div>
 
               {activeJob.status === "failed" && (

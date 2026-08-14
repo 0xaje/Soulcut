@@ -2,7 +2,7 @@ import type { Express, Request, Response } from "express";
 import { getPdfReportShareByToken } from "./db";
 import { storageGet } from "./storage";
 
-type ShareRecord = { storageKey: string };
+type ShareRecord = { storageKey: string; expiresAt: Date | null; revokedAt: Date | null };
 
 type ReportShareDependencies = {
   getShareByToken: (token: string) => Promise<ShareRecord | undefined>;
@@ -10,6 +10,10 @@ type ReportShareDependencies = {
 };
 
 const shareTokenPattern = /^[A-Za-z0-9_-]{24,64}$/;
+
+export function isActiveReportShare(share: ShareRecord, now = new Date()): boolean {
+  return !share.revokedAt && (!share.expiresAt || share.expiresAt.getTime() > now.getTime());
+}
 
 export function registerReportShareRoute(app: Express, overrides: Partial<ReportShareDependencies> = {}) {
   const dependencies: ReportShareDependencies = {
@@ -28,6 +32,10 @@ export function registerReportShareRoute(app: Express, overrides: Partial<Report
     try {
       const share = await dependencies.getShareByToken(token);
       if (!share) {
+        res.status(404).send("Report link not found.");
+        return;
+      }
+      if (!isActiveReportShare(share)) {
         res.status(404).send("Report link not found.");
         return;
       }

@@ -8,7 +8,7 @@ const servers: Server[] = [];
 async function startShareServer() {
   const app = express();
   registerReportShareRoute(app, {
-    getShareByToken: async token => token === "valid_share_token_1234567890" ? { storageKey: "report-shares/report.pdf" } : undefined,
+    getShareByToken: async token => token === "valid_share_token_1234567890" ? { storageKey: "report-shares/report.pdf", expiresAt: null, revokedAt: null } : undefined,
     getReportUrl: async key => ({ url: `/manus-storage/${key}` }),
   });
   const server = createServer(app);
@@ -41,5 +41,21 @@ describe("PDF report share links", () => {
     const malformed = await fetch(`${url}/share/report/short`);
     expect(unknown.status).toBe(404);
     expect(malformed.status).toBe(404);
+  });
+
+  it("rejects expired and revoked report links without revealing stored report details", async () => {
+    const app = express();
+    registerReportShareRoute(app, {
+      getShareByToken: async token => token === "expired_share_token_1234567890" ? { storageKey: "hidden.pdf", expiresAt: new Date(Date.now() - 1), revokedAt: null } : { storageKey: "hidden.pdf", expiresAt: null, revokedAt: new Date() },
+      getReportUrl: async key => ({ url: `/manus-storage/${key}` }),
+    });
+    const server = createServer(app);
+    servers.push(server);
+    await new Promise<void>((resolve, reject) => { server.once("error", reject); server.listen(0, "127.0.0.1", () => resolve()); });
+    const address = server.address();
+    if (!address || typeof address === "string") throw new Error("Share test server did not bind.");
+    const url = `http://127.0.0.1:${address.port}`;
+    expect((await fetch(`${url}/share/report/expired_share_token_1234567890`)).status).toBe(404);
+    expect((await fetch(`${url}/share/report/revoked_share_token_1234567890`)).status).toBe(404);
   });
 });

@@ -30,6 +30,11 @@ type ReportEvent = {
   createdAt: Date | string;
 };
 
+export type ReportBranding = {
+  coverTitle?: string | null;
+  logoBuffer?: Buffer | null;
+};
+
 export function orderReportEvents<T extends Pick<ReportEvent, "id">>(events: T[]): T[] {
   return [...events].sort((a, b) => a.id - b.id);
 }
@@ -98,13 +103,17 @@ function metadataLine(doc: InstanceType<typeof PDFDocument>, label: string, valu
   doc.font("Helvetica").fontSize(9).fillColor(primary).text(`  ${toText(value)}`);
 }
 
-function drawCover(doc: InstanceType<typeof PDFDocument>, job: ReportJob) {
+function drawCover(doc: InstanceType<typeof PDFDocument>, job: ReportJob, branding?: ReportBranding) {
   doc.save();
   doc.rect(0, 0, doc.page.width, doc.page.height).fill("#09090D");
   doc.circle(doc.page.width - 66, 132, 116).fill("#202A12");
   doc.circle(doc.page.width - 42, 98, 86).fill("#C7FF4B");
+  if (branding?.logoBuffer) {
+    doc.image(branding.logoBuffer, doc.page.width - 158, 52, { fit: [78, 78], align: "center", valign: "center" });
+  }
   doc.fillColor(accent).font("Helvetica-Bold").fontSize(10).text("SOULCUT", pageMargin, 58, { characterSpacing: 2.2 });
-  doc.fillColor(primary).font("Helvetica-Bold").fontSize(36).text("VIDEO\nANALYSIS\nREPORT", pageMargin, 174, {
+  doc.fillColor(primary).font("Helvetica-Bold").fontSize(36).text(toText(branding?.coverTitle ?? "Video Analysis Report").toUpperCase(), pageMargin, 174, {
+    width: 360,
     lineGap: 4,
   });
   doc.fillColor(muted).font("Helvetica").fontSize(11).text("A considered record of the source, the signal, and the edit-ready moments.", pageMargin, 328, {
@@ -121,7 +130,7 @@ function drawCover(doc: InstanceType<typeof PDFDocument>, job: ReportJob) {
   doc.restore();
 }
 
-export async function buildJobPdfReport(job: ReportJob, events: ReportEvent[]): Promise<Buffer> {
+export async function buildJobPdfReport(job: ReportJob, events: ReportEvent[], branding?: ReportBranding): Promise<Buffer> {
   return new Promise((resolve, reject) => {
     const doc = new PDFDocument({ size: "A4", margin: pageMargin, compress: false, info: {
       Title: `SoulCut report — ${job.id}`,
@@ -134,7 +143,7 @@ export async function buildJobPdfReport(job: ReportJob, events: ReportEvent[]): 
     doc.on("end", () => resolve(Buffer.concat(chunks)));
     doc.on("pageAdded", () => drawPageChrome(doc));
 
-    drawCover(doc, job);
+    drawCover(doc, job, branding);
     doc.addPage();
     doc.fillColor(primary).font("Helvetica-Bold").fontSize(27).text("Video analysis brief");
     doc.moveDown(0.25);

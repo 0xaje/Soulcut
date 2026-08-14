@@ -5,16 +5,20 @@ import {
   createVideoJobProgressEvent,
   createPdfReportShare,
   createVideoJob,
+  getPdfReportBranding,
   getVideoJobForUser,
+  listActivePdfReportSharesForUser,
   listAllVideoJobProgressEventsForUser,
   listAllVideoJobsForUser,
   listVideoJobProgressEventsForUser,
   listVideoJobsForUser,
+  revokePdfReportShareForUser,
+  upsertPdfReportBranding,
   updateVideoJobForUser,
 } from "../db";
 import { buildJobHistoryCsv } from "../jobHistoryCsv";
 import { buildJobPdfReport } from "../jobPdfReport";
-import { storagePut } from "../storage";
+import { storageGet, storageGetSignedUrl, storagePut } from "../storage";
 import { analyzeVideoUrl, isPublicVideoUrl } from "../videoAnalysis";
 import { protectedProcedure, router } from "../_core/trpc";
 
@@ -24,6 +28,18 @@ const videoUrlInput = z
   .url("Enter a valid public video URL.")
   .max(2048)
   .refine(isPublicVideoUrl, "Enter a public video URL rather than a local or private address.");
+
+const shareExpiryInput = z.number().int().min(1).max(24 * 365);
+const brandingTitleInput = z.string().trim().min(3).max(140);
+
+async function loadPdfBranding(userId: number) {
+  const branding = await getPdfReportBranding(userId);
+  if (!branding?.logoStorageKey) return { coverTitle: branding?.coverTitle };
+  const signedUrl = await storageGetSignedUrl(branding.logoStorageKey);
+  const response = await fetch(signedUrl);
+  if (!response.ok) throw new Error("Saved report logo could not be loaded.");
+  return { coverTitle: branding.coverTitle, logoBuffer: Buffer.from(await response.arrayBuffer()) };
+}
 
 export const videoJobsRouter = router({
   list: protectedProcedure.query(({ ctx }) => listVideoJobsForUser(ctx.user.id)),
@@ -62,7 +78,7 @@ export const videoJobsRouter = router({
       const job = await getVideoJobForUser(input.id, ctx.user.id);
       if (!job) throw new TRPCError({ code: "NOT_FOUND", message: "Video job not found." });
       const events = await listVideoJobProgressEventsForUser({ jobId: job.id, userId: ctx.user.id });
-      const pdf = await buildJobPdfReport(job, events);
+      const pdf = await buildJobPdfReport(job, events, await loadPdfBranding(ctx.user.id));
       return {
         filename: `soulcut-report-${job.id}.pdf`,
         base64: pdf.toString("base64"),
@@ -70,13 +86,14 @@ export const videoJobsRouter = router({
     }),
 
   createPdfShare: protectedProcedure
-    .input(z.object({ id: z.string().min(8).max(32) }))
+    .input(z.object({ id: z.string().min(8).max(32), expiresInHours: shareExpiryInput }))
     .mutation(async ({ ctx, input }) => {
       const job = await getVideoJobForUser(input.id, ctx.user.id);
       if (!job) throw new TRPCError({ code: "NOT_FOUND", message: "Video job not found." });
       const events = await listVideoJobProgressEventsForUser({ jobId: job.id, userId: ctx.user.id });
-      const pdf = await buildJobPdfReport(job, events);
+      const pdf = await buildJobPdfReport(job, events, await loadPdfBranding(ctx.user.id));
       const token = nanoid(40);
+      const expiresAt = new Date(Date.now() + input.expiresInHours * 60 * 60 * 1000);
       const stored = await storagePut(
         `report-shares/${ctx.user.id}/${job.id}-${token}.pdf`,
         pdf,
@@ -87,8 +104,52 @@ export const videoJobsRouter = router({
         jobId: job.id,
         userId: ctx.user.id,
         storageKey: stored.key,
+        expiresAt,
       });
-      return { sharePath: `/share/report/${token}` };
+      return { sharePath: `/share/report/${token}`, expiresAt };
+    }),
+
+  listPdfShares: protectedProcedure.query(({ ctx }) => listActivePdfReportSharesForUser(ctx.user.id)),
+
+  revokePdfShare: protectedProcedure
+    .input(z.object({ token: z.string().min(24).max(64) }))
+    .mutation(async ({ ctx, input }) => {
+      const revoked = await revokePdfReportShareForUser({ token: input.token, userId: ctx.user.id });
+      if (!revoked) throw new TRPCError({ code: "NOT_FOUND", message: "Active share link not found." });
+      return { success: true };
+    }),
+
+  getPdfBranding: protectedProcedure.query(async ({ ctx }) => {
+    const branding = await getPdfReportBranding(ctx.user.id);
+    const logoUrl = branding?.logoStorageKey ? (await storageGet(branding.logoStorageKey)).url : null;
+    return { coverTitle: branding?.coverTitle ?? "Video Analysis Report", logoUrl };
+  }),
+
+  setPdfCoverTitle: protectedProcedure
+    .input(z.object({ coverTitle: brandingTitleInput }))
+    .mutation(async ({ ctx, input }) => {
+      const branding = await upsertPdfReportBranding({ userId: ctx.user.id, coverTitle: input.coverTitle });
+      const logoUrl = branding.logoStorageKey ? (await storageGet(branding.logoStorageKey)).url : null;
+      return { coverTitle: branding.coverTitle, logoUrl };
+    }),
+
+  uploadPdfLogo: protectedProcedure
+    .input(z.object({ dataUrl: z.string().max(2_800_000) }))
+    .mutation(async ({ ctx, input }) => {
+      const match = input.dataUrl.match(/^data:(image\/(?:png|jpeg));base64,([A-Za-z0-9+/=]+)$/);
+      if (!match) throw new TRPCError({ code: "BAD_REQUEST", message: "Upload a PNG or JPEG logo." });
+      const contentType = match[1];
+      const image = Buffer.from(match[2], "base64");
+      const validMagic = contentType === "image/png"
+        ? image.subarray(0, 8).equals(Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]))
+        : image.subarray(0, 3).equals(Buffer.from([255, 216, 255]));
+      if (!validMagic || image.length > 2_000_000) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "Upload a valid image smaller than 2 MB." });
+      }
+      const extension = contentType === "image/png" ? "png" : "jpg";
+      const stored = await storagePut(`report-branding/${ctx.user.id}/logo.${extension}`, image, contentType);
+      const branding = await upsertPdfReportBranding({ userId: ctx.user.id, logoStorageKey: stored.key });
+      return { coverTitle: branding.coverTitle, logoUrl: stored.url };
     }),
 
   create: protectedProcedure

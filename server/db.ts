@@ -1,4 +1,4 @@
-import { and, asc, desc, eq, gt } from "drizzle-orm";
+import { and, asc, desc, eq, gt, isNull, or } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
 import {
   type ClipSuggestion,
@@ -6,6 +6,7 @@ import {
   type InsertVideoJob,
   type VideoJob,
   type VideoJobProgressStage,
+  pdfReportBranding,
   pdfReportShares,
   users,
   videoJobs,
@@ -232,6 +233,7 @@ export async function createPdfReportShare(input: {
   jobId: string;
   userId: number;
   storageKey: string;
+  expiresAt: Date | null;
 }) {
   const db = await getDb();
   if (!db) throw new Error("Database is not available");
@@ -243,4 +245,64 @@ export async function getPdfReportShareByToken(token: string) {
   if (!db) throw new Error("Database is not available");
   const results = await db.select().from(pdfReportShares).where(eq(pdfReportShares.token, token)).limit(1);
   return results[0];
+}
+
+export async function listActivePdfReportSharesForUser(userId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database is not available");
+  const now = new Date();
+  return db
+    .select({
+      token: pdfReportShares.token,
+      jobId: pdfReportShares.jobId,
+      createdAt: pdfReportShares.createdAt,
+      expiresAt: pdfReportShares.expiresAt,
+      videoUrl: videoJobs.videoUrl,
+      jobStatus: videoJobs.status,
+    })
+    .from(pdfReportShares)
+    .innerJoin(videoJobs, eq(pdfReportShares.jobId, videoJobs.id))
+    .where(and(
+      eq(pdfReportShares.userId, userId),
+      isNull(pdfReportShares.revokedAt),
+      or(isNull(pdfReportShares.expiresAt), gt(pdfReportShares.expiresAt, now))
+    ))
+    .orderBy(desc(pdfReportShares.createdAt));
+}
+
+export async function revokePdfReportShareForUser(input: { token: string; userId: number }): Promise<boolean> {
+  const db = await getDb();
+  if (!db) throw new Error("Database is not available");
+  const found = await db
+    .select({ token: pdfReportShares.token })
+    .from(pdfReportShares)
+    .where(and(eq(pdfReportShares.token, input.token), eq(pdfReportShares.userId, input.userId), isNull(pdfReportShares.revokedAt)))
+    .limit(1);
+  if (!found[0]) return false;
+  await db
+    .update(pdfReportShares)
+    .set({ revokedAt: new Date() })
+    .where(and(eq(pdfReportShares.token, input.token), eq(pdfReportShares.userId, input.userId)));
+  return true;
+}
+
+export async function getPdfReportBranding(userId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database is not available");
+  const results = await db.select().from(pdfReportBranding).where(eq(pdfReportBranding.userId, userId)).limit(1);
+  return results[0];
+}
+
+export async function upsertPdfReportBranding(input: { userId: number; coverTitle?: string; logoStorageKey?: string | null }) {
+  const db = await getDb();
+  if (!db) throw new Error("Database is not available");
+  const existing = await getPdfReportBranding(input.userId);
+  const coverTitle = input.coverTitle ?? existing?.coverTitle ?? "Video Analysis Report";
+  const logoStorageKey = input.logoStorageKey ?? existing?.logoStorageKey ?? null;
+  await db.insert(pdfReportBranding).values({ userId: input.userId, coverTitle, logoStorageKey }).onDuplicateKeyUpdate({
+    set: { coverTitle, logoStorageKey, updatedAt: new Date() },
+  });
+  const saved = await getPdfReportBranding(input.userId);
+  if (!saved) throw new Error("Report branding could not be saved");
+  return saved;
 }

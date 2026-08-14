@@ -24,3 +24,4 @@
 - [x] Add a secure formatted PDF report download for an individual job and its recorded stages.
 - [x] Restore the development server and repair the PDF report implementation until type checks and tests pass.
 - [x] Add a branded PDF cover page, support PDF reports for failed jobs, and create secure shareable report links.
+- [x] Add expiring and revocable report-share links plus custom logo and cover-title preferences for PDF reports.
