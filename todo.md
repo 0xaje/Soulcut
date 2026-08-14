@@ -20,3 +20,4 @@
 - [x] Package the validated SoulCut implementation workflow as a reusable skill.
 - [x] Add automated integration tests for authenticated progress streaming and successful/failed job-history filters.
 - [x] Add a secure CSV export for job history and recorded analysis stages.
+- [x] Add safe ignore rules, record the commit-and-push convention, and publish the current SoulCut state to GitHub.

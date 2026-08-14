@@ -13,6 +13,19 @@ build/
 .env.development.local
 .env.test.local
 .env.production.local
+.env.*
+!.env.example
+!.env.sample
+
+# Local secrets and credentials
+*.pem
+*.key
+*.p12
+*.pfx
+*.secret
+secrets/
+credentials/
+service-account*.json
 
 # IDE and editor files
 .vscode/
@@ -112,3 +125,9 @@ temp/
 # Manus version file (auto-generated, not part of source)
 client/public/__manus__/version.json
 .project-config.json
+.manus-logs/
+
+# Locally generated exports
+exports/
+downloads/
+*.private.csv
