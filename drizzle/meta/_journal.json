@@ -1,5 +1,27 @@
 {
   "version": "7",
   "dialect": "mysql",
-  "entries": []
+  "entries": [
+    {
+      "idx": 0,
+      "version": "5",
+      "when": 1786676184163,
+      "tag": "0000_whole_tigra",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "5",
+      "when": 1786676387801,
+      "tag": "0001_rapid_jazinda",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1786676757103,
+      "tag": "0002_lively_mastermind",
+      "breakpoints": true
+    }
+  ]
 }

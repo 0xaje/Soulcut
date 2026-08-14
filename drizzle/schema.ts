@@ -1,4 +1,4 @@
-import { int, mysqlEnum, mysqlTable, text, timestamp, varchar } from "drizzle-orm/mysql-core";
+import { index, int, json, mysqlEnum, mysqlTable, text, timestamp, varchar } from "drizzle-orm/mysql-core";
 
 /**
  * Core user table backing auth flow.
@@ -25,4 +25,39 @@ export const users = mysqlTable("users", {
 export type User = typeof users.$inferSelect;
 export type InsertUser = typeof users.$inferInsert;
 
-// TODO: Add your tables here
+export type ClipSuggestion = {
+  startSeconds: number;
+  endSeconds: number;
+  title: string;
+  hook: string;
+  reason: string;
+};
+
+export const videoJobs = mysqlTable(
+  "video_jobs",
+  {
+    id: varchar("id", { length: 32 }).primaryKey(),
+    userId: int("userId")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    videoUrl: varchar("videoUrl", { length: 2048 }).notNull(),
+    videoTitle: varchar("videoTitle", { length: 512 }),
+    status: mysqlEnum("status", ["pending", "processing", "done", "failed"])
+      .default("pending")
+      .notNull(),
+    summary: text("summary"),
+    topics: json("topics").$type<string[]>(),
+    clips: json("clips").$type<ClipSuggestion[]>(),
+    sourceNote: text("sourceNote"),
+    model: varchar("model", { length: 128 }),
+    failureReason: text("failureReason"),
+    createdAt: timestamp("createdAt").defaultNow().notNull(),
+    startedAt: timestamp("startedAt"),
+    completedAt: timestamp("completedAt"),
+    updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+  },
+  table => [index("video_jobs_user_created_idx").on(table.userId, table.createdAt)]
+);
+
+export type VideoJob = typeof videoJobs.$inferSelect;
+export type InsertVideoJob = typeof videoJobs.$inferInsert;

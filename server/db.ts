@@ -1,6 +1,13 @@
-import { eq } from "drizzle-orm";
+import { and, desc, eq } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { InsertUser, users } from "../drizzle/schema";
+import {
+  type ClipSuggestion,
+  type InsertUser,
+  type InsertVideoJob,
+  type VideoJob,
+  users,
+  videoJobs,
+} from "../drizzle/schema";
 import { ENV } from './_core/env';
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -89,4 +96,73 @@ export async function getUserByOpenId(openId: string) {
   return result.length > 0 ? result[0] : undefined;
 }
 
-// TODO: add feature queries here as your schema grows.
+type VideoJobStatus = "pending" | "processing" | "done" | "failed";
+
+type VideoJobUpdate = Partial<{
+  status: VideoJobStatus;
+  videoTitle: string | null;
+  summary: string | null;
+  topics: string[] | null;
+  clips: ClipSuggestion[] | null;
+  sourceNote: string | null;
+  model: string | null;
+  failureReason: string | null;
+  startedAt: Date | null;
+  completedAt: Date | null;
+}>;
+
+export async function createVideoJob(input: {
+  id: string;
+  userId: number;
+  videoUrl: string;
+}): Promise<VideoJob> {
+  const db = await getDb();
+  if (!db) throw new Error("Database is not available");
+
+  await db.insert(videoJobs).values(input);
+  const job = await getVideoJobForUser(input.id, input.userId);
+  if (!job) throw new Error("Video job could not be created");
+  return job;
+}
+
+export async function getVideoJobForUser(id: string, userId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database is not available");
+
+  const result = await db
+    .select()
+    .from(videoJobs)
+    .where(and(eq(videoJobs.id, id), eq(videoJobs.userId, userId)))
+    .limit(1);
+  return result[0];
+}
+
+export async function listVideoJobsForUser(userId: number): Promise<VideoJob[]> {
+  const db = await getDb();
+  if (!db) throw new Error("Database is not available");
+
+  return db
+    .select()
+    .from(videoJobs)
+    .where(eq(videoJobs.userId, userId))
+    .orderBy(desc(videoJobs.createdAt))
+    .limit(50);
+}
+
+export async function updateVideoJobForUser(
+  id: string,
+  userId: number,
+  changes: VideoJobUpdate
+): Promise<VideoJob> {
+  const db = await getDb();
+  if (!db) throw new Error("Database is not available");
+
+  await db
+    .update(videoJobs)
+    .set({ ...changes, updatedAt: new Date() } as Partial<InsertVideoJob>)
+    .where(and(eq(videoJobs.id, id), eq(videoJobs.userId, userId)));
+
+  const job = await getVideoJobForUser(id, userId);
+  if (!job) throw new Error("Video job was not found");
+  return job;
+}

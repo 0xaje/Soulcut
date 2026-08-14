@@ -1,0 +1,13 @@
+# Project TODO
+
+- [x] Inspect the reference Short It AI repository to identify its routes, visual system, data contracts, and feature scope.
+- [x] Define the persistent video-job data model with ownership, status, summary, topics, clips, and timestamps.
+- [x] Add protected server procedures for creating, listing, and retrieving a user’s video-analysis jobs.
+- [x] Implement the server-side LLM analysis flow with structured output for summary, topics, and short-clip recommendations.
+- [x] Build a branded dark landing page with hero, feature highlights, and authenticated call to action.
+- [x] Build protected submit and job-results screens with URL validation, progress states, and result presentation.
+- [x] Build a protected history dashboard showing a user’s job status and prior results.
+- [x] Add copy-to-clipboard and native sharing actions for summaries and clip recommendations.
+- [x] Add responsive styling, accessible interaction states, and mobile navigation.
+- [x] Add and run focused Vitest coverage for validation, authorization, and analysis-output handling.
+- [x] Verify functional flows and visual layout in the running application.

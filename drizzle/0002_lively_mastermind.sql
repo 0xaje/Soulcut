@@ -1,0 +1,1 @@
+CREATE INDEX `video_jobs_user_created_idx` ON `video_jobs` (`userId`,`createdAt`);
