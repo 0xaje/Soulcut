@@ -19,7 +19,7 @@ import {
   Sparkles,
   Tag,
 } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { type CSSProperties, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { Link, useLocation } from "wouter";
 
@@ -71,6 +71,47 @@ function StatusPill({ status }: { status: "pending" | "processing" | "done" | "f
       {status === "done" && <Check size={12} />}
       {label}
     </span>
+  );
+}
+
+function AnalysisLoadingCard() {
+  const stages = [
+    ["01", "Reading source", "Gathering public context"],
+    ["02", "Finding signal", "Mapping topics and story"],
+    ["03", "Shaping clips", "Flagging cut-worthy moments"],
+  ];
+
+  return (
+    <section className="analysis-loader mt-5 overflow-hidden rounded-3xl border border-[#c7ff4b]/20 bg-[#10150e] p-5 sm:p-7" role="status" aria-live="polite" aria-label="SoulCut is analyzing the video">
+      <div className="analysis-loader__glow" aria-hidden="true" />
+      <div className="relative grid gap-6 lg:grid-cols-[160px_minmax(0,1fr)] lg:items-center">
+        <div className="analysis-orb mx-auto lg:mx-0" aria-hidden="true">
+          <div className="analysis-orb__ring analysis-orb__ring--outer" />
+          <div className="analysis-orb__ring analysis-orb__ring--inner" />
+          <div className="analysis-orb__core"><Sparkles size={20} /></div>
+          <span className="analysis-orb__node analysis-orb__node--one" />
+          <span className="analysis-orb__node analysis-orb__node--two" />
+          <span className="analysis-orb__node analysis-orb__node--three" />
+        </div>
+        <div>
+          <div className="flex flex-wrap items-center gap-3">
+            <span className="eyebrow text-[#d8ff83]">SoulCut is at work</span>
+            <span className="analysis-loader__live"><span /> Live analysis</span>
+          </div>
+          <h2 className="mt-3 font-display text-3xl tracking-[-.055em] text-white sm:text-4xl">Turning the long cut into its <span className="italic text-white/50">best moments.</span></h2>
+          <p className="mt-2 max-w-xl text-sm leading-relaxed text-white/53">We’re reading accessible source material, extracting the core ideas, and only suggesting timestamps when there is grounded timing context.</p>
+          <div className="mt-6 grid gap-2 sm:grid-cols-3">
+            {stages.map(([number, title, detail], index) => (
+              <div key={number} className="analysis-stage rounded-2xl p-3.5" style={{ "--stage-delay": `${index * 220}ms` } as CSSProperties}>
+                <div className="flex items-center justify-between gap-2"><span className="font-mono text-[10px] tracking-[.14em] text-[#c7ff4b]">{number}</span><span className="analysis-stage__pulse" /></div>
+                <p className="mt-5 text-sm font-medium text-white/84">{title}</p>
+                <p className="mt-1 text-xs leading-relaxed text-white/38">{detail}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </section>
   );
 }
 
@@ -234,18 +275,7 @@ export default function Workspace() {
             <p className="relative mt-3 px-1 text-xs text-white/32">SoulCut only analyzes public sources it can access. Recommendations remain grounded in available video context.</p>
           </section>
 
-          {isWorking && (
-            <section className="mt-5 overflow-hidden rounded-3xl border border-[#c7ff4b]/15 bg-[#c7ff4b]/[.045] p-5 sm:p-6">
-              <div className="flex items-start gap-4">
-                <span className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-[#c7ff4b] text-black"><LoaderCircle className="animate-spin" size={19} /></span>
-                <div>
-                  <p className="font-display text-2xl tracking-[-.045em]">Reading the source material</p>
-                  <p className="mt-1.5 text-sm leading-relaxed text-white/48">The model is compiling one connected analysis: central story, key topics, and clip ideas when timing evidence is available.</p>
-                </div>
-              </div>
-              <div className="mt-5 h-1 overflow-hidden rounded-full bg-white/10"><div className="h-full w-2/5 animate-pulse rounded-full bg-[#c7ff4b]" /></div>
-            </section>
-          )}
+          {isWorking && <AnalysisLoadingCard />}
 
           {activeJob && !isWorking && (
             <section className="mt-5 space-y-5">

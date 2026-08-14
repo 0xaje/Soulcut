@@ -69,8 +69,35 @@ a { color: inherit; text-decoration: none; }
 .clip-card { border: 1px solid rgba(255,255,255,.08); background: rgba(255,255,255,.025); transition: border-color 180ms ease, background 180ms ease; }
 .clip-card:hover { border-color: rgba(255,255,255,.17); background: rgba(255,255,255,.045); }
 
+.analysis-loader { position: relative; isolation: isolate; }
+.analysis-loader__glow { position: absolute; z-index: -1; inset: -38% 15% auto auto; width: 25rem; height: 22rem; border-radius: 999px; background: rgba(199,255,75,.16); filter: blur(75px); pointer-events: none; }
+.analysis-loader__live { display: inline-flex; align-items: center; gap: .42rem; border-radius: 999px; border: 1px solid rgba(199,255,75,.18); background: rgba(199,255,75,.07); padding: .3rem .55rem; font-family: "DM Mono", ui-monospace, monospace; font-size: .58rem; letter-spacing: .08em; text-transform: uppercase; color: rgba(216,255,131,.76); }
+.analysis-loader__live span { width: .38rem; height: .38rem; border-radius: 999px; background: #c7ff4b; box-shadow: 0 0 12px rgba(199,255,75,.95); animation: analysis-blink 1.35s ease-in-out infinite; }
+.analysis-orb { position: relative; width: 9rem; height: 9rem; display: grid; place-items: center; }
+.analysis-orb__ring { position: absolute; inset: 0; border: 1px solid rgba(199,255,75,.35); border-radius: 999px; }
+.analysis-orb__ring--outer { border-style: dashed; animation: analysis-spin 9s linear infinite; }
+.analysis-orb__ring--inner { inset: 1.1rem; border-color: rgba(255,255,255,.15); animation: analysis-spin 5.8s linear infinite reverse; }
+.analysis-orb__core { position: relative; z-index: 2; display: grid; place-items: center; width: 3.25rem; height: 3.25rem; border-radius: 1.15rem; color: #10170c; background: #c7ff4b; box-shadow: 0 0 0 10px rgba(199,255,75,.06), 0 0 36px rgba(199,255,75,.38); animation: analysis-core 1.8s cubic-bezier(.23,1,.32,1) infinite alternate; }
+.analysis-orb__node { position: absolute; z-index: 3; width: .53rem; height: .53rem; border: 1px solid rgba(255,255,255,.72); border-radius: 999px; background: #10150e; box-shadow: 0 0 16px rgba(199,255,75,.75); }
+.analysis-orb__node--one { top: .65rem; left: 2rem; animation: analysis-node 1.7s ease-in-out infinite; }
+.analysis-orb__node--two { right: .7rem; bottom: 2.05rem; animation: analysis-node 1.7s ease-in-out .38s infinite; }
+.analysis-orb__node--three { left: 1.25rem; bottom: 1.3rem; animation: analysis-node 1.7s ease-in-out .76s infinite; }
+.analysis-stage { position: relative; overflow: hidden; border: 1px solid rgba(255,255,255,.08); background: rgba(0,0,0,.16); }
+.analysis-stage::after { content: ""; position: absolute; inset: auto 12% 0; height: 2px; border-radius: 99px; background: #c7ff4b; transform: scaleX(.2); transform-origin: left; animation: analysis-stage-line 2.2s cubic-bezier(.23,1,.32,1) var(--stage-delay) infinite alternate; }
+.analysis-stage__pulse { width: .38rem; height: .38rem; border-radius: 999px; background: rgba(199,255,75,.75); box-shadow: 0 0 10px rgba(199,255,75,.75); animation: analysis-blink 1.35s ease-in-out var(--stage-delay) infinite; }
+
 @media (prefers-reduced-motion: no-preference) {
   .hero-orb--violet { animation: drift 13s ease-in-out infinite alternate; }
   .hero-orb--gold { animation: drift 10s ease-in-out -3s infinite alternate-reverse; }
 }
 @keyframes drift { from { transform: translate3d(0,0,0) scale(1); } to { transform: translate3d(3rem,-1.5rem,0) scale(1.12); } }
+@keyframes analysis-spin { to { transform: rotate(360deg); } }
+@keyframes analysis-blink { 0%, 100% { opacity: .35; transform: scale(.85); } 50% { opacity: 1; transform: scale(1.15); } }
+@keyframes analysis-core { from { transform: scale(.92) rotate(-5deg); } to { transform: scale(1.06) rotate(5deg); } }
+@keyframes analysis-node { 0%, 100% { opacity: .32; transform: scale(.85); } 50% { opacity: 1; transform: scale(1.28); } }
+@keyframes analysis-stage-line { from { transform: scaleX(.16); opacity: .35; } to { transform: scaleX(1); opacity: 1; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .analysis-loader *, .analysis-loader *::after { animation: none !important; }
+  .analysis-stage::after { transform: scaleX(.68); opacity: .75; }
+}
