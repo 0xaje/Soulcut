@@ -94,10 +94,10 @@ export default function Workspace() {
 
   useEffect(() => {
     if (!isAuthenticated || pendingFromLandingLoaded) return;
-    const pendingUrl = sessionStorage.getItem("short-it:pending-url");
+    const pendingUrl = sessionStorage.getItem("soulcut:pending-url");
     if (pendingUrl) {
       setVideoUrl(pendingUrl);
-      sessionStorage.removeItem("short-it:pending-url");
+      sessionStorage.removeItem("soulcut:pending-url");
     }
     setPendingFromLandingLoaded(true);
   }, [isAuthenticated, pendingFromLandingLoaded]);
@@ -148,7 +148,7 @@ export default function Workspace() {
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-3">
           <Link href="/" className="flex items-center gap-2.5">
             <span className="flex h-8 w-8 items-center justify-center rounded-full bg-white text-black"><Scissors size={15} strokeWidth={2.7} /></span>
-            <span className="font-display text-lg tracking-[-0.04em]">Short It AI</span>
+            <span className="font-display text-lg tracking-[-0.04em]">SoulCut</span>
           </Link>
           <div className="flex items-center gap-2 sm:gap-4">
             <span className="hidden max-w-48 truncate text-xs text-white/38 sm:block">{user?.name ?? "Private workspace"}</span>
@@ -231,7 +231,7 @@ export default function Workspace() {
                 {isWorking ? "Analyzing…" : "Create brief"}
               </button>
             </div>
-            <p className="relative mt-3 px-1 text-xs text-white/32">Short It only analyzes public sources it can access. Recommendations remain grounded in available video context.</p>
+            <p className="relative mt-3 px-1 text-xs text-white/32">SoulCut only analyzes public sources it can access. Recommendations remain grounded in available video context.</p>
           </section>
 
           {isWorking && (
@@ -271,7 +271,7 @@ export default function Workspace() {
                       <div><p className="eyebrow text-white/50">The brief</p><h2 className="mt-3 font-display text-4xl tracking-[-.06em]">What it says.</h2></div>
                       <div className="flex gap-2">
                         <button type="button" onClick={() => void copyText(activeJob.summary!, "Brief copied.")} className="icon-button" aria-label="Copy summary"><Copy size={16} /></button>
-                        <button type="button" onClick={() => void shareText("Short It AI brief", activeJob.summary!)} className="icon-button" aria-label="Share summary"><Share2 size={16} /></button>
+                        <button type="button" onClick={() => void shareText("SoulCut brief", activeJob.summary!)} className="icon-button" aria-label="Share summary"><Share2 size={16} /></button>
                       </div>
                     </div>
                     <p className="mt-8 max-w-3xl text-base leading-8 text-white/72 sm:text-lg">{activeJob.summary}</p>
@@ -298,7 +298,7 @@ export default function Workspace() {
                               </div>
                               <div className="flex shrink-0 gap-2 sm:opacity-0 sm:transition sm:group-hover:opacity-100">
                                 <button type="button" className="icon-button" aria-label="Copy clip note" onClick={() => { void copyText(clipText(clip), "Clip note copied."); setCopiedClip(index); window.setTimeout(() => setCopiedClip(null), 1400); }}>{copiedClip === index ? <Check size={16} /> : <Copy size={16} />}</button>
-                                <button type="button" className="icon-button" aria-label="Share clip note" onClick={() => void shareText("Short It AI clip idea", clipText(clip))}><Share2 size={16} /></button>
+                                <button type="button" className="icon-button" aria-label="Share clip note" onClick={() => void shareText("SoulCut clip idea", clipText(clip))}><Share2 size={16} /></button>
                               </div>
                             </div>
                             <p className="mt-4 border-t border-white/8 pt-3 text-xs leading-relaxed text-white/38"><span className="text-white/60">Why this moment:</span> {clip.reason}</p>

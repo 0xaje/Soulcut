@@ -42,7 +42,7 @@ export default function Home() {
 
   const openWorkspace = () => {
     if (videoUrl.trim()) {
-      sessionStorage.setItem("short-it:pending-url", videoUrl.trim());
+      sessionStorage.setItem("soulcut:pending-url", videoUrl.trim());
     }
     if (isAuthenticated) {
       setLocation("/app");
@@ -65,7 +65,7 @@ export default function Home() {
               <span className="flex h-8 w-8 items-center justify-center rounded-full bg-white text-black shadow-[0_0_28px_rgba(255,255,255,.25)]">
                 <Scissors size={15} strokeWidth={2.7} />
               </span>
-              <span className="font-display text-lg tracking-[-0.04em]">Short It AI</span>
+              <span className="font-display text-lg tracking-[-0.04em]">SoulCut</span>
             </button>
             <div className="hidden items-center gap-7 text-sm text-white/55 md:flex">
               <a className="transition hover:text-white" href="#how-it-works">How it works</a>
@@ -153,7 +153,7 @@ export default function Home() {
           <div className="grid gap-px overflow-hidden rounded-3xl border border-white/10 bg-white/10 sm:grid-cols-3">
             {[
               ["01", "Paste", "Add the public video you want to understand."],
-              ["02", "Analyze", "Short It finds the central story and topics."],
+              ["02", "Analyze", "SoulCut finds the central story and topics."],
               ["03", "Repurpose", "Use clip notes to plan your next social cut."],
             ].map(([index, heading, body]) => (
               <article key={index} className="min-h-56 bg-[#111116] p-6 sm:p-7">
@@ -201,7 +201,7 @@ export default function Home() {
             <div className="md:justify-self-end">
               <p className="max-w-xs text-sm leading-relaxed text-white/55">Your video links, summaries, and outputs stay organized behind your secure workspace.</p>
               <button type="button" onClick={openWorkspace} className="mt-7 inline-flex items-center gap-2 rounded-full bg-white px-5 py-3 text-sm font-semibold text-black transition hover:bg-[#c7ff4b] active:scale-[0.97]">
-                Open Short It AI <Sparkles size={16} />
+                Open SoulCut <Sparkles size={16} />
               </button>
             </div>
           </div>
@@ -209,7 +209,7 @@ export default function Home() {
       </section>
 
       <footer className="mx-auto flex max-w-6xl flex-col gap-3 px-6 py-8 text-xs text-white/30 sm:flex-row sm:items-center sm:justify-between">
-        <span className="font-display text-base tracking-[-0.04em] text-white/60">Short It AI</span>
+        <span className="font-display text-base tracking-[-0.04em] text-white/60">SoulCut</span>
         <span>Video analysis for better short-form decisions.</span>
       </footer>
     </main>
