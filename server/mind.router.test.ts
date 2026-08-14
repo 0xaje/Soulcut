@@ -93,7 +93,7 @@ describe("Mind router", () => {
       userId: 7,
       category: "tone",
       source: "feedback",
-      evidence: expect.objectContaining({ source: "feedback", sourceReference: "job-owned", weight: 3 }),
+      evidence: expect.objectContaining({ source: "feedback", sourceReference: "feedback:1:job:job-owned", weight: 3 }),
       activity: expect.objectContaining({ type: "updated" }),
     }));
     expect(result.message).toContain("updated your Creative DNA");

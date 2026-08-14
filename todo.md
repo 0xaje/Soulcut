@@ -54,3 +54,9 @@
 - [x] Add positive feedback-learning coverage proving a feedback event persists and updates a user-owned Mind memory.
 - [x] Add owner-scoped preference-evidence retrieval coverage for successful access and cross-owner isolation.
 - [x] Add a persistence-level test proving a second authenticated user cannot retrieve evidence attached to another user’s Creative Mind memory.
+- [x] Audit all production runtime paths and user-facing copy for mock, demo, fabricated, simulated, or unreal activity.
+- [x] Remove or replace any non-live runtime behavior with authenticated integrations, persisted data, or explicit unavailable/error states.
+- [x] Add production-runtime safeguards and tests that prevent fabricated user activity or recommendation evidence from being introduced.
+- [x] Remove unreachable template component-showcase code that contains demo and simulated responses from the SoulCut codebase.
+- [x] Add an automated shipped-source guard that fails if demo, fake, mock, synthetic, or simulated runtime code is introduced outside tests.
+- [x] Add behavioral tests proving Mind activity and recommendation evidence originate only from persisted owner-scoped onboarding, teaching, feedback, or job data.

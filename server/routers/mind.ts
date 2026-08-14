@@ -146,7 +146,7 @@ export const mindRouter = router({
         const job = await getVideoJobForUser(input.jobId, ctx.user.id);
         if (!job) throw new Error("Video job not found.");
       }
-      await createFeedbackEventForUser({ userId: ctx.user.id, ...input });
+      const feedbackEvent = await createFeedbackEventForUser({ userId: ctx.user.id, ...input });
       const learned = input.feedbackType === "keep"
         ? inferTeaching(input.feedbackText || "The creator approved this recommendation style.", "format")
         : feedbackMemory(input.reason, input.feedbackText);
@@ -157,7 +157,7 @@ export const mindRouter = router({
         value: learned.value,
         confidence: input.feedbackType === "keep" ? 66 : 78,
         source: "feedback",
-        evidence: { source: "feedback", sourceReference: input.jobId ?? null, detail: learned.value, weight: input.feedbackType === "keep" ? 1 : 3 },
+        evidence: { source: "feedback", sourceReference: `feedback:${feedbackEvent.id}${input.jobId ? `:job:${input.jobId}` : ""}`, detail: learned.value, weight: input.feedbackType === "keep" ? 1 : 3 },
         activity: { type: input.feedbackType === "keep" ? "reinforced" : "updated", message: `${input.feedbackType === "keep" ? "Reinforced" : "Updated"}: ${learned.value}` },
       });
       return { memory, message: input.feedbackType === "keep" ? "Your Mind reinforced this preference." : "Your Mind updated your Creative DNA." };

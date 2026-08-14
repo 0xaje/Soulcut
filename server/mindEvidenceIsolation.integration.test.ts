@@ -2,7 +2,7 @@ import { eq } from "drizzle-orm";
 import { nanoid } from "nanoid";
 import { afterEach, describe, expect, it } from "vitest";
 import { creativeMinds, memoryEvidence, mindMemories, users } from "../drizzle/schema";
-import { getDb, listMemoryEvidenceForUser } from "./db";
+import { createFeedbackEventForUser, getDb, listMemoryEvidenceForUser, listMindActivityForUser, upsertMindMemoryForUser } from "./db";
 
 const cleanupOpenIds: string[] = [];
 
@@ -47,5 +47,40 @@ describe("Mind evidence ownership isolation", () => {
     expect(ownerEvidence).toHaveLength(1);
     expect(ownerEvidence[0]?.detail).toBe("Owner chose question-first hooks.");
     expect(otherEvidence).toEqual([]);
+  });
+
+  it.runIf(Boolean(process.env.DATABASE_URL))("surfaces feedback evidence and activity only after a real owner-scoped feedback event is persisted", async () => {
+    const db = await getDb();
+    if (!db) throw new Error("Database is required for feedback persistence coverage.");
+    const ownerOpenId = `feedback-owner-${nanoid(12)}`;
+    cleanupOpenIds.push(ownerOpenId);
+    await db.insert(users).values({ openId: ownerOpenId, loginMethod: "test" });
+    const owner = (await db.select().from(users).where(eq(users.openId, ownerOpenId)).limit(1))[0];
+    if (!owner) throw new Error("Feedback test user could not be created.");
+
+    const feedback = await createFeedbackEventForUser({
+      userId: owner.id,
+      recommendationId: "recommendation-1",
+      feedbackType: "not_my_style",
+      reason: "wrong_tone",
+      feedbackText: "Avoid overly formal language.",
+    });
+    const memory = await upsertMindMemoryForUser({
+      userId: owner.id,
+      category: "tone",
+      memoryKey: "avoid-overly-formal-language",
+      value: "Avoid overly formal language.",
+      confidence: 78,
+      source: "feedback",
+      evidence: { source: "feedback", sourceReference: `feedback:${feedback.id}`, detail: "Avoid overly formal language.", weight: 3 },
+      activity: { type: "updated", message: "Updated: Avoid overly formal language." },
+    });
+
+    const [evidence, activity] = await Promise.all([
+      listMemoryEvidenceForUser({ userId: owner.id, memoryId: memory.id }),
+      listMindActivityForUser(owner.id),
+    ]);
+    expect(evidence).toEqual([expect.objectContaining({ source: "feedback", sourceReference: `feedback:${feedback.id}`, detail: "Avoid overly formal language." })]);
+    expect(activity).toEqual(expect.arrayContaining([expect.objectContaining({ userId: owner.id, memoryId: memory.id, activityType: "updated", message: "Updated: Avoid overly formal language." })]));
   });
 });
