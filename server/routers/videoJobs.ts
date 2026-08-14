@@ -24,6 +24,7 @@ import {
 import { buildJobHistoryCsv } from "../jobHistoryCsv";
 import { buildJobPdfReport } from "../jobPdfReport";
 import { storageGet, storageGetSignedUrl, storagePut } from "../storage";
+import { parseCreatorTranscript } from "../transcriptIngestion";
 import { isPublicVideoUrl } from "../videoAnalysis";
 import { protectedProcedure, router } from "../_core/trpc";
 
@@ -37,6 +38,12 @@ const videoUrlInput = z
 const shareExpiryInput = z.number().int().min(1).max(24 * 365);
 const brandingTitleInput = z.string().trim().min(3).max(140);
 const jobIdInput = z.object({ id: z.string().min(8).max(32) });
+const transcriptImportInput = z.object({
+  videoUrl: videoUrlInput,
+  filename: z.string().trim().min(5).max(180),
+  mimeType: z.string().trim().max(120).optional(),
+  dataUrl: z.string().max(550_000).regex(/^data:(?:text\/plain|text\/vtt|application\/x-subrip|application\/octet-stream)(?:;charset=[^;]+)?;base64,[A-Za-z0-9+/=]+$/, "Upload a text, SRT, or WebVTT transcript file."),
+});
 const ANALYSIS_SUBMISSION_RATE_LIMIT = { scope: "analysis-submission", maximum: 10, windowMinutes: 60 } as const;
 const DAILY_ANALYSIS_QUOTA = 20;
 const jobListInput = z.object({
@@ -78,6 +85,11 @@ async function loadPdfBranding(userId: number) {
   const response = await fetch(signedUrl);
   if (!response.ok) throw new Error("Saved report logo could not be loaded.");
   return { coverTitle: branding.coverTitle, logoBuffer: Buffer.from(await response.arrayBuffer()) };
+}
+
+function transcriptBytesFromDataUrl(dataUrl: string) {
+  const encoded = dataUrl.slice(dataUrl.indexOf(",") + 1);
+  return Buffer.from(encoded, "base64");
 }
 
 export const videoJobsRouter = router({
@@ -269,6 +281,30 @@ export const videoJobsRouter = router({
         userId: ctx.user.id,
         stage: "queued",
         message: "Analysis queued. A worker will begin shortly.",
+      });
+      return queuedJob;
+    }),
+
+  createWithTranscript: protectedProcedure
+    .input(transcriptImportInput)
+    .mutation(async ({ ctx, input }) => {
+      const parsed = parseCreatorTranscript({ filename: input.filename, mimeType: input.mimeType, bytes: transcriptBytesFromDataUrl(input.dataUrl) });
+      await consumeSubmissionCapacity(ctx.user.id);
+      const stored = await storagePut(`transcripts/${ctx.user.id}/${nanoid()}.${parsed.format}`, parsed.content, parsed.format === "vtt" ? "text/vtt" : "text/plain");
+      const job = await createVideoJob({
+        id: nanoid(),
+        userId: ctx.user.id,
+        videoUrl: input.videoUrl,
+        transcriptStorageKey: stored.key,
+        transcriptFormat: parsed.format,
+        transcriptCharacterCount: parsed.characterCount,
+      });
+      const queuedJob = await updateVideoJobForUser(job.id, ctx.user.id, { startedAt: new Date() });
+      await createVideoJobProgressEvent({
+        jobId: queuedJob.id,
+        userId: ctx.user.id,
+        stage: "queued",
+        message: `Analysis queued with an imported ${parsed.format.toUpperCase()} transcript.`,
       });
       return queuedJob;
     }),

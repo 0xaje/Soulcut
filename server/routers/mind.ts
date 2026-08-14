@@ -10,7 +10,10 @@ import {
   listMemoryEvidenceForUser,
   listMindActivityForUser,
   listMindMemoriesForUser,
+  listRecommendationComparisonForUser,
   markCreativeMindOnboarded,
+  setMindMemoryRetirementForUser,
+  updateMindMemoryForUser,
   upsertMindMemoryForUser,
   type MindMemoryCategory,
 } from "../db";
@@ -84,10 +87,12 @@ export const mindRouter = router({
     return { mind, builderAvailability: builder.availability, builderHumanId: builder.humanId };
   }),
 
-  getCreativeDNA: protectedProcedure.query(async ({ ctx }) => {
+  getCreativeDNA: protectedProcedure
+    .input(z.object({ includeRetired: z.boolean().optional() }).optional())
+    .query(async ({ ctx, input }) => {
     const [mind, memories, stats, confidenceEvolution] = await Promise.all([
       ensureCreativeMindForUser(ctx.user.id),
-      listMindMemoriesForUser(ctx.user.id),
+      listMindMemoriesForUser(ctx.user.id, { includeRetired: input?.includeRetired }),
       getMindStatsForUser(ctx.user.id),
       listMindConfidenceEvolutionForUser(ctx.user.id),
     ]);
@@ -96,15 +101,19 @@ export const mindRouter = router({
       memories: memories.map(memory => ({ ...memory, confidenceEvolution: confidenceEvolution.get(memory.id) ?? null })),
       stats,
     };
-  }),
+    }),
 
-  getMindMemories: protectedProcedure.query(({ ctx }) => listMindMemoriesForUser(ctx.user.id)),
+  getMindMemories: protectedProcedure
+    .input(z.object({ includeRetired: z.boolean().optional() }).optional())
+    .query(({ ctx, input }) => listMindMemoriesForUser(ctx.user.id, { includeRetired: input?.includeRetired })),
 
   getMindActivity: protectedProcedure
     .input(z.object({ limit: z.number().int().min(1).max(30).optional() }).optional())
     .query(({ ctx, input }) => listMindActivityForUser(ctx.user.id, input?.limit ?? 12)),
 
   getMindStats: protectedProcedure.query(({ ctx }) => getMindStatsForUser(ctx.user.id)),
+
+  getRecommendationComparison: protectedProcedure.query(({ ctx }) => listRecommendationComparisonForUser(ctx.user.id)),
 
   getPreferenceEvidence: protectedProcedure
     .input(z.object({ memoryId: z.number().int().positive() }))
@@ -158,6 +167,30 @@ export const mindRouter = router({
         activity: { type: "learned", message: `Learned: ${learned.value}` },
       });
       return { memory, message: `Your Mind learned: ${learned.value}` };
+    }),
+
+  updatePreference: protectedProcedure
+    .input(z.object({ memoryId: z.number().int().positive(), value: z.string().trim().min(3).max(500) }))
+    .mutation(async ({ ctx, input }) => {
+      const memory = await updateMindMemoryForUser({ userId: ctx.user.id, memoryId: input.memoryId, value: compactText(input.value) });
+      if (!memory) throw new Error("Preference not found or already retired.");
+      return { memory, message: "Your Mind preference was refined." };
+    }),
+
+  retirePreference: protectedProcedure
+    .input(z.object({ memoryId: z.number().int().positive(), reason: z.string().trim().max(320).optional() }))
+    .mutation(async ({ ctx, input }) => {
+      const memory = await setMindMemoryRetirementForUser({ userId: ctx.user.id, memoryId: input.memoryId, retired: true, reason: input.reason });
+      if (!memory) throw new Error("Preference not found.");
+      return { memory, message: "This preference will no longer guide future analysis." };
+    }),
+
+  restorePreference: protectedProcedure
+    .input(z.object({ memoryId: z.number().int().positive() }))
+    .mutation(async ({ ctx, input }) => {
+      const memory = await setMindMemoryRetirementForUser({ userId: ctx.user.id, memoryId: input.memoryId, retired: false });
+      if (!memory) throw new Error("Preference not found.");
+      return { memory, message: "This preference can guide future analysis again." };
     }),
 
   submitFeedback: protectedProcedure

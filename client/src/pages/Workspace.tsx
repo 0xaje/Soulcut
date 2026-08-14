@@ -37,7 +37,7 @@ import {
   Users,
   X,
 } from "lucide-react";
-import { type CSSProperties, useEffect, useMemo, useState } from "react";
+import { type CSSProperties, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { Link, useLocation } from "wouter";
 
@@ -60,6 +60,15 @@ const feedbackReasonOptions: Array<{ value: FeedbackReason; label: string }> = [
   { value: "not_my_audience", label: "Not for my audience" },
   { value: "other", label: "Other" },
 ];
+
+function readFileAsDataUrl(file: File) {
+  return new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onerror = () => reject(new Error("Transcript file could not be read."));
+    reader.onload = () => typeof reader.result === "string" ? resolve(reader.result) : reject(new Error("Transcript file could not be read."));
+    reader.readAsDataURL(file);
+  });
+}
 
 function formatTime(seconds: number) {
   const whole = Math.max(0, Math.floor(seconds));
@@ -223,6 +232,8 @@ export default function Workspace() {
   const { user, loading, isAuthenticated, logout } = useAuth({ redirectOnUnauthenticated: true });
   const utils = trpc.useUtils();
   const [videoUrl, setVideoUrl] = useState("");
+  const [transcriptFile, setTranscriptFile] = useState<File | null>(null);
+  const transcriptInputRef = useRef<HTMLInputElement>(null);
   const [activeId, setActiveId] = useState<string | null>(null);
   const [copiedClip, setCopiedClip] = useState<number | null>(null);
   const [pendingFromLandingLoaded, setPendingFromLandingLoaded] = useState(false);
@@ -257,6 +268,7 @@ export default function Workspace() {
   }), [historyEndDate, historySearch, historyStartDate, includeArchived]);
   const jobsQuery = trpc.videoJobs.list.useQuery(listFilters, { enabled: isAuthenticated });
   const createJob = trpc.videoJobs.create.useMutation();
+  const createJobWithTranscript = trpc.videoJobs.createWithTranscript.useMutation();
   const runJob = trpc.videoJobs.run.useMutation();
   const archiveJob = trpc.videoJobs.archive.useMutation();
   const restoreJob = trpc.videoJobs.restore.useMutation();
@@ -344,12 +356,21 @@ export default function Workspace() {
       return;
     }
     try {
-      const created = await createJob.mutateAsync({ videoUrl: videoUrl.trim() });
+      const created = transcriptFile
+        ? await createJobWithTranscript.mutateAsync({
+          videoUrl: videoUrl.trim(),
+          filename: transcriptFile.name,
+          mimeType: transcriptFile.type || undefined,
+          dataUrl: await readFileAsDataUrl(transcriptFile),
+        })
+        : await createJob.mutateAsync({ videoUrl: videoUrl.trim() });
       setActiveId(created.id);
       setProcessingJobId(created.id);
       await utils.videoJobs.list.invalidate();
       setVideoUrl("");
-      toast.success("Analysis queued. We’ll update this brief as the worker progresses.");
+      setTranscriptFile(null);
+      if (transcriptInputRef.current) transcriptInputRef.current.value = "";
+      toast.success(transcriptFile ? "Transcript-backed analysis queued. We’ll update this brief as the worker progresses." : "Analysis queued. We’ll update this brief as the worker progresses.");
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "We could not analyze that video.");
       await utils.videoJobs.list.invalidate();
@@ -575,7 +596,7 @@ export default function Workspace() {
     );
   }
 
-  const isWorking = createJob.isPending || runJob.isPending || Boolean(processingJobId);
+  const isWorking = createJob.isPending || createJobWithTranscript.isPending || runJob.isPending || Boolean(processingJobId);
   const activeClips = (activeJob?.clips ?? []) as Clip[];
   const appliedMindPreferences = activeJob?.mindContextSnapshot?.preferences ?? [];
   const hasMindOnboardingInput = onboardingVoice.length + onboardingHooks.length + onboardingPacing.length > 0 || Boolean(onboardingAudience.trim()) || Boolean(onboardingNotes.trim());
@@ -613,6 +634,7 @@ export default function Workspace() {
           </Link>
           <div className="flex items-center gap-2 sm:gap-4">
             <Link href="/dna" className="hidden rounded-full border border-white/10 bg-white/[.04] px-3 py-2 text-xs text-white/55 transition hover:border-[#c7ff4b]/45 hover:text-[#d8ff83] sm:block">Creative DNA</Link>
+            <Link href="/evolution" className="hidden rounded-full border border-white/10 bg-white/[.04] px-3 py-2 text-xs text-white/55 transition hover:border-[#c7ff4b]/45 hover:text-[#d8ff83] lg:block">Evolution</Link>
             <span className="hidden max-w-48 truncate text-xs text-white/38 sm:block">{user?.name ?? "Private workspace"}</span>
             <button onClick={handleLogout} type="button" className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[.04] px-3 py-2 text-xs text-white/62 transition hover:bg-white/10 hover:text-white active:scale-[.97]">
               <LogOut size={14} /> <span className="hidden sm:inline">Sign out</span>
@@ -718,7 +740,7 @@ export default function Workspace() {
             <div className="relative flex flex-col gap-6">
               <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
                 <div className="max-w-2xl"><div className="flex items-center gap-2"><span className="eyebrow text-[#d8ff83]">Your Creative Mind</span><span className="inline-flex items-center gap-1 rounded-full border border-[#c7ff4b]/20 bg-[#c7ff4b]/10 px-2 py-1 font-mono text-[9px] uppercase tracking-[.12em] text-[#d8ff83]"><CircleDot size={10} /> {mindQuery.data?.builderAvailability === "available" ? "Minds connected" : "Learning locally"}</span></div><h1 className="mt-3 font-display text-4xl leading-[.86] tracking-[-.065em] sm:text-6xl">SoulCut remembers <span className="italic text-white/42">how you create.</span></h1><p className="mt-4 max-w-xl text-sm leading-relaxed text-white/54">Every lesson, approval, and correction becomes evidence your Mind can use for the next creative decision.</p></div>
-                <div className="flex shrink-0 flex-wrap gap-2"><button type="button" onClick={() => setShowMindOnboarding(true)} className="inline-flex items-center justify-center gap-2 rounded-full border border-[#c7ff4b]/25 bg-[#c7ff4b]/10 px-4 py-2.5 text-xs text-[#d8ff83] transition hover:bg-[#c7ff4b]/18"><Users size={14} /> Shape your Mind</button><Link href="/dna" className="inline-flex items-center justify-center gap-2 rounded-full border border-white/12 bg-white/[.045] px-4 py-2.5 text-xs text-white/72 transition hover:border-[#c7ff4b]/45 hover:bg-[#c7ff4b]/10 hover:text-[#e1ff9f]"><Network size={14} /> Open Creative DNA</Link><button type="button" onClick={() => setMindPanelOpen(current => !current)} aria-expanded={mindPanelOpen} className="rounded-full px-3 py-2.5 text-xs text-white/45 transition hover:text-white">{mindPanelOpen ? "Hide preview" : "Preview"}</button></div>
+                <div className="flex shrink-0 flex-wrap gap-2"><button type="button" onClick={() => setShowMindOnboarding(true)} className="inline-flex items-center justify-center gap-2 rounded-full border border-[#c7ff4b]/25 bg-[#c7ff4b]/10 px-4 py-2.5 text-xs text-[#d8ff83] transition hover:bg-[#c7ff4b]/18"><Users size={14} /> Shape your Mind</button><Link href="/dna" className="inline-flex items-center justify-center gap-2 rounded-full border border-white/12 bg-white/[.045] px-4 py-2.5 text-xs text-white/72 transition hover:border-[#c7ff4b]/45 hover:bg-[#c7ff4b]/10 hover:text-[#e1ff9f]"><Network size={14} /> Open Creative DNA</Link><Link href="/evolution" className="inline-flex items-center justify-center gap-2 rounded-full border border-white/12 bg-white/[.045] px-4 py-2.5 text-xs text-white/72 transition hover:border-[#c7ff4b]/45 hover:bg-[#c7ff4b]/10 hover:text-[#e1ff9f]"><History size={14} /> Compare videos</Link><button type="button" onClick={() => setMindPanelOpen(current => !current)} aria-expanded={mindPanelOpen} className="rounded-full px-3 py-2.5 text-xs text-white/45 transition hover:text-white">{mindPanelOpen ? "Hide preview" : "Preview"}</button></div>
               </div>
               <div className="grid gap-2 sm:grid-cols-4">
                 {[
@@ -776,7 +798,9 @@ export default function Workspace() {
                 {isWorking ? "Analyzing…" : "Analyze with Mind"}
               </button>
             </div>
-            <p className="relative mt-3 px-1 text-xs text-white/32">SoulCut only analyzes public sources it can access. Your Mind guides creative prioritization; the source remains the evidence.</p>
+            <input ref={transcriptInputRef} type="file" accept=".txt,.srt,.vtt,text/plain,text/vtt,application/x-subrip" className="sr-only" onChange={event => { const file = event.target.files?.[0]; if (!file) return; if (file.size > 400_000) { toast.error("Transcript files must be 400 KB or smaller."); event.target.value = ""; return; } if (!/\.(txt|srt|vtt)$/i.test(file.name)) { toast.error("Use a .txt, .srt, or .vtt transcript file."); event.target.value = ""; return; } setTranscriptFile(file); }} />
+            <div className="relative mt-3 flex flex-wrap items-center justify-between gap-2 px-1"><p className="text-xs text-white/32">SoulCut only analyzes public sources it can access. Your Mind guides creative prioritization; the source remains the evidence.</p><div className="flex items-center gap-2">{transcriptFile ? <><span className="max-w-52 truncate text-[11px] text-[#d8ff83]">Transcript: {transcriptFile.name}</span><button type="button" onClick={() => { setTranscriptFile(null); if (transcriptInputRef.current) transcriptInputRef.current.value = ""; }} disabled={isWorking} className="rounded-lg px-2 py-1 text-[11px] text-white/45 transition hover:text-white">Remove</button></> : <button type="button" onClick={() => transcriptInputRef.current?.click()} disabled={isWorking} className="rounded-lg border border-white/10 px-2.5 py-1 text-[11px] text-white/50 transition hover:border-[#c7ff4b]/35 hover:text-[#d8ff83] disabled:opacity-50">Attach transcript</button>}</div></div>
+            <p className="relative mt-2 px-1 text-[10px] leading-relaxed text-white/27">Optional creator-exported .txt, .srt, or .vtt transcript. It stays private to this analysis; timing cues are used only when present.</p>
           </section>
 
           {isWorking && <AnalysisLoadingCard progress={progress.latestEvent} isConnected={progress.isConnected} hasStreamError={progress.hasStreamError} />}
@@ -787,6 +811,7 @@ export default function Workspace() {
                 <div className="min-w-0">
                   <div className="flex flex-wrap items-center gap-2.5"><StatusPill status={activeJob.status} /><span className="font-mono text-[10px] uppercase tracking-[.14em] text-white/32">{activeJob.model ?? "Video research"}</span></div>
                   <p className="mt-4 break-all text-sm leading-relaxed text-white/65">{activeJob.videoUrl}</p>
+                  {activeJob.transcriptFormat && <p className="mt-2 text-[11px] text-[#d8ff83]/70">Imported {activeJob.transcriptFormat.toUpperCase()} transcript · {activeJob.transcriptCharacterCount?.toLocaleString() ?? "—"} characters</p>}
                 </div>
                 <div className="flex shrink-0 flex-wrap gap-2"><button type="button" onClick={() => void downloadJobPdf(activeJob.id)} disabled={exportPdf.isPending} className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[.04] px-3.5 py-2 text-xs text-white/60 transition hover:bg-white/8 hover:text-white disabled:opacity-50"><FileText size={13} /> {exportPdf.isPending ? "Preparing PDF" : activeJob.status === "failed" ? "Error report" : "PDF report"}</button><label className="flex items-center rounded-full border border-white/10 bg-white/[.04] px-2 text-xs text-white/52"><span className="sr-only">Share link expiry</span><select value={shareExpiryHours} onChange={event => setShareExpiryHours(Number(event.target.value))} className="bg-transparent py-2 outline-none"><option value={24}>24h</option><option value={168}>7d</option><option value={720}>30d</option><option value={2160}>90d</option></select></label><button type="button" onClick={() => void shareJobPdf(activeJob.id)} disabled={createPdfShare.isPending} className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[.04] px-3.5 py-2 text-xs text-white/60 transition hover:bg-white/8 hover:text-white disabled:opacity-50"><Share2 size={13} /> {createPdfShare.isPending ? "Creating link" : "Share link"}</button><a href={activeJob.videoUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 rounded-full border border-white/10 px-3.5 py-2 text-xs text-white/60 transition hover:bg-white/8 hover:text-white"><ExternalLink size={13} /> Source</a></div>
               </div>

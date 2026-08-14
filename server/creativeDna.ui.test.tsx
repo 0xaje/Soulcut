@@ -11,9 +11,12 @@ vi.mock("../client/src/lib/trpc", () => ({
   trpc: {
     mind: {
       getMind: { useQuery: () => ({ data: { builderAvailability: "available" } }) },
-      getCreativeDNA: { useQuery: () => ({ data: { stats: { preferenceCount: 3, feedbackCount: 2, strongPatterns: 1, averageConfidence: 82 }, memories: [] } }) },
-      getMindActivity: { useQuery: () => ({ data: [{ id: 1, activityType: "learned", message: "Learned: Fast pacing", createdAt: new Date() }] }) },
+      getCreativeDNA: { useQuery: () => ({ data: { stats: { preferenceCount: 3, feedbackCount: 2, strongPatterns: 1, averageConfidence: 82 }, memories: [] }, refetch: vi.fn() }) },
+      getMindActivity: { useQuery: () => ({ data: [{ id: 1, activityType: "learned", message: "Learned: Fast pacing", createdAt: new Date() }], refetch: vi.fn() }) },
       getPreferenceEvidence: { useQuery: () => ({ data: [], isLoading: false }) },
+      updatePreference: { useMutation: () => ({ mutateAsync: vi.fn(), isPending: false }) },
+      retirePreference: { useMutation: () => ({ mutateAsync: vi.fn(), isPending: false }) },
+      restorePreference: { useMutation: () => ({ mutateAsync: vi.fn(), isPending: false }) },
     },
   },
 }));

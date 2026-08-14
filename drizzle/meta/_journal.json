@@ -71,6 +71,13 @@
       "when": 1786726099589,
       "tag": "0009_harsh_ego",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "5",
+      "when": 1786726731146,
+      "tag": "0010_curly_leech",
+      "breakpoints": true
     }
   ]
 }

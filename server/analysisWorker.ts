@@ -6,7 +6,20 @@ import {
   updateClaimedVideoJob,
 } from "./db";
 import { getCreativeMindAnalysisContextForUser } from "./mindAnalysisContext";
+import { storageGetSignedUrl } from "./storage";
+import { parseCreatorTranscript, type ParsedTranscript } from "./transcriptIngestion";
 import { analyzeVideoUrl } from "./videoAnalysis";
+
+async function loadJobTranscript(job: { transcriptStorageKey?: string | null; transcriptFormat?: "txt" | "srt" | "vtt" | null }): Promise<ParsedTranscript | null> {
+  if (!job.transcriptStorageKey || !job.transcriptFormat) return null;
+  const response = await fetch(await storageGetSignedUrl(job.transcriptStorageKey));
+  if (!response.ok) throw new Error("Imported transcript could not be loaded for analysis.");
+  return parseCreatorTranscript({
+    filename: `transcript.${job.transcriptFormat}`,
+    mimeType: job.transcriptFormat === "vtt" ? "text/vtt" : job.transcriptFormat === "srt" ? "application/x-subrip" : "text/plain",
+    bytes: Buffer.from(await response.arrayBuffer()),
+  });
+}
 
 export function retryDelayMs(attemptCount: number): number {
   return Math.min(15 * 60_000, 30_000 * 2 ** Math.max(0, attemptCount - 1));
@@ -25,8 +38,10 @@ export async function processNextAnalysisJob() {
     if (await cancelled()) return { processed: true as const, status: "cancelled" as const };
     await addEvent("reading", "Worker claimed the job and is reading accessible video context.");
     const mindContext = await getCreativeMindAnalysisContextForUser(job.userId);
+    const transcript = await loadJobTranscript(job);
+    if (transcript) await addEvent("reading", `Imported ${transcript.format.toUpperCase()} transcript loaded with ${transcript.characterCount.toLocaleString()} characters.`);
     await addEvent("analyzing", mindContext ? "Distilling the story through your Creative Mind preferences." : "Distilling the core story and key topics.");
-    const analysis = await analyzeVideoUrl(job.videoUrl, mindContext);
+    const analysis = transcript ? await analyzeVideoUrl(job.videoUrl, mindContext, transcript) : await analyzeVideoUrl(job.videoUrl, mindContext);
     if (await cancelled()) return { processed: true as const, status: "cancelled" as const };
     const contextApplied = await updateClaimedVideoJob(job.id, workerToken, { mindContextSnapshot: mindContext });
     if (!contextApplied || await cancelled()) return { processed: true as const, status: "cancelled" as const };

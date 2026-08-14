@@ -14,6 +14,8 @@ export type CreativeDnaMemory = {
     confidenceAfter: number | null;
     createdAt: Date | string;
   } | null;
+  retiredAt?: Date | string | null;
+  retirementReason?: string | null;
 };
 
 export type CreativeDnaEvidence = {
@@ -31,6 +33,9 @@ export function MindEvidenceDetails({
   onCloseEvidence,
   evidence,
   isLoadingEvidence,
+  onEditMemory,
+  onRetireMemory,
+  onRestoreMemory,
 }: {
   memories: CreativeDnaMemory[];
   selectedMemoryId: number | null;
@@ -38,18 +43,22 @@ export function MindEvidenceDetails({
   onCloseEvidence: () => void;
   evidence: CreativeDnaEvidence[] | undefined;
   isLoadingEvidence: boolean;
+  onEditMemory?: (memory: CreativeDnaMemory) => void;
+  onRetireMemory?: (memory: CreativeDnaMemory) => void;
+  onRestoreMemory?: (memory: CreativeDnaMemory) => void;
 }) {
   if (!memories.length) {
     return <div className="rounded-2xl border border-dashed border-white/12 p-4 text-sm leading-relaxed text-white/38">Teach your Mind a preference to begin building your Creative DNA.</div>;
   }
 
   return <>
-    {memories.map(memory => <article key={memory.id} className="rounded-2xl border border-white/8 bg-white/[.025] p-3.5">
-      <div className="flex items-center justify-between gap-2"><span className="text-[10px] uppercase tracking-[.12em] text-[#d8ff83]">{memory.category}</span><span className="font-mono text-[10px] text-white/38">{memory.confidence}%</span></div>
+    {memories.map(memory => <article key={memory.id} className={`rounded-2xl border p-3.5 ${memory.retiredAt ? "border-white/6 bg-black/20 opacity-70" : "border-white/8 bg-white/[.025]"}`}>
+      <div className="flex items-center justify-between gap-2"><span className="text-[10px] uppercase tracking-[.12em] text-[#d8ff83]">{memory.category}</span><span className="font-mono text-[10px] text-white/38">{memory.retiredAt ? "Retired" : `${memory.confidence}%`}</span></div>
       <p className="mt-2 text-sm text-white/80">{memory.value}</p>
       <p className="mt-2 text-[10px] text-white/37">{describeMindEvidence(memory)}</p>
       {memory.confidenceEvolution && <p className="mt-1 text-[10px] text-[#d8ff83]/72">{memory.confidenceEvolution.confidenceBefore === null ? `Initial confidence ${memory.confidenceEvolution.confidenceAfter ?? memory.confidence}%` : memory.confidenceEvolution.confidenceAfter !== null && memory.confidenceEvolution.confidenceAfter > memory.confidenceEvolution.confidenceBefore ? `Confidence +${memory.confidenceEvolution.confidenceAfter - memory.confidenceEvolution.confidenceBefore} after latest signal` : "Confidence reconfirmed by latest signal"}</p>}
-      <div className="mt-3 flex items-center justify-between gap-2"><time className="text-[10px] text-white/30">{formatMindLastUpdated(memory.updatedAt)}</time><button type="button" onClick={() => onSelectMemory(memory.id)} className="text-[10px] text-[#d8ff83] transition hover:text-[#c7ff4b]">View evidence</button></div>
+      {memory.retiredAt && <p className="mt-1 text-[10px] text-white/35">{memory.retirementReason ? `Reason: ${memory.retirementReason}` : "This preference no longer guides new analysis."}</p>}
+      <div className="mt-3 flex flex-wrap items-center justify-between gap-2"><time className="text-[10px] text-white/30">{formatMindLastUpdated(memory.updatedAt)}</time><div className="flex items-center gap-2"><button type="button" onClick={() => onSelectMemory(memory.id)} className="text-[10px] text-[#d8ff83] transition hover:text-[#c7ff4b]">View evidence</button>{memory.retiredAt ? onRestoreMemory && <button type="button" onClick={() => onRestoreMemory(memory)} className="text-[10px] text-white/55 transition hover:text-white">Restore</button> : <>{onEditMemory && <button type="button" onClick={() => onEditMemory(memory)} className="text-[10px] text-white/55 transition hover:text-white">Edit</button>}{onRetireMemory && <button type="button" onClick={() => onRetireMemory(memory)} className="text-[10px] text-white/45 transition hover:text-red-100">Retire</button>}</>}</div></div>
     </article>)}
     {selectedMemoryId !== null && <section className="sm:col-span-2 rounded-2xl border border-[#c7ff4b]/16 bg-[#c7ff4b]/[.045] p-4" aria-live="polite">
       <div className="flex items-center justify-between gap-3"><p className="text-xs font-medium text-[#d8ff83]">Evidence for this preference</p><button type="button" onClick={onCloseEvidence} className="text-[10px] text-white/45 transition hover:text-white">Close</button></div>

@@ -72,3 +72,7 @@
 - [x] Add an evidence-grounded Creative DNA confidence-evolution indicator that shows the current confidence change when a preference is reinforced.
 - [x] Add focused coverage that detailed rejection reasons and free-form feedback text persist and become the expected Mind learning signal.
 - [x] Add an end-to-end regression test for the second-video memory loop from persisted preference through bounded analysis context, result snapshot, and grounded explanation.
+- [x] Add secure source-platform transcript ingestion with clear provenance, size limits, owner isolation, and analysis integration.
+- [x] Add owner-scoped preference editing and retirement controls that preserve evidence history and prevent retired preferences from influencing future analysis.
+- [x] Add an evidence-based multi-video recommendation comparison view that uses only persisted job snapshots, recommendation feedback, and Mind evidence.
+- [x] Add focused tests for transcript ingestion, preference lifecycle controls, comparison ownership, and truthful comparison metrics.

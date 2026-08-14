@@ -8,10 +8,13 @@ const dbMocks = vi.hoisted(() => ({
   getCreativeMindForUser: vi.fn(),
   getMindStatsForUser: vi.fn(),
   getVideoJobForUser: vi.fn(),
+  listRecommendationComparisonForUser: vi.fn(),
   listMemoryEvidenceForUser: vi.fn(),
   listMindActivityForUser: vi.fn(),
   listMindMemoriesForUser: vi.fn(),
   markCreativeMindOnboarded: vi.fn(),
+  setMindMemoryRetirementForUser: vi.fn(),
+  updateMindMemoryForUser: vi.fn(),
   upsertMindMemoryForUser: vi.fn(),
 }));
 
@@ -32,6 +35,9 @@ describe("Mind router", () => {
     dbMocks.createFeedbackEventForUser.mockResolvedValue({ id: 1 });
     dbMocks.getFeedbackSignalSummaryForUser.mockResolvedValue({ keepCount: 0, notMyStyleCount: 0, totalCount: 0 });
     dbMocks.markCreativeMindOnboarded.mockResolvedValue({ id: "mind-7", userId: 7, onboardedAt: new Date() });
+    dbMocks.updateMindMemoryForUser.mockResolvedValue({ id: 12, value: "Use concise hooks" });
+    dbMocks.setMindMemoryRetirementForUser.mockResolvedValue({ id: 12, value: "Use concise hooks" });
+    dbMocks.listRecommendationComparisonForUser.mockResolvedValue([]);
   });
 
   it("rejects empty onboarding so a Mind cannot be marked ready without an explicit creator signal", async () => {
@@ -67,6 +73,27 @@ describe("Mind router", () => {
       evidence: expect.objectContaining({ source: "teaching", weight: 4 }),
     }));
     expect(result.message).toContain("Your Mind learned");
+  });
+
+  it("refines only the caller’s active preference through the owner-scoped persistence helper", async () => {
+    const caller = mindRouter.createCaller(context);
+    await expect(caller.updatePreference({ memoryId: 12, value: "Use concise, question-first hooks." })).resolves.toMatchObject({ message: "Your Mind preference was refined." });
+    expect(dbMocks.updateMindMemoryForUser).toHaveBeenCalledWith({ userId: 7, memoryId: 12, value: "Use concise, question-first hooks." });
+  });
+
+  it("retires and restores only the caller’s preference through the lifecycle helper", async () => {
+    const caller = mindRouter.createCaller(context);
+    await caller.retirePreference({ memoryId: 12, reason: "No longer relevant" });
+    await caller.restorePreference({ memoryId: 12 });
+    expect(dbMocks.setMindMemoryRetirementForUser).toHaveBeenNthCalledWith(1, { userId: 7, memoryId: 12, retired: true, reason: "No longer relevant" });
+    expect(dbMocks.setMindMemoryRetirementForUser).toHaveBeenNthCalledWith(2, { userId: 7, memoryId: 12, retired: false });
+  });
+
+  it("returns comparison rows only via the authenticated caller’s owner-scoped helper", async () => {
+    dbMocks.listRecommendationComparisonForUser.mockResolvedValue([{ jobId: "owned-job" }]);
+    const caller = mindRouter.createCaller(context);
+    await expect(caller.getRecommendationComparison()).resolves.toEqual([{ jobId: "owned-job" }]);
+    expect(dbMocks.listRecommendationComparisonForUser).toHaveBeenCalledWith(7);
   });
 
   it("checks video-job ownership before recording recommendation feedback", async () => {

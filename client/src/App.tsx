@@ -2,6 +2,7 @@ import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/NotFound";
 import CreativeDNA from "@/pages/CreativeDNA";
+import CreativeEvolution from "@/pages/CreativeEvolution";
 import Home from "@/pages/Home";
 import Workspace from "@/pages/Workspace";
 import { Route, Switch } from "wouter";
@@ -14,6 +15,7 @@ function Router() {
       <Route path="/" component={Home} />
       <Route path="/app" component={Workspace} />
       <Route path="/dna" component={CreativeDNA} />
+      <Route path="/evolution" component={CreativeEvolution} />
       <Route path="/404" component={NotFound} />
       <Route component={NotFound} />
     </Switch>

@@ -162,11 +162,13 @@ export async function markCreativeMindOnboarded(userId: number): Promise<Creativ
   return updated;
 }
 
-export async function listMindMemoriesForUser(userId: number): Promise<MindMemory[]> {
+export async function listMindMemoriesForUser(userId: number, options: { includeRetired?: boolean } = {}): Promise<MindMemory[]> {
   const mind = await ensureCreativeMindForUser(userId);
   const db = await getDb();
   if (!db) throw new Error("Database is not available");
-  return db.select().from(mindMemories).where(eq(mindMemories.mindId, mind.id)).orderBy(desc(mindMemories.confidence), desc(mindMemories.updatedAt));
+  const conditions = [eq(mindMemories.mindId, mind.id)];
+  if (!options.includeRetired) conditions.push(isNull(mindMemories.retiredAt));
+  return db.select().from(mindMemories).where(and(...conditions)).orderBy(desc(mindMemories.confidence), desc(mindMemories.updatedAt));
 }
 
 export async function upsertMindMemoryForUser(input: {
@@ -199,6 +201,8 @@ export async function upsertMindMemoryForUser(input: {
       source: input.source,
       evidenceCount,
       lastReinforcedAt: now,
+      retiredAt: null,
+      retirementReason: null,
       updatedAt: now,
     }).where(eq(mindMemories.id, previous.id));
   } else {
@@ -249,6 +253,54 @@ export async function upsertMindMemoryForUser(input: {
     message: input.activity.message,
   });
   return memory;
+}
+
+export async function updateMindMemoryForUser(input: { userId: number; memoryId: number; value: string }): Promise<MindMemory | undefined> {
+  const mind = await getCreativeMindForUser(input.userId);
+  if (!mind) return undefined;
+  const db = await getDb();
+  if (!db) throw new Error("Database is not available");
+  const existing = (await db.select().from(mindMemories)
+    .where(and(eq(mindMemories.id, input.memoryId), eq(mindMemories.mindId, mind.id), isNull(mindMemories.retiredAt)))
+    .limit(1))[0];
+  if (!existing) return undefined;
+  const now = new Date();
+  await db.update(mindMemories).set({ value: input.value, updatedAt: now }).where(eq(mindMemories.id, existing.id));
+  await db.update(creativePreferences).set({ label: input.value.slice(0, 160), lastUpdatedAt: now, updatedAt: now })
+    .where(and(eq(creativePreferences.mindId, mind.id), eq(creativePreferences.memoryId, existing.id)));
+  await db.insert(memoryEvidence).values({
+    memoryId: existing.id,
+    source: "teaching",
+    detail: `Creator refined this preference to: ${input.value}`,
+    weight: 1,
+    confidenceBefore: existing.confidence,
+    confidenceAfter: existing.confidence,
+  });
+  await db.insert(mindActivity).values({ mindId: mind.id, userId: input.userId, memoryId: existing.id, activityType: "updated", message: `Refined: ${input.value}` });
+  return (await db.select().from(mindMemories).where(eq(mindMemories.id, existing.id)).limit(1))[0];
+}
+
+export async function setMindMemoryRetirementForUser(input: { userId: number; memoryId: number; retired: boolean; reason?: string | null }): Promise<MindMemory | undefined> {
+  const mind = await getCreativeMindForUser(input.userId);
+  if (!mind) return undefined;
+  const db = await getDb();
+  if (!db) throw new Error("Database is not available");
+  const existing = (await db.select().from(mindMemories)
+    .where(and(eq(mindMemories.id, input.memoryId), eq(mindMemories.mindId, mind.id)))
+    .limit(1))[0];
+  if (!existing) return undefined;
+  if (input.retired === Boolean(existing.retiredAt)) return existing;
+  const now = new Date();
+  await db.update(mindMemories).set({ retiredAt: input.retired ? now : null, retirementReason: input.retired ? (input.reason?.trim() || null) : null, updatedAt: now })
+    .where(eq(mindMemories.id, existing.id));
+  await db.insert(mindActivity).values({
+    mindId: mind.id,
+    userId: input.userId,
+    memoryId: existing.id,
+    activityType: input.retired ? "updated" : "reinforced",
+    message: input.retired ? `Retired: ${existing.value}` : `Restored: ${existing.value}`,
+  });
+  return (await db.select().from(mindMemories).where(eq(mindMemories.id, existing.id)).limit(1))[0];
 }
 
 export async function listMemoryEvidenceForUser(input: { userId: number; memoryId: number }) {
@@ -332,7 +384,7 @@ export async function getMindStatsForUser(userId: number) {
   const db = await getDb();
   if (!db) throw new Error("Database is not available");
   const [memories, feedback] = await Promise.all([
-    db.select().from(mindMemories).where(eq(mindMemories.mindId, mind.id)),
+    db.select().from(mindMemories).where(and(eq(mindMemories.mindId, mind.id), isNull(mindMemories.retiredAt))),
     db.select().from(feedbackEvents).where(and(eq(feedbackEvents.mindId, mind.id), eq(feedbackEvents.userId, userId))),
   ]);
   const averageConfidence = memories.length === 0 ? 0 : Math.round(memories.reduce((sum, memory) => sum + memory.confidence, 0) / memories.length);
@@ -366,6 +418,9 @@ export async function createVideoJob(input: {
   id: string;
   userId: number;
   videoUrl: string;
+  transcriptStorageKey?: string;
+  transcriptFormat?: "txt" | "srt" | "vtt";
+  transcriptCharacterCount?: number;
 }): Promise<VideoJob> {
   const db = await getDb();
   if (!db) throw new Error("Database is not available");
@@ -424,6 +479,54 @@ export async function listAllVideoJobsForUser(userId: number): Promise<VideoJob[
     .from(videoJobs)
     .where(eq(videoJobs.userId, userId))
     .orderBy(desc(videoJobs.createdAt));
+}
+
+export type RecommendationComparisonItem = {
+  jobId: string;
+  videoUrl: string;
+  createdAt: Date;
+  transcriptFormat: "txt" | "srt" | "vtt" | null;
+  clipCount: number;
+  appliedPreferenceCount: number;
+  appliedPreferences: Array<{ category: string; value: string; confidence: number; evidenceCount: number }>;
+  keptCount: number;
+  correctedCount: number;
+};
+
+export async function listRecommendationComparisonForUser(userId: number): Promise<RecommendationComparisonItem[]> {
+  const db = await getDb();
+  if (!db) throw new Error("Database is not available");
+  const jobs = await db.select().from(videoJobs)
+    .where(and(eq(videoJobs.userId, userId), eq(videoJobs.status, "done")))
+    .orderBy(asc(videoJobs.createdAt), asc(videoJobs.id))
+    .limit(12);
+  const jobIds = jobs.map(job => job.id);
+  if (!jobIds.length) return [];
+  const feedback = await db.select({ jobId: feedbackEvents.jobId, feedbackType: feedbackEvents.feedbackType })
+    .from(feedbackEvents)
+    .where(and(eq(feedbackEvents.userId, userId), or(...jobIds.map(jobId => eq(feedbackEvents.jobId, jobId)))!));
+  const feedbackByJob = new Map<string, { keptCount: number; correctedCount: number }>();
+  feedback.forEach(event => {
+    if (!event.jobId) return;
+    const current = feedbackByJob.get(event.jobId) ?? { keptCount: 0, correctedCount: 0 };
+    if (event.feedbackType === "keep") current.keptCount += 1;
+    if (event.feedbackType === "not_my_style") current.correctedCount += 1;
+    feedbackByJob.set(event.jobId, current);
+  });
+  return jobs.map(job => {
+    const snapshot = job.mindContextSnapshot?.preferences ?? [];
+    const counts = feedbackByJob.get(job.id) ?? { keptCount: 0, correctedCount: 0 };
+    return {
+      jobId: job.id,
+      videoUrl: job.videoUrl,
+      createdAt: job.createdAt,
+      transcriptFormat: job.transcriptFormat,
+      clipCount: job.clips?.length ?? 0,
+      appliedPreferenceCount: snapshot.length,
+      appliedPreferences: snapshot,
+      ...counts,
+    };
+  });
 }
 
 export async function updateVideoJobForUser(

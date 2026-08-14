@@ -18,12 +18,16 @@ const mocks = vi.hoisted(() => ({
   listVideoJobProgressEventsForUser: vi.fn(),
   listVideoJobsForUser: vi.fn(),
   revokePdfReportShareForUser: vi.fn(),
+  storageGet: vi.fn(),
+  storageGetSignedUrl: vi.fn(),
+  storagePut: vi.fn(),
   upsertPdfReportBranding: vi.fn(),
   updateVideoJobForUser: vi.fn(),
 }));
 
 vi.mock("./db", () => mocks);
 vi.mock("./videoAnalysis", () => ({ isPublicVideoUrl: () => true }));
+vi.mock("./storage", () => ({ storageGet: mocks.storageGet, storageGetSignedUrl: mocks.storageGetSignedUrl, storagePut: mocks.storagePut }));
 
 import { appRouter } from "./routers";
 
@@ -39,6 +43,7 @@ describe("queued video-job admission", () => {
     mocks.consumeRateLimit.mockResolvedValue(true);
     mocks.consumeAnalysisQuota.mockResolvedValue({ allowed: true, used: 1 });
     mocks.createVideoJobProgressEvent.mockResolvedValue(undefined);
+    mocks.storagePut.mockResolvedValue({ key: "transcripts/42/private.vtt", url: "/manus-storage/transcripts/42/private.vtt" });
     mocks.getVideoJobForUser.mockResolvedValue(undefined);
     mocks.createVideoJob.mockImplementation(async (input: { id: string; userId: number; videoUrl: string }) => ({
       ...input,
@@ -95,6 +100,27 @@ describe("queued video-job admission", () => {
       stage: "queued",
       message: "Analysis queued. A worker will begin shortly.",
     });
+  });
+
+  it("stores a validated creator-provided transcript privately and persists only its provenance on the queued job", async () => {
+    const caller = appRouter.createCaller(authenticatedContext);
+    const dataUrl = `data:text/vtt;base64,${Buffer.from("WEBVTT\n\n00:00:01.000 --> 00:00:04.000\nWhat is the signal?").toString("base64")}`;
+
+    const job = await caller.videoJobs.createWithTranscript({
+      videoUrl: "https://www.youtube.com/watch?v=public-video",
+      filename: "creator.vtt",
+      mimeType: "text/vtt",
+      dataUrl,
+    });
+
+    expect(mocks.storagePut).toHaveBeenCalledWith(expect.stringMatching(/^transcripts\/42\//), expect.stringContaining("00:00:01.000 --> 00:00:04.000"), "text/vtt");
+    expect(mocks.createVideoJob).toHaveBeenCalledWith(expect.objectContaining({
+      userId: 42,
+      transcriptStorageKey: "transcripts/42/private.vtt",
+      transcriptFormat: "vtt",
+      transcriptCharacterCount: expect.any(Number),
+    }));
+    expect(mocks.createVideoJobProgressEvent).toHaveBeenCalledWith(expect.objectContaining({ jobId: job.id, userId: 42, stage: "queued", message: expect.stringContaining("imported VTT transcript") }));
   });
 
   it("restores an archived brief only through the authenticated owner-scoped update", async () => {
