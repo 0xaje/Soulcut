@@ -17,3 +17,5 @@
 - [x] Stream user-owned analysis progress events from the server and bind the workspace loading state to those live stages.
 - [x] Let users reopen completed jobs and view their persisted analysis-stage timeline.
 - [x] Add a history filter toggle for successful and failed job runs.
+- [x] Package the validated SoulCut implementation workflow as a reusable skill.
+- [x] Add automated integration tests for authenticated progress streaming and successful/failed job-history filters.

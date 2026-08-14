@@ -13,6 +13,17 @@ type ProgressPayload = {
   createdAt: Date | string;
 };
 
+type ProgressStreamUser = { id: number };
+type ProgressStreamJob = { status: "pending" | "processing" | "done" | "failed" };
+
+export type ProgressStreamDependencies = {
+  authenticateRequest: (req: Request) => Promise<ProgressStreamUser | null>;
+  getJobForUser: (jobId: string, userId: number) => Promise<ProgressStreamJob | undefined>;
+  listProgressEvents: (input: { jobId: string; userId: number; afterId?: number }) => Promise<ProgressPayload[]>;
+  pollIntervalMs: number;
+  heartbeatIntervalMs: number;
+};
+
 const terminalStages = new Set<VideoJobProgressStage>(["complete", "failed"]);
 
 export function formatProgressSse(payload: ProgressPayload): string {
@@ -30,7 +41,19 @@ function writeSnapshot(res: Response, stage: VideoJobProgressStage, message: str
   );
 }
 
-export function registerAnalysisProgressStream(app: Express) {
+export function registerAnalysisProgressStream(
+  app: Express,
+  overrides: Partial<ProgressStreamDependencies> = {}
+) {
+  const dependencies: ProgressStreamDependencies = {
+    authenticateRequest: req => sdk.authenticateRequest(req).catch(() => null),
+    getJobForUser: getVideoJobForUser,
+    listProgressEvents: listVideoJobProgressEventsForUser,
+    pollIntervalMs: 1200,
+    heartbeatIntervalMs: 15_000,
+    ...overrides,
+  };
+
   app.get("/api/video-jobs/:id/progress", async (req: Request, res: Response) => {
     const jobId = req.params.id;
     if (!jobId || jobId.length > 32) {
@@ -38,13 +61,13 @@ export function registerAnalysisProgressStream(app: Express) {
       return;
     }
 
-    const user = await sdk.authenticateRequest(req).catch(() => null);
+    const user = await dependencies.authenticateRequest(req);
     if (!user) {
       res.status(401).json({ error: "Authentication is required." });
       return;
     }
 
-    const job = await getVideoJobForUser(jobId, user.id);
+    const job = await dependencies.getJobForUser(jobId, user.id);
     if (!job) {
       res.status(404).json({ error: "Video job not found." });
       return;
@@ -69,7 +92,7 @@ export function registerAnalysisProgressStream(app: Express) {
 
     const emitAvailableEvents = async () => {
       if (closed || res.writableEnded) return;
-      const events = await listVideoJobProgressEventsForUser({
+      const events = await dependencies.listProgressEvents({
         jobId,
         userId: user.id,
         afterId: lastEventId,
@@ -100,10 +123,10 @@ export function registerAnalysisProgressStream(app: Express) {
         if (!res.writableEnded) res.end();
         close();
       });
-    }, 1200);
+    }, dependencies.pollIntervalMs);
     const heartbeatTimer = setInterval(() => {
       if (!closed && !res.writableEnded) res.write(": keep-alive\n\n");
-    }, 15_000);
+    }, dependencies.heartbeatIntervalMs);
 
     req.on("close", close);
     await emitAvailableEvents().catch(() => {

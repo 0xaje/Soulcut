@@ -1,7 +1,7 @@
 import { startLogin } from "@/const";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { type AnalysisProgressEvent, type AnalysisProgressStage, useAnalysisProgress } from "@/hooks/useAnalysisProgress";
-import { filterJobHistory, type HistoryFilter } from "@/lib/jobHistory";
+import { filterJobHistory, getVisibleHistorySelection, type HistoryFilter } from "@/lib/jobHistory";
 import { trpc } from "@/lib/trpc";
 import {
   ArrowLeft,
@@ -209,9 +209,13 @@ export default function Workspace() {
     () => filterJobHistory(jobs, historyFilter),
     [historyFilter, jobs]
   );
+  const visibleActiveId = useMemo(
+    () => getVisibleHistorySelection(jobs, historyFilter, activeId),
+    [activeId, historyFilter, jobs]
+  );
   const activeJob = useMemo(
-    () => jobs.find((job) => job.id === activeId) ?? filteredJobs[0] ?? null,
-    [activeId, filteredJobs, jobs]
+    () => filteredJobs.find((job) => job.id === visibleActiveId) ?? null,
+    [filteredJobs, visibleActiveId]
   );
 
   useEffect(() => {
@@ -229,14 +233,8 @@ export default function Workspace() {
   }, [activeJob?.id, timelineJobId]);
 
   useEffect(() => {
-    if (!filteredJobs.length) {
-      setActiveId(null);
-      return;
-    }
-    if (!activeId || !filteredJobs.some(job => job.id === activeId)) {
-      setActiveId(filteredJobs[0].id);
-    }
-  }, [activeId, filteredJobs]);
+    if (activeId !== visibleActiveId) setActiveId(visibleActiveId);
+  }, [activeId, visibleActiveId]);
 
   const submitAnalysis = async () => {
     if (!videoUrl.trim()) {
