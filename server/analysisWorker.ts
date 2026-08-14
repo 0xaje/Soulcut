@@ -5,6 +5,7 @@ import {
   isVideoJobCancelled,
   updateClaimedVideoJob,
 } from "./db";
+import { getCreativeMindAnalysisContextForUser } from "./mindAnalysisContext";
 import { analyzeVideoUrl } from "./videoAnalysis";
 
 export function retryDelayMs(attemptCount: number): number {
@@ -23,8 +24,9 @@ export async function processNextAnalysisJob() {
   try {
     if (await cancelled()) return { processed: true as const, status: "cancelled" as const };
     await addEvent("reading", "Worker claimed the job and is reading accessible video context.");
-    await addEvent("analyzing", "Distilling the core story and key topics.");
-    const analysis = await analyzeVideoUrl(job.videoUrl);
+    const mindContext = await getCreativeMindAnalysisContextForUser(job.userId);
+    await addEvent("analyzing", mindContext ? "Distilling the story through your Creative Mind preferences." : "Distilling the core story and key topics.");
+    const analysis = await analyzeVideoUrl(job.videoUrl, mindContext);
     if (await cancelled()) return { processed: true as const, status: "cancelled" as const };
     await addEvent("clips", "Shaping grounded short-form clip recommendations.");
     const completed = await updateClaimedVideoJob(job.id, workerToken, {

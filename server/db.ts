@@ -1,12 +1,22 @@
 import { and, asc, desc, eq, gt, gte, isNotNull, isNull, like, lte, or } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
+import { nanoid } from "nanoid";
 import {
+  type CreativeMind,
+  type MindMemory,
+  type MindActivity,
   type ClipSuggestion,
   type InsertUser,
   type InsertVideoJob,
   type VideoJob,
   type VideoJobProgressStage,
   analysisUsage,
+  creativeMinds,
+  creativePreferences,
+  feedbackEvents,
+  memoryEvidence,
+  mindActivity,
+  mindMemories,
   pdfReportBranding,
   pdfReportShares,
   requestRateLimits,
@@ -100,6 +110,186 @@ export async function getUserByOpenId(openId: string) {
   const result = await db.select().from(users).where(eq(users.openId, openId)).limit(1);
 
   return result.length > 0 ? result[0] : undefined;
+}
+
+export type MindMemoryCategory = NonNullable<MindMemory["category"]>;
+export type MindMemorySource = NonNullable<MindMemory["source"]>;
+export type MindEvidenceSource = "onboarding" | "teaching" | "feedback" | "analysis" | "selection";
+export type MindActivityType = NonNullable<MindActivity["activityType"]>;
+
+function clampConfidence(value: number) {
+  return Math.max(1, Math.min(100, Math.round(value)));
+}
+
+export async function getCreativeMindForUser(userId: number): Promise<CreativeMind | undefined> {
+  const db = await getDb();
+  if (!db) throw new Error("Database is not available");
+  const rows = await db.select().from(creativeMinds).where(eq(creativeMinds.userId, userId)).limit(1);
+  return rows[0];
+}
+
+export async function ensureCreativeMindForUser(userId: number): Promise<CreativeMind> {
+  const existing = await getCreativeMindForUser(userId);
+  if (existing) return existing;
+  const db = await getDb();
+  if (!db) throw new Error("Database is not available");
+  try {
+    await db.insert(creativeMinds).values({ id: nanoid(), userId });
+  } catch (error) {
+    const concurrent = await getCreativeMindForUser(userId);
+    if (concurrent) return concurrent;
+    throw error;
+  }
+  const created = await getCreativeMindForUser(userId);
+  if (!created) throw new Error("Creative Mind could not be created");
+  return created;
+}
+
+export async function markCreativeMindOnboarded(userId: number): Promise<CreativeMind> {
+  const mind = await ensureCreativeMindForUser(userId);
+  const db = await getDb();
+  if (!db) throw new Error("Database is not available");
+  await db.update(creativeMinds).set({ onboardedAt: new Date(), updatedAt: new Date() }).where(and(eq(creativeMinds.id, mind.id), eq(creativeMinds.userId, userId)));
+  const updated = await getCreativeMindForUser(userId);
+  if (!updated) throw new Error("Creative Mind could not be updated");
+  return updated;
+}
+
+export async function listMindMemoriesForUser(userId: number): Promise<MindMemory[]> {
+  const mind = await ensureCreativeMindForUser(userId);
+  const db = await getDb();
+  if (!db) throw new Error("Database is not available");
+  return db.select().from(mindMemories).where(eq(mindMemories.mindId, mind.id)).orderBy(desc(mindMemories.confidence), desc(mindMemories.updatedAt));
+}
+
+export async function upsertMindMemoryForUser(input: {
+  userId: number;
+  category: MindMemoryCategory;
+  memoryKey: string;
+  value: string;
+  confidence: number;
+  source: MindMemorySource;
+  evidence: { source: MindEvidenceSource; sourceReference?: string | null; detail: string; weight?: number };
+  activity: { type: MindActivityType; message: string };
+}): Promise<MindMemory> {
+  const mind = await ensureCreativeMindForUser(input.userId);
+  const db = await getDb();
+  if (!db) throw new Error("Database is not available");
+  const now = new Date();
+  const existing = await db.select().from(mindMemories)
+    .where(and(eq(mindMemories.mindId, mind.id), eq(mindMemories.category, input.category), eq(mindMemories.memoryKey, input.memoryKey)))
+    .limit(1);
+  const previous = existing[0];
+  const evidenceCount = (previous?.evidenceCount ?? 0) + 1;
+  const confidence = previous
+    ? clampConfidence(Math.max(previous.confidence, input.confidence) + Math.min(8, Math.max(1, input.evidence.weight ?? 1)))
+    : clampConfidence(input.confidence);
+
+  if (previous) {
+    await db.update(mindMemories).set({
+      value: input.value,
+      confidence,
+      source: input.source,
+      evidenceCount,
+      lastReinforcedAt: now,
+      updatedAt: now,
+    }).where(eq(mindMemories.id, previous.id));
+  } else {
+    await db.insert(mindMemories).values({
+      mindId: mind.id,
+      category: input.category,
+      memoryKey: input.memoryKey,
+      value: input.value,
+      confidence,
+      source: input.source,
+      evidenceCount,
+      lastReinforcedAt: now,
+    });
+  }
+
+  const rows = await db.select().from(mindMemories)
+    .where(and(eq(mindMemories.mindId, mind.id), eq(mindMemories.category, input.category), eq(mindMemories.memoryKey, input.memoryKey)))
+    .limit(1);
+  const memory = rows[0];
+  if (!memory) throw new Error("Mind memory could not be saved");
+
+  await db.insert(memoryEvidence).values({
+    memoryId: memory.id,
+    source: input.evidence.source,
+    sourceReference: input.evidence.sourceReference ?? null,
+    detail: input.evidence.detail,
+    weight: input.evidence.weight ?? 1,
+  });
+  await db.insert(creativePreferences).values({
+    mindId: mind.id,
+    memoryId: memory.id,
+    category: input.category,
+    label: input.value.slice(0, 160),
+    confidence,
+    source: input.source,
+    evidenceCount,
+    lastUpdatedAt: now,
+  }).onDuplicateKeyUpdate({
+    set: { label: input.value.slice(0, 160), confidence, source: input.source, evidenceCount, lastUpdatedAt: now, updatedAt: now },
+  });
+  await db.insert(mindActivity).values({
+    mindId: mind.id,
+    userId: input.userId,
+    memoryId: memory.id,
+    activityType: input.activity.type,
+    message: input.activity.message,
+  });
+  return memory;
+}
+
+export async function listMemoryEvidenceForUser(input: { userId: number; memoryId: number }) {
+  const mind = await getCreativeMindForUser(input.userId);
+  if (!mind) return [];
+  const db = await getDb();
+  if (!db) throw new Error("Database is not available");
+  const memory = await db.select({ id: mindMemories.id }).from(mindMemories)
+    .where(and(eq(mindMemories.id, input.memoryId), eq(mindMemories.mindId, mind.id))).limit(1);
+  if (!memory[0]) return [];
+  return db.select().from(memoryEvidence).where(eq(memoryEvidence.memoryId, input.memoryId)).orderBy(desc(memoryEvidence.createdAt));
+}
+
+export async function listMindActivityForUser(userId: number, limit = 12) {
+  const mind = await ensureCreativeMindForUser(userId);
+  const db = await getDb();
+  if (!db) throw new Error("Database is not available");
+  return db.select().from(mindActivity)
+    .where(and(eq(mindActivity.mindId, mind.id), eq(mindActivity.userId, userId)))
+    .orderBy(desc(mindActivity.createdAt), desc(mindActivity.id)).limit(limit);
+}
+
+export async function createFeedbackEventForUser(input: {
+  userId: number;
+  jobId?: string | null;
+  recommendationId?: string | null;
+  feedbackType: "keep" | "not_my_style" | "teach";
+  reason?: string | null;
+  feedbackText?: string | null;
+}) {
+  const mind = await ensureCreativeMindForUser(input.userId);
+  const db = await getDb();
+  if (!db) throw new Error("Database is not available");
+  await db.insert(feedbackEvents).values({ mindId: mind.id, ...input });
+  const rows = await db.select().from(feedbackEvents).where(and(eq(feedbackEvents.mindId, mind.id), eq(feedbackEvents.userId, input.userId))).orderBy(desc(feedbackEvents.id)).limit(1);
+  if (!rows[0]) throw new Error("Feedback event could not be saved");
+  return rows[0];
+}
+
+export async function getMindStatsForUser(userId: number) {
+  const mind = await ensureCreativeMindForUser(userId);
+  const db = await getDb();
+  if (!db) throw new Error("Database is not available");
+  const [memories, feedback] = await Promise.all([
+    db.select().from(mindMemories).where(eq(mindMemories.mindId, mind.id)),
+    db.select().from(feedbackEvents).where(and(eq(feedbackEvents.mindId, mind.id), eq(feedbackEvents.userId, userId))),
+  ]);
+  const averageConfidence = memories.length === 0 ? 0 : Math.round(memories.reduce((sum, memory) => sum + memory.confidence, 0) / memories.length);
+  const strongPatterns = memories.filter(memory => memory.confidence >= 75 && memory.evidenceCount >= 2).length;
+  return { mind, preferenceCount: memories.length, feedbackCount: feedback.length, strongPatterns, averageConfidence };
 }
 
 export type VideoJobStatus = "pending" | "processing" | "retrying" | "done" | "failed" | "cancelled";

@@ -6,6 +6,7 @@ const mocks = vi.hoisted(() => ({
   isVideoJobCancelled: vi.fn(),
   updateClaimedVideoJob: vi.fn(),
   analyzeVideoUrl: vi.fn(),
+  getCreativeMindAnalysisContextForUser: vi.fn(),
 }));
 
 vi.mock("./db", () => ({
@@ -16,6 +17,7 @@ vi.mock("./db", () => ({
 }));
 
 vi.mock("./videoAnalysis", () => ({ analyzeVideoUrl: mocks.analyzeVideoUrl }));
+vi.mock("./mindAnalysisContext", () => ({ getCreativeMindAnalysisContextForUser: mocks.getCreativeMindAnalysisContextForUser }));
 
 import { processNextAnalysisJob, retryDelayMs } from "./analysisWorker";
 
@@ -42,6 +44,7 @@ describe("durable analysis worker", () => {
     mocks.isVideoJobCancelled.mockResolvedValue(false);
     mocks.updateClaimedVideoJob.mockResolvedValue({ ...queuedJob, status: "done" });
     mocks.analyzeVideoUrl.mockResolvedValue(analysis);
+    mocks.getCreativeMindAnalysisContextForUser.mockResolvedValue(null);
   });
 
   it("uses capped exponential retry delays", () => {
@@ -53,7 +56,7 @@ describe("durable analysis worker", () => {
   it("claims one queued job, records the stages, and persists a completed analysis", async () => {
     await expect(processNextAnalysisJob()).resolves.toMatchObject({ processed: true, status: "done" });
 
-    expect(mocks.analyzeVideoUrl).toHaveBeenCalledWith(queuedJob.videoUrl);
+    expect(mocks.analyzeVideoUrl).toHaveBeenCalledWith(queuedJob.videoUrl, null);
     expect(mocks.updateClaimedVideoJob).toHaveBeenCalledWith(
       queuedJob.id,
       expect.any(String),
@@ -65,6 +68,16 @@ describe("durable analysis worker", () => {
       "clips",
       "complete",
     ]);
+  });
+
+  it("passes only the claimed user’s bounded Creative Mind context into analysis", async () => {
+    const mindContext = { preferences: [{ category: "hook", value: "Question-first", confidence: 84, evidenceCount: 3 }] };
+    mocks.getCreativeMindAnalysisContextForUser.mockResolvedValue(mindContext);
+
+    await processNextAnalysisJob();
+
+    expect(mocks.getCreativeMindAnalysisContextForUser).toHaveBeenCalledWith(42);
+    expect(mocks.analyzeVideoUrl).toHaveBeenCalledWith(queuedJob.videoUrl, mindContext);
   });
 
   it("schedules a retry instead of failing on a transient analysis error", async () => {

@@ -1,13 +1,16 @@
 import { startLogin } from "@/const";
 import { useAuth } from "@/_core/hooks/useAuth";
+import { MindEvidenceDetails } from "@/components/MindEvidenceDetails";
 import { type AnalysisProgressEvent, type AnalysisProgressStage, useAnalysisProgress } from "@/hooks/useAnalysisProgress";
 import { filterJobHistory, getVisibleHistorySelection, type HistoryFilter } from "@/lib/jobHistory";
 import { trpc } from "@/lib/trpc";
 import {
   Archive,
   ArrowLeft,
+  Brain,
   Check,
   ChevronRight,
+  CircleDot,
   Clock3,
   Copy,
   Download,
@@ -17,7 +20,9 @@ import {
   Link2,
   LoaderCircle,
   LogOut,
+  Network,
   Play,
+  Plus,
   RotateCcw,
   Scissors,
   Search,
@@ -25,7 +30,10 @@ import {
   Share2,
   Sparkles,
   Tag,
+  ThumbsDown,
+  ThumbsUp,
   Trash2,
+  Users,
   X,
 } from "lucide-react";
 import { type CSSProperties, useEffect, useMemo, useState } from "react";
@@ -106,9 +114,9 @@ function AnalysisLoadingCard({
   hasStreamError: boolean;
 }) {
   const stages = [
-    ["01", "reading", "Reading source", "Gathering public context"],
-    ["02", "analyzing", "Finding signal", "Mapping topics and story"],
-    ["03", "clips", "Shaping clips", "Flagging cut-worthy moments"],
+    ["01", "reading", "Understanding the story", "Gathering grounded public context"],
+    ["02", "analyzing", "Checking your Creative DNA", "Matching the story to what your Mind knows"],
+    ["03", "clips", "Preparing creative opportunities", "Finding moments that fit your audience"],
   ];
   const currentStageIndex = progress ? progressStageOrder.indexOf(progress.stage) : -1;
   const liveMessage = progress?.message ?? "Opening a live connection to the analysis server.";
@@ -130,7 +138,7 @@ function AnalysisLoadingCard({
             <span className="eyebrow text-[#d8ff83]">SoulCut is at work</span>
             <span className="analysis-loader__live"><span /> {isConnected ? "Live analysis" : "Connecting"}</span>
           </div>
-          <h2 className="mt-3 font-display text-3xl tracking-[-.055em] text-white sm:text-4xl">Turning the long cut into its <span className="italic text-white/50">best moments.</span></h2>
+          <h2 className="mt-3 font-display text-3xl tracking-[-.055em] text-white sm:text-4xl">Your Mind is preparing <span className="italic text-white/50">the moments that fit.</span></h2>
           <p className="mt-2 max-w-xl text-sm leading-relaxed text-white/53" aria-live="polite">{liveMessage}</p>
           {hasStreamError && <p className="mt-2 text-xs text-white/35">Live updates briefly paused; SoulCut will continue processing and refresh the completed brief when ready.</p>}
           <div className="mt-6 grid gap-2 sm:grid-cols-3">
@@ -215,6 +223,15 @@ export default function Workspace() {
   const [shareExpiryHours, setShareExpiryHours] = useState(24 * 7);
   const [reportSettingsOpen, setReportSettingsOpen] = useState(false);
   const [coverTitleInput, setCoverTitleInput] = useState("");
+  const [mindPanelOpen, setMindPanelOpen] = useState(false);
+  const [showMindOnboarding, setShowMindOnboarding] = useState(false);
+  const [onboardingVoice, setOnboardingVoice] = useState<string[]>([]);
+  const [onboardingHooks, setOnboardingHooks] = useState<string[]>([]);
+  const [onboardingPacing, setOnboardingPacing] = useState<string[]>([]);
+  const [onboardingAudience, setOnboardingAudience] = useState("");
+  const [onboardingNotes, setOnboardingNotes] = useState("");
+  const [teachMindInput, setTeachMindInput] = useState("");
+  const [selectedMemoryId, setSelectedMemoryId] = useState<number | null>(null);
   const listFilters = useMemo(() => ({
     includeArchived,
     search: historySearch.trim() || undefined,
@@ -236,6 +253,16 @@ export default function Workspace() {
   const uploadPdfLogo = trpc.videoJobs.uploadPdfLogo.useMutation();
   const pdfSharesQuery = trpc.videoJobs.listPdfShares.useQuery(undefined, { enabled: isAuthenticated && reportSettingsOpen });
   const pdfBrandingQuery = trpc.videoJobs.getPdfBranding.useQuery(undefined, { enabled: isAuthenticated && reportSettingsOpen });
+  const mindQuery = trpc.mind.getMind.useQuery(undefined, { enabled: isAuthenticated });
+  const creativeDnaQuery = trpc.mind.getCreativeDNA.useQuery(undefined, { enabled: isAuthenticated });
+  const mindActivityQuery = trpc.mind.getMindActivity.useQuery({ limit: 6 }, { enabled: isAuthenticated });
+  const personalizedInput = useMemo(() => (activeId ? { jobId: activeId } : { jobId: "__inactive__" }), [activeId]);
+  const personalizedQuery = trpc.mind.getPersonalizedRecommendations.useQuery(personalizedInput, { enabled: isAuthenticated && Boolean(activeId) });
+  const evidenceInput = useMemo(() => ({ memoryId: selectedMemoryId ?? 1 }), [selectedMemoryId]);
+  const preferenceEvidenceQuery = trpc.mind.getPreferenceEvidence.useQuery(evidenceInput, { enabled: isAuthenticated && selectedMemoryId !== null });
+  const completeMindOnboarding = trpc.mind.completeOnboarding.useMutation();
+  const teachMind = trpc.mind.teachMind.useMutation();
+  const submitMindFeedback = trpc.mind.submitFeedback.useMutation();
   const progress = useAnalysisProgress(processingJobId);
   const timelineInput = useMemo(() => (timelineJobId ? { id: timelineJobId } : { id: "__inactive__" }), [timelineJobId]);
   const timelineQuery = trpc.videoJobs.timeline.useQuery(timelineInput, {
@@ -280,6 +307,10 @@ export default function Workspace() {
   }, [pdfBrandingQuery.data?.coverTitle]);
 
   useEffect(() => {
+    if (mindQuery.data && !mindQuery.data.mind.onboardedAt) setShowMindOnboarding(true);
+  }, [mindQuery.data]);
+
+  useEffect(() => {
     const stage = progress.latestEvent?.stage;
     if (!processingJobId || !stage || !["complete", "failed", "cancelled"].includes(stage)) return;
     setProcessingJobId(null);
@@ -305,6 +336,64 @@ export default function Workspace() {
       toast.error(error instanceof Error ? error.message : "We could not analyze that video.");
       await utils.videoJobs.list.invalidate();
       setProcessingJobId(null);
+    }
+  };
+
+  const toggleOnboardingOption = (value: string, current: string[], setCurrent: (next: string[]) => void) => {
+    setCurrent(current.includes(value) ? current.filter(item => item !== value) : [...current, value]);
+  };
+
+  const refreshMindData = async () => {
+    await Promise.all([
+      utils.mind.getMind.invalidate(),
+      utils.mind.getCreativeDNA.invalidate(),
+      utils.mind.getMindActivity.invalidate(),
+      utils.mind.getMindStats.invalidate(),
+      utils.mind.getPersonalizedRecommendations.invalidate(),
+    ]);
+  };
+
+  const saveMindOnboarding = async () => {
+    try {
+      await completeMindOnboarding.mutateAsync({
+        voice: onboardingVoice,
+        hooks: onboardingHooks,
+        pacing: onboardingPacing,
+        audience: onboardingAudience.trim() || undefined,
+        notes: onboardingNotes.trim() || undefined,
+      });
+      setShowMindOnboarding(false);
+      await refreshMindData();
+      toast.success("Your Creative Mind is ready to learn with you.");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "We could not initialize your Mind.");
+    }
+  };
+
+  const saveTeaching = async () => {
+    if (!teachMindInput.trim()) return;
+    try {
+      const result = await teachMind.mutateAsync({ lesson: teachMindInput.trim() });
+      setTeachMindInput("");
+      await refreshMindData();
+      toast.success(result.message);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "We could not update your Mind.");
+    }
+  };
+
+  const recordRecommendationFeedback = async (index: number, feedbackType: "keep" | "not_my_style") => {
+    if (!activeJob) return;
+    try {
+      const result = await submitMindFeedback.mutateAsync({
+        jobId: activeJob.id,
+        recommendationId: `clip-${index + 1}`,
+        feedbackType,
+      });
+      await refreshMindData();
+      toast.success(result.message);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "We could not record that feedback.");
     }
   };
 
@@ -465,9 +554,33 @@ export default function Workspace() {
 
   const isWorking = createJob.isPending || runJob.isPending || Boolean(processingJobId);
   const activeClips = (activeJob?.clips ?? []) as Clip[];
+  const hasMindOnboardingInput = onboardingVoice.length + onboardingHooks.length + onboardingPacing.length > 0 || Boolean(onboardingAudience.trim()) || Boolean(onboardingNotes.trim());
 
   return (
     <main className="workspace-bg min-h-screen text-white">
+      {showMindOnboarding && (
+        <div className="fixed inset-0 z-50 grid place-items-center overflow-y-auto bg-[#050507]/90 p-4 backdrop-blur-md" role="dialog" aria-modal="true" aria-labelledby="mind-onboarding-title">
+          <section className="my-8 w-full max-w-3xl rounded-[2rem] border border-[#c7ff4b]/25 bg-[#101014] p-5 shadow-[0_30px_120px_rgba(0,0,0,.65)] sm:p-8">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+              <div><p className="eyebrow text-[#d8ff83]">Meet your SoulCut Mind</p><h1 id="mind-onboarding-title" className="mt-3 font-display text-4xl leading-[.86] tracking-[-.065em] sm:text-6xl">Teach it once.<br /><span className="italic text-white/40">It remembers.</span></h1></div>
+              <span className="grid h-11 w-11 place-items-center rounded-2xl border border-[#c7ff4b]/20 bg-[#c7ff4b]/10 text-[#d8ff83]"><Brain size={21} /></span>
+            </div>
+            <p className="mt-5 max-w-xl text-sm leading-relaxed text-white/52">Your Creative Mind learns the choices you make, the style you prefer, and what you want it to avoid. Start with a few useful signals—never a long form.</p>
+            <div className="mt-7 grid gap-5 sm:grid-cols-3">
+              {[
+                ["Voice", ["Conversational", "Direct", "Educational", "Humorous", "Energetic", "Professional"], onboardingVoice, setOnboardingVoice],
+                ["Hooks", ["Questions", "Bold statements", "Curiosity", "Contrarian", "Story-first", "Problem-first"], onboardingHooks, setOnboardingHooks],
+                ["Editing", ["Fast", "Balanced", "Calm", "Cinematic", "Raw", "Minimal"], onboardingPacing, setOnboardingPacing],
+              ].map(([title, options, selected, setter]) => <div key={title as string}><p className="text-xs font-medium uppercase tracking-[.14em] text-white/45">{title as string}</p><div className="mt-3 flex flex-wrap gap-2">{(options as string[]).map(option => <button key={option} type="button" onClick={() => toggleOnboardingOption(option, selected as string[], setter as (next: string[]) => void)} aria-pressed={(selected as string[]).includes(option)} className={`rounded-full border px-3 py-1.5 text-xs transition ${(selected as string[]).includes(option) ? "border-[#c7ff4b]/60 bg-[#c7ff4b]/12 text-[#e1ff9f]" : "border-white/10 bg-white/[.035] text-white/55 hover:border-white/25 hover:text-white"}`}>{option}</button>)}</div></div>)}
+            </div>
+            <div className="mt-6 grid gap-4 sm:grid-cols-2">
+              <label className="text-xs text-white/50">Who are you creating for?<input value={onboardingAudience} onChange={event => setOnboardingAudience(event.target.value)} className="mt-2 w-full rounded-xl border border-white/10 bg-black/20 px-3 py-2.5 text-sm text-white outline-none placeholder:text-white/25 focus:border-[#c7ff4b]/55" placeholder="e.g. first-time founders" /></label>
+              <label className="text-xs text-white/50">Anything your Mind should know?<textarea value={onboardingNotes} onChange={event => setOnboardingNotes(event.target.value)} className="mt-2 min-h-20 w-full resize-none rounded-xl border border-white/10 bg-black/20 px-3 py-2.5 text-sm text-white outline-none placeholder:text-white/25 focus:border-[#c7ff4b]/55" placeholder="e.g. Avoid corporate language and emojis." /></label>
+            </div>
+            <div className="mt-7 flex flex-wrap justify-end gap-3"><button type="button" onClick={() => setShowMindOnboarding(false)} className="rounded-full px-4 py-2.5 text-sm text-white/50 transition hover:text-white">Explore first</button><button type="button" onClick={() => void saveMindOnboarding()} disabled={completeMindOnboarding.isPending || !hasMindOnboardingInput} className="inline-flex items-center gap-2 rounded-full bg-[#e9ffe2] px-5 py-2.5 text-sm font-semibold text-[#111710] transition hover:bg-[#c7ff4b] disabled:opacity-50"><Brain size={15} /> {completeMindOnboarding.isPending ? "Teaching…" : "Teach my Mind"}</button></div>
+          </section>
+        </div>
+      )}
       <header className="sticky top-0 z-30 border-b border-white/8 bg-[#08080b]/85 px-4 py-3 backdrop-blur-xl sm:px-6">
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-3">
           <Link href="/" className="flex items-center gap-2.5">
@@ -574,12 +687,40 @@ export default function Workspace() {
         </aside>
 
         <section className="order-1 min-w-0 lg:order-2">
+          <section className="relative mb-8 overflow-hidden rounded-[2rem] border border-[#c7ff4b]/18 bg-[#10140f] p-5 shadow-[0_24px_80px_rgba(0,0,0,.22)] sm:p-7">
+            <div className="absolute -right-16 -top-16 h-52 w-52 rounded-full bg-[#c7ff4b]/[.10] blur-3xl" aria-hidden="true" />
+            <div className="relative flex flex-col gap-6">
+              <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
+                <div className="max-w-2xl"><div className="flex items-center gap-2"><span className="eyebrow text-[#d8ff83]">Your Creative Mind</span><span className="inline-flex items-center gap-1 rounded-full border border-[#c7ff4b]/20 bg-[#c7ff4b]/10 px-2 py-1 font-mono text-[9px] uppercase tracking-[.12em] text-[#d8ff83]"><CircleDot size={10} /> {mindQuery.data?.builderAvailability === "available" ? "Minds connected" : "Learning locally"}</span></div><h1 className="mt-3 font-display text-4xl leading-[.86] tracking-[-.065em] sm:text-6xl">SoulCut remembers <span className="italic text-white/42">how you create.</span></h1><p className="mt-4 max-w-xl text-sm leading-relaxed text-white/54">Every lesson, approval, and correction becomes evidence your Mind can use for the next creative decision.</p></div>
+                <div className="flex shrink-0 flex-wrap gap-2"><button type="button" onClick={() => setShowMindOnboarding(true)} className="inline-flex items-center justify-center gap-2 rounded-full border border-[#c7ff4b]/25 bg-[#c7ff4b]/10 px-4 py-2.5 text-xs text-[#d8ff83] transition hover:bg-[#c7ff4b]/18"><Users size={14} /> Shape your Mind</button><button type="button" onClick={() => setMindPanelOpen(current => !current)} aria-expanded={mindPanelOpen} className="inline-flex items-center justify-center gap-2 rounded-full border border-white/12 bg-white/[.045] px-4 py-2.5 text-xs text-white/72 transition hover:border-[#c7ff4b]/45 hover:bg-[#c7ff4b]/10 hover:text-[#e1ff9f]"><Network size={14} /> {mindPanelOpen ? "Close Creative DNA" : "View Creative DNA"}</button></div>
+              </div>
+              <div className="grid gap-2 sm:grid-cols-4">
+                {[
+                  ["Preferences", creativeDnaQuery.data?.stats.preferenceCount ?? 0, Brain],
+                  ["Feedback signals", creativeDnaQuery.data?.stats.feedbackCount ?? 0, ThumbsUp],
+                  ["Strong patterns", creativeDnaQuery.data?.stats.strongPatterns ?? 0, Network],
+                  ["Avg. confidence", `${creativeDnaQuery.data?.stats.averageConfidence ?? 0}%`, CircleDot],
+                ].map(([label, value, Icon]) => {
+                  const StatIcon = Icon as typeof Brain;
+                  return <div key={label as string} className="rounded-2xl border border-white/8 bg-black/20 p-3.5"><div className="flex items-center justify-between text-white/35"><span className="text-[10px] uppercase tracking-[.12em]">{label as string}</span><StatIcon size={13} /></div><p className="mt-3 font-display text-3xl tracking-[-.05em] text-white">{value as string | number}</p></div>;
+                })}
+              </div>
+              <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_290px]">
+                <div className="rounded-2xl border border-white/8 bg-black/20 p-3"><label className="sr-only" htmlFor="teach-mind">Teach your Mind</label><div className="flex flex-col gap-2 sm:flex-row"><input id="teach-mind" value={teachMindInput} onChange={event => setTeachMindInput(event.target.value)} onKeyDown={event => { if (event.key === "Enter") void saveTeaching(); }} maxLength={500} className="min-w-0 flex-1 bg-transparent px-2 py-2 text-sm text-white outline-none placeholder:text-white/30" placeholder="Teach your Mind… e.g. Keep intros under five seconds." /><button type="button" onClick={() => void saveTeaching()} disabled={teachMind.isPending || !teachMindInput.trim()} className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#e9ffe2] px-3.5 py-2 text-xs font-semibold text-[#111710] transition hover:bg-[#c7ff4b] disabled:opacity-50"><Plus size={14} /> {teachMind.isPending ? "Learning" : "Teach Mind"}</button></div></div>
+                <div className="rounded-2xl border border-white/8 bg-black/20 px-3.5 py-3"><p className="text-[10px] uppercase tracking-[.12em] text-white/35">Latest learning</p>{mindActivityQuery.data?.[0] ? <p className="mt-2 text-xs leading-relaxed text-white/65">{mindActivityQuery.data[0].message}</p> : <p className="mt-2 text-xs leading-relaxed text-white/35">Your Mind will surface each meaningful learning event here.</p>}</div>
+              </div>
+              {mindPanelOpen && <div className="grid gap-4 border-t border-white/8 pt-5 lg:grid-cols-[minmax(0,1fr)_290px]">
+                <div><div className="flex items-center justify-between"><p className="eyebrow text-[9px]">Creative DNA</p><span className="text-[10px] text-white/35">Evidence-backed, never assumed</span></div><div className="mt-3 grid gap-2 sm:grid-cols-2"><MindEvidenceDetails memories={creativeDnaQuery.data?.memories ?? []} selectedMemoryId={selectedMemoryId} onSelectMemory={setSelectedMemoryId} onCloseEvidence={() => setSelectedMemoryId(null)} evidence={preferenceEvidenceQuery.data} isLoadingEvidence={preferenceEvidenceQuery.isLoading} /></div></div>
+                <div><p className="eyebrow text-[9px]">Mind activity</p><div className="mt-3 space-y-2">{mindActivityQuery.data?.length ? mindActivityQuery.data.map(activity => <div key={activity.id} className="rounded-xl border border-white/8 bg-white/[.025] p-3"><p className="text-xs text-white/72">{activity.message}</p><time className="mt-1 block text-[10px] text-white/30">{new Date(activity.createdAt).toLocaleDateString(undefined, { month: "short", day: "numeric" })}</time></div>) : <p className="rounded-xl border border-dashed border-white/10 p-3 text-xs leading-relaxed text-white/35">No learning events yet. Your direct teaching and feedback will appear here.</p>}</div></div>
+              </div>}
+            </div>
+          </section>
           <div className="mb-9 flex flex-col justify-between gap-5 sm:flex-row sm:items-end">
             <div>
-              <p className="eyebrow">Video intelligence / 01</p>
-              <h1 className="mt-3 font-display text-5xl leading-[.86] tracking-[-.07em] sm:text-7xl">The cut starts <span className="text-white/35 italic">here.</span></h1>
+              <p className="eyebrow">Mind-guided analysis / 01</p>
+              <h1 className="mt-3 font-display text-5xl leading-[.86] tracking-[-.07em] sm:text-7xl">Make the next cut <span className="text-white/35 italic">sound like you.</span></h1>
             </div>
-            <p className="max-w-xs text-sm leading-relaxed text-white/42">Submit a public video, then use the brief and selective clip notes to start a better edit.</p>
+            <p className="max-w-xs text-sm leading-relaxed text-white/42">Submit a public video. SoulCut grounds the brief in the source and uses your Mind to prioritize creative opportunities.</p>
           </div>
 
           <section className="relative overflow-hidden rounded-[1.8rem] border border-white/10 bg-[#121218] p-4 shadow-[0_22px_60px_rgba(0,0,0,.2)] sm:p-5">
@@ -606,10 +747,10 @@ export default function Workspace() {
                 className="inline-flex items-center justify-center gap-2 rounded-2xl bg-[#e9ffe2] px-5 py-3.5 text-sm font-semibold text-[#111710] transition hover:bg-[#c7ff4b] disabled:cursor-not-allowed disabled:opacity-55 active:scale-[.97]"
               >
                 {isWorking ? <LoaderCircle size={17} className="animate-spin" /> : <Sparkles size={17} />}
-                {isWorking ? "Analyzing…" : "Create brief"}
+                {isWorking ? "Analyzing…" : "Analyze with Mind"}
               </button>
             </div>
-            <p className="relative mt-3 px-1 text-xs text-white/32">SoulCut only analyzes public sources it can access. Recommendations remain grounded in available video context.</p>
+            <p className="relative mt-3 px-1 text-xs text-white/32">SoulCut only analyzes public sources it can access. Your Mind guides creative prioritization; the source remains the evidence.</p>
           </section>
 
           {isWorking && <AnalysisLoadingCard progress={progress.latestEvent} isConnected={progress.isConnected} hasStreamError={progress.hasStreamError} />}
@@ -669,6 +810,7 @@ export default function Workspace() {
                               </div>
                             </div>
                             <p className="mt-4 border-t border-white/8 pt-3 text-xs leading-relaxed text-white/38"><span className="text-white/60">Why this moment:</span> {clip.reason}</p>
+                            {personalizedQuery.data?.[index] && <div className="mt-3 rounded-xl border border-[#c7ff4b]/14 bg-[#c7ff4b]/[.045] p-3"><div className="flex flex-wrap items-center justify-between gap-2"><p className="text-[10px] font-medium uppercase tracking-[.13em] text-[#d8ff83]">Why it fits your Creative DNA</p><span className="font-mono text-[10px] text-[#d8ff83]/70">Mind confidence {personalizedQuery.data[index].mindConfidence}%</span></div>{personalizedQuery.data[index].fit.length ? <ul className="mt-2 space-y-1">{personalizedQuery.data[index].fit.map(item => <li key={item.memoryId} className="text-xs leading-relaxed text-white/58">Based on: {item.statement} <span className="text-white/30">({item.evidenceCount} evidence signals)</span></li>)}</ul> : <p className="mt-2 text-xs leading-relaxed text-white/42">Teach your Mind more preferences to tailor future recommendations.</p>}<div className="mt-3 flex flex-wrap gap-2"><button type="button" onClick={() => void recordRecommendationFeedback(index, "keep")} disabled={submitMindFeedback.isPending} className="inline-flex items-center gap-1.5 rounded-lg border border-white/10 px-2.5 py-1.5 text-[10px] text-white/58 transition hover:border-[#c7ff4b]/45 hover:text-[#d8ff83] disabled:opacity-50"><ThumbsUp size={12} /> Keep this</button><button type="button" onClick={() => void recordRecommendationFeedback(index, "not_my_style")} disabled={submitMindFeedback.isPending} className="inline-flex items-center gap-1.5 rounded-lg border border-white/10 px-2.5 py-1.5 text-[10px] text-white/52 transition hover:border-red-300/35 hover:text-red-100 disabled:opacity-50"><ThumbsDown size={12} /> Not my style</button></div></div>}
                           </article>
                         ))}
                       </div>

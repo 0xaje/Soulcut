@@ -1,4 +1,4 @@
-import { date, index, int, json, mysqlEnum, mysqlTable, primaryKey, text, timestamp, varchar } from "drizzle-orm/mysql-core";
+import { date, index, int, json, mysqlEnum, mysqlTable, primaryKey, text, timestamp, uniqueIndex, varchar } from "drizzle-orm/mysql-core";
 
 /**
  * Core user table backing auth flow.
@@ -24,6 +24,146 @@ export const users = mysqlTable("users", {
 
 export type User = typeof users.$inferSelect;
 export type InsertUser = typeof users.$inferInsert;
+
+export const creativeMinds = mysqlTable(
+  "creative_minds",
+  {
+    id: varchar("id", { length: 32 }).primaryKey(),
+    userId: int("userId")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    name: varchar("name", { length: 140 }).default("SoulCut Creative Director").notNull(),
+    externalMindId: varchar("externalMindId", { length: 64 }),
+    externalStatus: mysqlEnum("externalStatus", ["not_linked", "verified", "unavailable"]).default("not_linked").notNull(),
+    onboardedAt: timestamp("onboardedAt"),
+    createdAt: timestamp("createdAt").defaultNow().notNull(),
+    updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+  },
+  table => [uniqueIndex("creative_minds_user_id_unique").on(table.userId)]
+);
+
+export type CreativeMind = typeof creativeMinds.$inferSelect;
+
+export const mindMemories = mysqlTable(
+  "mind_memories",
+  {
+    id: int("id").autoincrement().primaryKey(),
+    mindId: varchar("mindId", { length: 32 })
+      .notNull()
+      .references(() => creativeMinds.id, { onDelete: "cascade" }),
+    category: mysqlEnum("category", ["voice", "hook", "pacing", "caption", "visual", "audience", "editing", "storytelling", "topics", "avoidances", "format", "tone"])
+      .notNull(),
+    memoryKey: varchar("memoryKey", { length: 128 }).notNull(),
+    value: text("value").notNull(),
+    confidence: int("confidence").default(50).notNull(),
+    source: mysqlEnum("source", ["explicit_creator_instruction", "feedback", "behavioral_pattern", "analysis_observation"])
+      .notNull(),
+    evidenceCount: int("evidenceCount").default(1).notNull(),
+    lastReinforcedAt: timestamp("lastReinforcedAt").defaultNow().notNull(),
+    createdAt: timestamp("createdAt").defaultNow().notNull(),
+    updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+  },
+  table => [
+    uniqueIndex("mind_memories_mind_category_key_unique").on(table.mindId, table.category, table.memoryKey),
+    index("mind_memories_mind_updated_idx").on(table.mindId, table.updatedAt),
+  ]
+);
+
+export type MindMemory = typeof mindMemories.$inferSelect;
+
+export const memoryEvidence = mysqlTable(
+  "memory_evidence",
+  {
+    id: int("id").autoincrement().primaryKey(),
+    memoryId: int("memoryId")
+      .notNull()
+      .references(() => mindMemories.id, { onDelete: "cascade" }),
+    source: mysqlEnum("source", ["onboarding", "teaching", "feedback", "analysis", "selection"])
+      .notNull(),
+    sourceReference: varchar("sourceReference", { length: 128 }),
+    detail: text("detail").notNull(),
+    weight: int("weight").default(1).notNull(),
+    createdAt: timestamp("createdAt").defaultNow().notNull(),
+  },
+  table => [index("memory_evidence_memory_created_idx").on(table.memoryId, table.createdAt)]
+);
+
+export type MemoryEvidence = typeof memoryEvidence.$inferSelect;
+
+export const creativePreferences = mysqlTable(
+  "creative_preferences",
+  {
+    id: int("id").autoincrement().primaryKey(),
+    mindId: varchar("mindId", { length: 32 })
+      .notNull()
+      .references(() => creativeMinds.id, { onDelete: "cascade" }),
+    memoryId: int("memoryId")
+      .notNull()
+      .references(() => mindMemories.id, { onDelete: "cascade" }),
+    category: varchar("category", { length: 32 }).notNull(),
+    label: varchar("label", { length: 160 }).notNull(),
+    confidence: int("confidence").notNull(),
+    source: varchar("source", { length: 64 }).notNull(),
+    evidenceCount: int("evidenceCount").default(1).notNull(),
+    lastUpdatedAt: timestamp("lastUpdatedAt").defaultNow().notNull(),
+    createdAt: timestamp("createdAt").defaultNow().notNull(),
+    updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+  },
+  table => [
+    uniqueIndex("creative_preferences_memory_id_unique").on(table.memoryId),
+    index("creative_preferences_mind_updated_idx").on(table.mindId, table.lastUpdatedAt),
+  ]
+);
+
+export type CreativePreference = typeof creativePreferences.$inferSelect;
+
+export const feedbackEvents = mysqlTable(
+  "feedback_events",
+  {
+    id: int("id").autoincrement().primaryKey(),
+    mindId: varchar("mindId", { length: 32 })
+      .notNull()
+      .references(() => creativeMinds.id, { onDelete: "cascade" }),
+    userId: int("userId")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    jobId: varchar("jobId", { length: 32 }).references(() => videoJobs.id, { onDelete: "set null" }),
+    recommendationId: varchar("recommendationId", { length: 128 }),
+    feedbackType: mysqlEnum("feedbackType", ["keep", "not_my_style", "teach"]).notNull(),
+    reason: varchar("reason", { length: 80 }),
+    feedbackText: text("feedbackText"),
+    createdAt: timestamp("createdAt").defaultNow().notNull(),
+  },
+  table => [
+    index("feedback_events_mind_created_idx").on(table.mindId, table.createdAt),
+    index("feedback_events_user_created_idx").on(table.userId, table.createdAt),
+  ]
+);
+
+export type FeedbackEvent = typeof feedbackEvents.$inferSelect;
+
+export const mindActivity = mysqlTable(
+  "mind_activity",
+  {
+    id: int("id").autoincrement().primaryKey(),
+    mindId: varchar("mindId", { length: 32 })
+      .notNull()
+      .references(() => creativeMinds.id, { onDelete: "cascade" }),
+    userId: int("userId")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    memoryId: int("memoryId").references(() => mindMemories.id, { onDelete: "set null" }),
+    activityType: mysqlEnum("activityType", ["learned", "updated", "reinforced", "detected"]).notNull(),
+    message: varchar("message", { length: 320 }).notNull(),
+    createdAt: timestamp("createdAt").defaultNow().notNull(),
+  },
+  table => [
+    index("mind_activity_mind_created_idx").on(table.mindId, table.createdAt),
+    index("mind_activity_user_created_idx").on(table.userId, table.createdAt),
+  ]
+);
+
+export type MindActivity = typeof mindActivity.$inferSelect;
 
 export type ClipSuggestion = {
   startSeconds: number;

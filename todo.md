@@ -36,15 +36,21 @@
 - [x] Ensure rate-limit or quota rejection cannot leave an unusable pending job record.
 - [x] Add focused automated coverage for rejected queue-submission behavior.
 - [x] Audit SoulCut’s current architecture, authentication, data model, analysis flow, UI, environment contract, and the official Minds API boundary.
-- [ ] Add a server-only Minds adapter with a truthful unavailable state and secure `MINDS_API_KEY` configuration boundary.
-- [ ] Add one user-owned SoulCut Creative Mind plus evidence-backed memory, preferences, feedback events, and activity persistence without altering existing jobs.
-- [ ] Add protected Mind, Creative DNA, activity, teaching, feedback, evidence, and Mind-stat API procedures with ownership isolation.
-- [ ] Build first-run Mind introduction and lightweight creator-preference onboarding that writes initial explicit memories.
-- [ ] Build a prominent Creative DNA and Mind activity experience with evidence, source, confidence, and last-updated detail.
-- [ ] Add real teaching and recommendation-feedback controls that persist events and update Creative DNA without fabricated evidence.
-- [ ] Inject bounded Creative Mind context into video analysis and present personalized recommendation fit and evidence explanations.
-- [ ] Reposition SoulCut’s landing page and authenticated workspace around the Mind → Analyze → Recommend → Learn loop while retaining reports, exports, and history as supporting controls.
-- [ ] Add and run tests for Mind lifecycle, memory evidence, feedback learning, personalization context, user isolation, and existing workflow regression coverage.
-- [ ] Configure and verify an official Minds API key for external Mind synchronization when the user provides one.
+- [x] Add a server-only Minds Builder adapter with a truthful unavailable state and secure `MINDS_BUILDER_API_KEY` configuration boundary.
+- [x] Add one user-owned SoulCut Creative Mind plus evidence-backed memory, preferences, feedback events, and activity persistence without altering existing jobs.
+- [x] Add protected Mind, Creative DNA, activity, teaching, feedback, evidence, and Mind-stat API procedures with ownership isolation.
+- [x] Build first-run Mind introduction and lightweight creator-preference onboarding that writes initial explicit memories.
+- [x] Build a prominent Creative DNA and Mind activity experience with evidence, source, confidence, and last-updated detail.
+- [x] Add real teaching and recommendation-feedback controls that persist events and update Creative DNA without fabricated evidence.
+- [x] Inject bounded Creative Mind context into video analysis and present personalized recommendation fit and evidence explanations.
+- [x] Reposition SoulCut’s landing page and authenticated workspace around the Mind → Analyze → Recommend → Learn loop while retaining reports, exports, and history as supporting controls.
+- [x] Add and run tests for Mind lifecycle, memory evidence, feedback learning, personalization context, user isolation, and existing workflow regression coverage.
+- [x] Configure and verify the official Animoca Minds Builder API key for external Mind synchronization.
 - [x] Verify the server-side `MINDS_BUILDER_API_KEY` against the live Animoca Brands Minds Builder API and confirm Mind `8208493e-f36b-1410-8466-00039ce7df11` without mock fallback.
 - [x] Keep optional external Minds credential checks isolated from the default SoulCut test suite unless their documented credential is configured.
+- [x] Require at least one onboarding preference or explicit creator note before a Mind can be marked onboarded, and test the persistence behavior.
+- [x] Surface actual per-memory evidence detail and last-updated timestamps in Creative DNA with focused UI coverage.
+- [x] Add focused Creative DNA interaction tests for evidence selection plus loading, empty, and detail states.
+- [x] Add positive feedback-learning coverage proving a feedback event persists and updates a user-owned Mind memory.
+- [x] Add owner-scoped preference-evidence retrieval coverage for successful access and cross-owner isolation.
+- [x] Add a persistence-level test proving a second authenticated user cannot retrieve evidence attached to another user’s Creative Mind memory.

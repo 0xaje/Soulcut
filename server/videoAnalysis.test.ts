@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { isPublicVideoUrl, parseVideoAnalysis } from "./videoAnalysis";
+import { formatCreativeMindGuidance, isPublicVideoUrl, parseVideoAnalysis } from "./videoAnalysis";
 
 describe("video analysis validation", () => {
   it("accepts public video URLs and rejects localhost or private network URLs", () => {
@@ -39,5 +39,15 @@ describe("video analysis validation", () => {
         })
       )
     ).toThrow();
+  });
+
+  it("frames Creative Mind preferences as bounded editorial guidance rather than source evidence", () => {
+    const guidance = formatCreativeMindGuidance({
+      preferences: [{ category: "hook", value: "Question-first openings", confidence: 84, evidenceCount: 3 }],
+    });
+
+    expect(guidance).toContain("Question-first openings");
+    expect(guidance).toContain("not evidence about the video");
+    expect(guidance).toContain("must never be presented as video facts");
   });
 });
