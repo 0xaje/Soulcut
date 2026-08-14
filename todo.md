@@ -14,3 +14,4 @@
 - [x] Rename Short It AI to SoulCut across user-facing copy, browser metadata, and project settings.
 - [x] Publish the SoulCut project to github.com/0xaje/Soulcut with the requested initial commit.
 - [x] Add an accessible animated loading experience while AI video analysis is processing.
+- [x] Stream user-owned analysis progress events from the server and bind the workspace loading state to those live stages.

@@ -1,12 +1,14 @@
-import { and, desc, eq } from "drizzle-orm";
+import { and, asc, desc, eq, gt } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
 import {
   type ClipSuggestion,
   type InsertUser,
   type InsertVideoJob,
   type VideoJob,
+  type VideoJobProgressStage,
   users,
   videoJobs,
+  videoJobProgressEvents,
 } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
@@ -165,4 +167,39 @@ export async function updateVideoJobForUser(
   const job = await getVideoJobForUser(id, userId);
   if (!job) throw new Error("Video job was not found");
   return job;
+}
+
+export async function createVideoJobProgressEvent(input: {
+  jobId: string;
+  userId: number;
+  stage: VideoJobProgressStage;
+  message: string;
+}): Promise<void> {
+  const db = await getDb();
+  if (!db) throw new Error("Database is not available");
+
+  await db.insert(videoJobProgressEvents).values(input);
+}
+
+export async function listVideoJobProgressEventsForUser(input: {
+  jobId: string;
+  userId: number;
+  afterId?: number;
+}) {
+  const db = await getDb();
+  if (!db) throw new Error("Database is not available");
+
+  const filters = [
+    eq(videoJobProgressEvents.jobId, input.jobId),
+    eq(videoJobProgressEvents.userId, input.userId),
+  ];
+  if (input.afterId && input.afterId > 0) {
+    filters.push(gt(videoJobProgressEvents.id, input.afterId));
+  }
+
+  return db
+    .select()
+    .from(videoJobProgressEvents)
+    .where(and(...filters))
+    .orderBy(asc(videoJobProgressEvents.id));
 }

@@ -61,3 +61,27 @@ export const videoJobs = mysqlTable(
 
 export type VideoJob = typeof videoJobs.$inferSelect;
 export type InsertVideoJob = typeof videoJobs.$inferInsert;
+
+export const videoJobProgressEvents = mysqlTable(
+  "video_job_progress_events",
+  {
+    id: int("id").autoincrement().primaryKey(),
+    jobId: varchar("jobId", { length: 32 })
+      .notNull()
+      .references(() => videoJobs.id, { onDelete: "cascade" }),
+    userId: int("userId")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    stage: mysqlEnum("stage", ["queued", "reading", "analyzing", "clips", "complete", "failed"])
+      .notNull(),
+    message: varchar("message", { length: 512 }).notNull(),
+    createdAt: timestamp("createdAt").defaultNow().notNull(),
+  },
+  table => [
+    index("video_job_progress_events_job_id_idx").on(table.jobId, table.id),
+    index("video_job_progress_events_user_id_idx").on(table.userId, table.id),
+  ]
+);
+
+export type VideoJobProgressEvent = typeof videoJobProgressEvents.$inferSelect;
+export type VideoJobProgressStage = NonNullable<VideoJobProgressEvent["stage"]>;

@@ -2,6 +2,7 @@ import { TRPCError } from "@trpc/server";
 import { nanoid } from "nanoid";
 import { z } from "zod";
 import {
+  createVideoJobProgressEvent,
   createVideoJob,
   getVideoJobForUser,
   listVideoJobsForUser,
@@ -53,10 +54,34 @@ export const videoJobsRouter = router({
         startedAt: new Date(),
         completedAt: null,
       });
+      await createVideoJobProgressEvent({
+        jobId: existing.id,
+        userId: ctx.user.id,
+        stage: "queued",
+        message: "Analysis queued. Preparing the source.",
+      });
+      await createVideoJobProgressEvent({
+        jobId: existing.id,
+        userId: ctx.user.id,
+        stage: "reading",
+        message: "Reading accessible video context and metadata.",
+      });
 
       try {
+        await createVideoJobProgressEvent({
+          jobId: existing.id,
+          userId: ctx.user.id,
+          stage: "analyzing",
+          message: "Distilling the core story and key topics.",
+        });
         const analysis = await analyzeVideoUrl(existing.videoUrl);
-        return await updateVideoJobForUser(existing.id, ctx.user.id, {
+        await createVideoJobProgressEvent({
+          jobId: existing.id,
+          userId: ctx.user.id,
+          stage: "clips",
+          message: "Shaping grounded short-form clip recommendations.",
+        });
+        const job = await updateVideoJobForUser(existing.id, ctx.user.id, {
           status: "done",
           summary: analysis.summary,
           topics: analysis.topics,
@@ -65,12 +90,25 @@ export const videoJobsRouter = router({
           model: "gpt-5-mini",
           completedAt: new Date(),
         });
+        await createVideoJobProgressEvent({
+          jobId: existing.id,
+          userId: ctx.user.id,
+          stage: "complete",
+          message: "Your video brief is ready.",
+        });
+        return job;
       } catch (error) {
         const failureReason = error instanceof Error ? error.message : "Analysis failed unexpectedly.";
         await updateVideoJobForUser(existing.id, ctx.user.id, {
           status: "failed",
           failureReason: failureReason.slice(0, 1800),
           completedAt: new Date(),
+        });
+        await createVideoJobProgressEvent({
+          jobId: existing.id,
+          userId: ctx.user.id,
+          stage: "failed",
+          message: "The analysis could not be completed.",
         });
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",

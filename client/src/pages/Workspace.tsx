@@ -1,5 +1,6 @@
 import { startLogin } from "@/const";
 import { useAuth } from "@/_core/hooks/useAuth";
+import { type AnalysisProgressEvent, type AnalysisProgressStage, useAnalysisProgress } from "@/hooks/useAnalysisProgress";
 import { trpc } from "@/lib/trpc";
 import {
   ArrowLeft,
@@ -74,12 +75,24 @@ function StatusPill({ status }: { status: "pending" | "processing" | "done" | "f
   );
 }
 
-function AnalysisLoadingCard() {
+const progressStageOrder: AnalysisProgressStage[] = ["reading", "analyzing", "clips"];
+
+function AnalysisLoadingCard({
+  progress,
+  isConnected,
+  hasStreamError,
+}: {
+  progress: AnalysisProgressEvent | null;
+  isConnected: boolean;
+  hasStreamError: boolean;
+}) {
   const stages = [
-    ["01", "Reading source", "Gathering public context"],
-    ["02", "Finding signal", "Mapping topics and story"],
-    ["03", "Shaping clips", "Flagging cut-worthy moments"],
+    ["01", "reading", "Reading source", "Gathering public context"],
+    ["02", "analyzing", "Finding signal", "Mapping topics and story"],
+    ["03", "clips", "Shaping clips", "Flagging cut-worthy moments"],
   ];
+  const currentStageIndex = progress ? progressStageOrder.indexOf(progress.stage) : -1;
+  const liveMessage = progress?.message ?? "Opening a live connection to the analysis server.";
 
   return (
     <section className="analysis-loader mt-5 overflow-hidden rounded-3xl border border-[#c7ff4b]/20 bg-[#10150e] p-5 sm:p-7" role="status" aria-live="polite" aria-label="SoulCut is analyzing the video">
@@ -96,18 +109,24 @@ function AnalysisLoadingCard() {
         <div>
           <div className="flex flex-wrap items-center gap-3">
             <span className="eyebrow text-[#d8ff83]">SoulCut is at work</span>
-            <span className="analysis-loader__live"><span /> Live analysis</span>
+            <span className="analysis-loader__live"><span /> {isConnected ? "Live analysis" : "Connecting"}</span>
           </div>
           <h2 className="mt-3 font-display text-3xl tracking-[-.055em] text-white sm:text-4xl">Turning the long cut into its <span className="italic text-white/50">best moments.</span></h2>
-          <p className="mt-2 max-w-xl text-sm leading-relaxed text-white/53">We’re reading accessible source material, extracting the core ideas, and only suggesting timestamps when there is grounded timing context.</p>
+          <p className="mt-2 max-w-xl text-sm leading-relaxed text-white/53" aria-live="polite">{liveMessage}</p>
+          {hasStreamError && <p className="mt-2 text-xs text-white/35">Live updates briefly paused; SoulCut will continue processing and refresh the completed brief when ready.</p>}
           <div className="mt-6 grid gap-2 sm:grid-cols-3">
-            {stages.map(([number, title, detail], index) => (
-              <div key={number} className="analysis-stage rounded-2xl p-3.5" style={{ "--stage-delay": `${index * 220}ms` } as CSSProperties}>
+            {stages.map(([number, stage, title, detail], index) => {
+              const stageIndex = progressStageOrder.indexOf(stage as AnalysisProgressStage);
+              const isCurrent = stage === progress?.stage;
+              const isComplete = currentStageIndex > stageIndex || progress?.stage === "complete";
+              return (
+              <div key={number} className={`analysis-stage rounded-2xl p-3.5 ${isCurrent ? "analysis-stage--current" : ""} ${isComplete ? "analysis-stage--complete" : ""}`} style={{ "--stage-delay": `${index * 220}ms` } as CSSProperties}>
                 <div className="flex items-center justify-between gap-2"><span className="font-mono text-[10px] tracking-[.14em] text-[#c7ff4b]">{number}</span><span className="analysis-stage__pulse" /></div>
                 <p className="mt-5 text-sm font-medium text-white/84">{title}</p>
                 <p className="mt-1 text-xs leading-relaxed text-white/38">{detail}</p>
               </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       </div>
@@ -123,9 +142,11 @@ export default function Workspace() {
   const [activeId, setActiveId] = useState<string | null>(null);
   const [copiedClip, setCopiedClip] = useState<number | null>(null);
   const [pendingFromLandingLoaded, setPendingFromLandingLoaded] = useState(false);
+  const [processingJobId, setProcessingJobId] = useState<string | null>(null);
   const jobsQuery = trpc.videoJobs.list.useQuery(undefined, { enabled: isAuthenticated });
   const createJob = trpc.videoJobs.create.useMutation();
   const runJob = trpc.videoJobs.run.useMutation();
+  const progress = useAnalysisProgress(processingJobId);
 
   const jobs = jobsQuery.data ?? [];
   const activeJob = useMemo(
@@ -151,6 +172,7 @@ export default function Workspace() {
     try {
       const created = await createJob.mutateAsync({ videoUrl: videoUrl.trim() });
       setActiveId(created.id);
+      setProcessingJobId(created.id);
       await utils.videoJobs.list.invalidate();
       const completed = await runJob.mutateAsync({ id: created.id });
       setActiveId(completed.id);
@@ -160,6 +182,8 @@ export default function Workspace() {
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "We could not analyze that video.");
       await utils.videoJobs.list.invalidate();
+    } finally {
+      setProcessingJobId(null);
     }
   };
 
@@ -275,7 +299,7 @@ export default function Workspace() {
             <p className="relative mt-3 px-1 text-xs text-white/32">SoulCut only analyzes public sources it can access. Recommendations remain grounded in available video context.</p>
           </section>
 
-          {isWorking && <AnalysisLoadingCard />}
+          {isWorking && <AnalysisLoadingCard progress={progress.latestEvent} isConnected={progress.isConnected} hasStreamError={progress.hasStreamError} />}
 
           {activeJob && !isWorking && (
             <section className="mt-5 space-y-5">

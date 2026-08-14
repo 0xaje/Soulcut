@@ -13,7 +13,9 @@ const styleSource = readFileSync(
 
 describe("AI analysis loading animation", () => {
   it("exposes an announced processing state with staged feedback", () => {
-    expect(workspaceSource).toContain("function AnalysisLoadingCard()");
+    expect(workspaceSource).toContain("function AnalysisLoadingCard({");
+    expect(workspaceSource).toContain("useAnalysisProgress(processingJobId)");
+    expect(workspaceSource).toContain("progress={progress.latestEvent}");
     expect(workspaceSource).toContain('role="status"');
     expect(workspaceSource).toContain('aria-live="polite"');
     expect(workspaceSource).toContain("Reading source");
