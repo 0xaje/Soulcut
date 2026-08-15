@@ -1,4 +1,4 @@
-# 📖 SoulCut: Comprehensive Getting Started & User Guide
+# SoulCut: Comprehensive Getting Started & User Guide
 
 Welcome to **SoulCut** — an AI-native Creative Director that learns your unique editorial style and distills long-form YouTube videos and podcasts into high-impact short-form video briefs.
 
@@ -29,8 +29,8 @@ This guide walks you through setup, running the application, teaching your Creat
 Before getting started, make sure you have:
 - **Node.js**: v18.0.0 or higher
 - **Package Manager**: `npm` or `pnpm`
-- **Groq API Key** (or OpenAI API key): For LLM inference ([console.groq.com](https://console.groq.com))
-- **Minds API Credentials** (Optional/Built-in): For syncing with external Minds instances ([useminds.com](https://useminds.com))
+- **Groq API Key** (or OpenAI API key): For LLM inference (console.groq.com)
+- **Minds API Credentials** (Optional/Built-in): For syncing with external Minds instances (useminds.com)
 
 ---
 
@@ -94,7 +94,7 @@ LLM_MODEL=llama-3.3-70b-versatile
 ## 4. Step-by-Step Workflow
 
 ### Step 1: Meet Your Creative Mind (Onboarding)
-1. Navigate to the landing page and click **"Meet Your Creative Mind →"** or click **Sign In** in the top navigation.
+1. Navigate to the landing page and click **"Meet Your Creative Mind ->"** or click **Sign In** in the top navigation.
 2. The initial onboarding takes you through your baseline taste preferences:
    - **Pacing & Energy**: Snappy high-retention vs. reflective deep-dive.
    - **Hook Strategy**: Bold contrarian opening vs. question-first framing.
@@ -115,10 +115,10 @@ You can train your Mind at any time using two methods:
 
 ### Step 4: Real-Time Live Analysis Streaming
 Once submitted, SoulCut's background worker claims the job and streams real-time status updates via Server-Sent Events (SSE):
-- 🟢 **Reading Context**: Worker claims the job and fetches video metadata and transcript.
-- 🟢 **Distilling Core Story**: Context snapshot is applied through your Creative Mind preferences.
-- 🟢 **Shaping Grounded Clips**: Timestamped hooks, virality scores, and editorial rationale are generated.
-- 🟢 **Complete**: Brief ready in seconds.
+- **Reading Context**: Worker claims the job and fetches video metadata and transcript.
+- **Distilling Core Story**: Context snapshot is applied through your Creative Mind preferences.
+- **Shaping Grounded Clips**: Timestamped hooks, virality scores, and editorial rationale are generated.
+- **Complete**: Brief ready in seconds.
 
 ### Step 5: Reviewing Clip Suggestions & Giving Feedback
 Each generated brief includes:
@@ -129,8 +129,8 @@ Each generated brief includes:
   - Suggested hook text.
   - Editorial rationale explaining why this segment works for short-form retention.
 - **Feedback Buttons**:
-  - 👍 **Keep**: Reinforces the preference rules that produced this recommendation, increasing their confidence score in your Mind.
-  - 👎 **Not My Style**: Marks a correction, triggering an adjustment in your Mind's weighting.
+  - **Keep**: Reinforces the preference rules that produced this recommendation, increasing their confidence score in your Mind.
+  - **Not My Style**: Marks a correction, triggering an adjustment in your Mind's weighting.
 
 ### Step 6: Inspecting Creative DNA & Evidence Audit
 Navigate to the **Creative DNA** tab to see your Mind's inner workings:

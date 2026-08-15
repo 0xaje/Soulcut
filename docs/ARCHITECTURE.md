@@ -1,4 +1,4 @@
-# 🏛️ SoulCut Architecture & Technical Design
+# SoulCut Architecture & Technical Design
 
 This document details the internal architecture, memory evolution lifecycle, streaming event pipeline, and data layer of **SoulCut**.
 
@@ -9,28 +9,27 @@ This document details the internal architecture, memory evolution lifecycle, str
 SoulCut is structured into 4 decoupled layers:
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                       Client Layer                          │
-│     React 18 + Tailwind CSS + Framer Motion + TanStack Query │
-│         (Interactive Workspace, Creative DNA, Reports)       │
-└──────────────────────────────┬──────────────────────────────┘
-                               │ tRPC v11 + SSE EventSource
-┌──────────────────────────────▼──────────────────────────────┐
-│                    Application Server                       │
-│        Express + tRPC Router + Background Worker Pool       │
-├─────────────────────────────────────────────────────────────┤
-│ • /api/trpc/*          -> Type-safe RPC Endpoints           │
-│ • /api/analysis/stream -> Live SSE Progress Pipeline        │
-│ • /api/reports/shared  -> Tokenized Client Brief Views      │
-│ • /api/scheduled/*     -> Durable Worker & Cleanup Jobs     │
-└───────────────┬─────────────────────────────┬───────────────┘
-                │                             │
-┌───────────────▼─────────────┐ ┌─────────────▼───────────────┐
-│     AI & Memory Engine      │ │      Dual-Mode Storage      │
-│ • Minds SDK / REST API      │ │ • MySQL (Drizzle ORM)       │
-│ • Groq LLM (Llama 3.3 70B)  │ │ • Resilient In-Memory Store │
-│ • Grounded Video Distillation│ │ • Local / S3 File Storage  │
-└─────────────────────────────┘ └─────────────────────────────┘
++-------------------------------------------------------------+
+|                       Client Layer                          |
+|     React 18 + Tailwind CSS + Framer Motion + TanStack Query|
+|         (Interactive Workspace, Creative DNA, Reports)      |
++------------------------------+------------------------------+
+                               | tRPC v11 + SSE EventSource
++------------------------------v------------------------------+
+|                    Application Server                       |
+|        Express + tRPC Router + Background Worker Pool       |
++-------------------------------------------------------------+
+| - /api/trpc/*          -> Type-safe RPC Endpoints           |
+| - /api/analysis/stream -> Live SSE Progress Pipeline        |
+| - /api/reports/shared  -> Tokenized Client Brief Views      |
+| - /api/scheduled/*     -> Durable Worker & Cleanup Jobs     |
++------------------------------+------------------------------+
+                               |
++------------------------------v------------------------------+
+|                     AI & Storage Layers                     |
+|  AI & Memory: Minds SDK + Groq LLM (Llama 3.3 70B)          |
+|  Storage: Dual-Mode MySQL (Drizzle) + In-Memory Store       |
++-------------------------------------------------------------+
 ```
 
 ---
@@ -43,7 +42,7 @@ Unlike standard one-shot prompt wrappers, SoulCut maintains a **persistent learn
 1. **Teaching Input**: Creator teaches the Mind via reference videos or direct stylistic rules.
 2. **Context Snapshot**: When a video analysis begins, the system takes a snapshot of the creator's top-confidence active preferences.
 3. **Grounded Distillation**: The LLM analyzes the video grounded by source transcripts and guided by the snapshot rules.
-4. **Creator Review**: Creator inspects the suggested clips and provides positive (`keep`) or corrective (`not_my_style`) signals.
+4. **Creator Review**: Creator inspects the suggested clips and provides positive (keep) or corrective (not_my_style) signals.
 5. **Confidence Adjustment**:
    - `keep` signals increment the preference confidence score (capped at 100%) and record new evidence.
    - `not_my_style` signals decrease weight or create corrective counter-rules.
