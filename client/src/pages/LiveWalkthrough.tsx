@@ -62,17 +62,17 @@ export default function LiveWalkthrough() {
       </header>
 
       <div className="mx-auto max-w-5xl px-4 py-7 sm:px-6 lg:py-10">
-        <section className="relative overflow-hidden rounded-[2rem] border border-lime-300/80 bg-gradient-to-br from-lime-50/70 via-white to-slate-50 p-6 shadow-lg dark:border-[#c7ff4b]/18 dark:bg-[#10140f] sm:p-9">
-          <div className="absolute -right-16 -top-20 h-64 w-64 rounded-full bg-lime-300/20 blur-3xl dark:bg-[#c7ff4b]/10" aria-hidden="true" />
+        <section className="relative overflow-hidden rounded-[2rem] border border-slate-300/80 bg-slate-100/90 p-6 shadow-sm dark:border-white/10 dark:bg-[#111116] sm:p-9">
+          <div className="absolute -right-16 -top-20 h-64 w-64 rounded-full bg-indigo-500/10 blur-3xl dark:bg-purple-500/[.07]" aria-hidden="true" />
           <div className="relative max-w-3xl">
-            <p className="eyebrow text-lime-700 dark:text-[#d8ff83]">Live judge walkthrough</p>
+            <p className="eyebrow text-slate-700 dark:text-white/60">Live judge walkthrough</p>
             <h1 className="mt-3 font-display text-3xl leading-[1.08] tracking-[-.04em] text-slate-900 sm:text-5xl dark:text-white">
               Your Mind <span className="italic text-slate-500 dark:text-white/42">remembers.</span>
             </h1>
             <p className="mt-4 max-w-2xl text-sm leading-relaxed text-slate-600 dark:text-white/55">
               This guide uses your current persisted SoulCut state. It does not create sample activity, substitute test data, or claim a step is complete until the relevant Mind, job, feedback, or comparison record exists.
             </p>
-            <div className="mt-5 inline-flex items-center gap-2 rounded-full border border-lime-300 bg-lime-100 px-3 py-1.5 font-mono text-[11px] font-semibold text-lime-900 dark:border-[#c7ff4b]/20 dark:bg-[#c7ff4b]/10 dark:text-[#d8ff83]">
+            <div className="mt-5 inline-flex items-center gap-2 rounded-full border border-slate-300 bg-white px-3 py-1.5 font-mono text-[11px] font-semibold text-slate-800 dark:border-white/12 dark:bg-white/[.06] dark:text-white/80">
               <Brain size={13} /> {mindQuery.data?.builderAvailability === "available" ? "SoulCut experience · Minds persistent intelligence" : "SoulCut persistent creative memory"}
             </div>
           </div>

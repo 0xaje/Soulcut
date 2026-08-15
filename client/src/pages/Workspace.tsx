@@ -861,14 +861,14 @@ export default function Workspace() {
 
         <section className="order-1 min-w-0 lg:order-2">
           {/* Creative Mind Hero Header */}
-          <section className="relative mb-8 overflow-hidden rounded-[2rem] border border-lime-300/80 bg-gradient-to-br from-lime-50/70 via-white to-slate-50 p-5 shadow-lg dark:border-[#c7ff4b]/18 dark:bg-[#10140f] dark:shadow-[0_24px_80px_rgba(0,0,0,.22)] sm:p-7">
-            <div className="absolute -right-16 -top-16 h-52 w-52 rounded-full bg-lime-300/20 blur-3xl dark:bg-[#c7ff4b]/[.10]" aria-hidden="true" />
+          <section className="relative mb-8 overflow-hidden rounded-[2rem] border border-slate-300/80 bg-slate-100/90 p-5 shadow-sm dark:border-white/10 dark:bg-[#111116] sm:p-7">
+            <div className="absolute -right-16 -top-16 h-52 w-52 rounded-full bg-indigo-500/10 blur-3xl dark:bg-purple-500/[.07]" aria-hidden="true" />
             <div className="relative flex flex-col gap-6">
               <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
                 <div className="max-w-2xl">
                   <div className="flex items-center gap-2">
-                    <span className="eyebrow text-lime-700 dark:text-[#d8ff83]">Meet your Creative Mind</span>
-                    <span className="inline-flex items-center gap-1 rounded-full border border-lime-300 bg-lime-100 px-2.5 py-1 font-mono text-[9px] font-semibold uppercase tracking-[.12em] text-lime-900 dark:border-[#c7ff4b]/20 dark:bg-[#c7ff4b]/10 dark:text-[#d8ff83]">
+                    <span className="eyebrow text-slate-700 dark:text-white/60">Meet your Creative Mind</span>
+                    <span className="inline-flex items-center gap-1 rounded-full border border-slate-300 bg-white px-2.5 py-1 font-mono text-[9px] font-semibold uppercase tracking-[.12em] text-slate-800 dark:border-white/12 dark:bg-white/[.06] dark:text-white/80">
                       <CircleDot size={10} /> {mindQuery.data?.builderAvailability === "available" ? "Powered by Minds" : "Persistent memory"}
                     </span>
                   </div>
@@ -880,13 +880,13 @@ export default function Workspace() {
                   </p>
                 </div>
                 <div className="flex shrink-0 flex-wrap gap-2">
-                  <button type="button" onClick={() => setShowMindOnboarding(true)} className="inline-flex items-center justify-center gap-2 rounded-full border border-lime-400 bg-lime-100 px-4 py-2.5 text-xs font-semibold text-lime-900 transition hover:bg-lime-200 dark:border-[#c7ff4b]/25 dark:bg-[#c7ff4b]/10 dark:text-[#d8ff83] dark:hover:bg-[#c7ff4b]/18">
+                  <button type="button" onClick={() => setShowMindOnboarding(true)} className="inline-flex items-center justify-center gap-2 rounded-full border border-slate-300 bg-white px-4 py-2.5 text-xs font-semibold text-slate-800 shadow-xs transition hover:bg-slate-50 dark:border-white/12 dark:bg-white/[.06] dark:text-white dark:hover:bg-white/12">
                     <Users size={14} /> Teach your Mind
                   </button>
-                  <Link href="/dna" className="inline-flex items-center justify-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-2.5 text-xs font-semibold text-slate-700 shadow-xs transition hover:border-slate-300 hover:bg-slate-100 dark:border-white/12 dark:bg-white/[.045] dark:text-white/72 dark:hover:border-[#c7ff4b]/45 dark:hover:bg-[#c7ff4b]/10 dark:hover:text-[#e1ff9f]">
+                  <Link href="/dna" className="inline-flex items-center justify-center gap-2 rounded-full border border-slate-300 bg-white px-4 py-2.5 text-xs font-semibold text-slate-700 shadow-xs transition hover:border-slate-400 hover:bg-slate-50 dark:border-white/12 dark:bg-white/[.045] dark:text-white/72 dark:hover:border-white/25 dark:hover:bg-white/10 dark:hover:text-white">
                     <Network size={14} /> Open Creative DNA
                   </Link>
-                  <Link href="/evolution" className="inline-flex items-center justify-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-2.5 text-xs font-semibold text-slate-700 shadow-xs transition hover:border-slate-300 hover:bg-slate-100 dark:border-white/12 dark:bg-white/[.045] dark:text-white/72 dark:hover:border-[#c7ff4b]/45 dark:hover:bg-[#c7ff4b]/10 dark:hover:text-[#e1ff9f]">
+                  <Link href="/evolution" className="inline-flex items-center justify-center gap-2 rounded-full border border-slate-300 bg-white px-4 py-2.5 text-xs font-semibold text-slate-700 shadow-xs transition hover:border-slate-400 hover:bg-slate-50 dark:border-white/12 dark:bg-white/[.045] dark:text-white/72 dark:hover:border-white/25 dark:hover:bg-white/10 dark:hover:text-white">
                     <History size={14} /> Compare videos
                   </Link>
                   <button type="button" onClick={() => setMindPanelOpen(current => !current)} aria-expanded={mindPanelOpen} className="rounded-full px-3 py-2.5 text-xs font-medium text-slate-500 transition hover:text-slate-900 dark:text-white/45 dark:hover:text-white">
@@ -904,7 +904,7 @@ export default function Workspace() {
                 ].map(([label, value, Icon]) => {
                   const StatIcon = Icon as typeof Brain;
                   return (
-                    <div key={label as string} className="rounded-2xl border border-slate-200 bg-white p-3.5 shadow-xs dark:border-white/8 dark:bg-black/20 dark:shadow-none">
+                    <div key={label as string} className="rounded-2xl border border-slate-200 bg-white p-3.5 shadow-xs dark:border-white/8 dark:bg-[#181820] dark:shadow-none">
                       <div className="flex items-center justify-between text-slate-500 dark:text-white/35">
                         <span className="text-[10px] font-semibold uppercase tracking-[.12em]">{label as string}</span>
                         <StatIcon size={13} />
@@ -916,7 +916,7 @@ export default function Workspace() {
               </div>
 
               <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_290px]">
-                <div className="rounded-2xl border border-slate-200 bg-white p-3 shadow-xs dark:border-white/8 dark:bg-black/20 dark:shadow-none">
+                <div className="rounded-2xl border border-slate-200 bg-white p-3 shadow-xs dark:border-white/8 dark:bg-[#181820] dark:shadow-none">
                   <label className="sr-only" htmlFor="teach-mind">Teach your Mind</label>
                   <div className="flex flex-col gap-2 sm:flex-row">
                     <input
@@ -932,13 +932,13 @@ export default function Workspace() {
                       type="button"
                       onClick={() => void saveTeaching()}
                       disabled={teachMind.isPending || !teachMindInput.trim()}
-                      className="inline-flex items-center justify-center gap-2 rounded-xl bg-slate-900 px-3.5 py-2 text-xs font-semibold text-white transition hover:bg-slate-800 disabled:opacity-50 dark:bg-[#e9ffe2] dark:text-[#111710] dark:hover:bg-[#c7ff4b]"
+                      className="inline-flex items-center justify-center gap-2 rounded-xl bg-slate-900 px-3.5 py-2 text-xs font-semibold text-white transition hover:bg-slate-800 disabled:opacity-50 dark:bg-white dark:text-black dark:hover:bg-slate-200"
                     >
                       <Plus size={14} /> {teachMind.isPending ? "Learning" : "Teach Mind"}
                     </button>
                   </div>
                 </div>
-                <div className="rounded-2xl border border-slate-200 bg-white px-3.5 py-3 shadow-xs dark:border-white/8 dark:bg-black/20 dark:shadow-none">
+                <div className="rounded-2xl border border-slate-200 bg-white px-3.5 py-3 shadow-xs dark:border-white/8 dark:bg-[#181820] dark:shadow-none">
                   <p className="text-[10px] font-semibold uppercase tracking-[.12em] text-slate-500 dark:text-white/35">Latest learning</p>
                   {mindActivityQuery.data?.[0] ? (
                     <p className="mt-2 text-xs leading-relaxed text-slate-700 dark:text-white/65">{mindActivityQuery.data[0].message}</p>
@@ -952,7 +952,7 @@ export default function Workspace() {
                 <div className="grid gap-4 border-t border-slate-200 pt-5 dark:border-white/8 lg:grid-cols-[minmax(0,1fr)_290px]">
                   <div>
                     <div className="flex items-center justify-between">
-                      <p className="eyebrow text-[9px] text-lime-700 dark:text-[#d8ff83]">Creative DNA</p>
+                      <p className="eyebrow text-[9px] text-slate-700 dark:text-white/60">Creative DNA</p>
                       <span className="text-[10px] text-slate-500 dark:text-white/35">Evidence-backed, never assumed</span>
                     </div>
                     <div className="mt-3 grid gap-2 sm:grid-cols-2">
@@ -960,11 +960,11 @@ export default function Workspace() {
                     </div>
                   </div>
                   <div>
-                    <p className="eyebrow text-[9px] text-lime-700 dark:text-[#d8ff83]">Mind activity</p>
+                    <p className="eyebrow text-[9px] text-slate-700 dark:text-white/60">Mind activity</p>
                     <div className="mt-3 space-y-4">
                       {activityGroups.length ? activityGroups.map(group => (
                         <section key={group.label}>
-                          <p className="font-mono text-[10px] uppercase tracking-[.12em] text-lime-700 dark:text-[#d8ff83]">{group.label}</p>
+                          <p className="font-mono text-[10px] uppercase tracking-[.12em] text-slate-600 dark:text-white/70">{group.label}</p>
                           <div className="mt-2 space-y-2">
                             {group.activity.map(activity => (
                               <div key={activity.id} className="rounded-xl border border-slate-200 bg-white p-3 shadow-xs dark:border-white/8 dark:bg-white/[.025] dark:shadow-none">
@@ -1084,19 +1084,19 @@ export default function Workspace() {
               {activeJob.status === "done" && activeJob.summary && (
                 <>
                   {appliedMindPreferences.length > 0 && (
-                    <article className="rounded-3xl border border-lime-300 bg-lime-50/80 p-5 sm:p-6 dark:border-[#c7ff4b]/16 dark:bg-[#c7ff4b]/[.045]">
+                    <article className="rounded-3xl border border-slate-300 bg-slate-100/90 p-5 sm:p-6 dark:border-white/10 dark:bg-[#111116]">
                       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                         <div>
-                          <p className="eyebrow text-lime-700 dark:text-[#d8ff83]">Your Mind remembered</p>
+                          <p className="eyebrow text-slate-700 dark:text-white/60">Your Mind remembered</p>
                           <h2 className="mt-2 font-display text-3xl tracking-[-.055em] text-slate-900 dark:text-white">{appliedMindPreferences.length} learned {appliedMindPreferences.length === 1 ? "preference" : "preferences"} applied to this video.</h2>
                           <p className="mt-2 max-w-xl text-sm leading-relaxed text-slate-600 dark:text-white/55">You did not need to restate your style. These are the bounded Creative DNA preferences your Mind had already learned when this analysis began.</p>
                         </div>
-                        <span className="font-mono text-[10px] font-semibold text-lime-700 dark:text-[#d8ff83]/70">Persisted at analysis time</span>
+                        <span className="font-mono text-[10px] font-semibold text-slate-600 dark:text-white/60">Persisted at analysis time</span>
                       </div>
                       <div className="mt-4 flex flex-wrap gap-2">
                         {appliedMindPreferences.map(preference => (
-                          <span key={`${preference.category}-${preference.value}`} className="rounded-full border border-lime-300 bg-white px-3 py-1.5 text-xs font-medium text-slate-800 shadow-2xs dark:border-[#c7ff4b]/18 dark:bg-black/20 dark:text-white/70">
-                            {preference.value} <span className="text-slate-400 dark:text-white/32">· {preference.confidence}%</span>
+                          <span key={`${preference.category}-${preference.value}`} className="rounded-full border border-slate-300 bg-white px-3 py-1.5 text-xs font-medium text-slate-800 shadow-2xs dark:border-white/12 dark:bg-black/30 dark:text-white/80">
+                            {preference.value} <span className="text-slate-400 dark:text-white/35">· {preference.confidence}%</span>
                           </span>
                         ))}
                       </div>
@@ -1104,10 +1104,10 @@ export default function Workspace() {
                   )}
 
                   {/* Executive Brief Card */}
-                  <article className="result-card result-card--summary rounded-3xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8 dark:border-white/9 dark:bg-black/20 dark:shadow-none">
+                  <article className="result-card result-card--summary rounded-3xl border border-slate-300 bg-white p-6 shadow-sm sm:p-8 dark:border-white/9 dark:bg-[#111116] dark:shadow-none">
                     <div className="flex flex-col justify-between gap-6 sm:flex-row sm:items-start">
                       <div>
-                        <p className="eyebrow text-lime-700 dark:text-white/50">Video understood</p>
+                        <p className="eyebrow text-slate-700 dark:text-white/60">Video understood</p>
                         <h2 className="mt-3 font-display text-4xl tracking-[-.06em] text-slate-900 dark:text-white">Executive brief.</h2>
                       </div>
                       <div className="flex gap-2">
@@ -1124,10 +1124,10 @@ export default function Workspace() {
                   </article>
 
                   {/* Creative Opportunities Section */}
-                  <article className="rounded-3xl border border-slate-200 bg-slate-50/50 p-6 sm:p-8 dark:border-white/9 dark:bg-[#101015]">
+                  <article className="rounded-3xl border border-slate-300 bg-slate-100/60 p-6 sm:p-8 dark:border-white/9 dark:bg-[#101015]">
                     <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
                       <div>
-                        <p className="eyebrow text-lime-700 dark:text-[#d8ff83]">Creative opportunities</p>
+                        <p className="eyebrow text-slate-700 dark:text-white/60">Creative opportunities</p>
                         <h2 className="mt-3 font-display text-4xl tracking-[-.06em] text-slate-900 dark:text-white">Your Mind found {activeClips.length} {activeClips.length === 1 ? "opportunity" : "opportunities"} that fit.</h2>
                         <p className="mt-2 text-sm text-slate-600 dark:text-white/44">Grounded in the available source and prioritized through your Creative DNA.</p>
                       </div>
@@ -1140,14 +1140,14 @@ export default function Workspace() {
                     {activeClips.length > 0 ? (
                       <div className="mt-7 grid gap-3">
                         {activeClips.map((clip, index) => (
-                          <article key={`${clip.startSeconds}-${clip.endSeconds}-${clip.title}`} className="clip-card group rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5 dark:border-white/8 dark:bg-[#15151c] dark:shadow-none">
+                          <article key={`${clip.startSeconds}-${clip.endSeconds}-${clip.title}`} className="clip-card group rounded-2xl border border-slate-300 bg-white p-4 shadow-sm sm:p-5 dark:border-white/8 dark:bg-[#15151c] dark:shadow-none">
                             <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                               <div className="flex min-w-0 gap-4">
                                 <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-slate-900 text-white shadow-sm dark:bg-white dark:text-black">
                                   <Play size={16} fill="currentColor" />
                                 </span>
                                 <div className="min-w-0">
-                                  <p className="font-mono text-[11px] font-semibold tracking-[.12em] text-lime-700 dark:text-[#c7ff4b]">{formatTime(clip.startSeconds)} — {formatTime(clip.endSeconds)}</p>
+                                  <p className="font-mono text-[11px] font-semibold tracking-[.12em] text-slate-700 dark:text-white/70">{formatTime(clip.startSeconds)} — {formatTime(clip.endSeconds)}</p>
                                   <h3 className="mt-1 font-display text-2xl tracking-[-.045em] text-slate-900 dark:text-white">{clip.title}</h3>
                                   <p className="mt-2 text-sm leading-relaxed text-slate-600 dark:text-white/52">“{clip.hook}”</p>
                                 </div>
@@ -1157,14 +1157,14 @@ export default function Workspace() {
                                 <button type="button" className="icon-button" aria-label="Share clip note" onClick={() => void shareText("SoulCut clip idea", clipText(clip))}><Share2 size={16} /></button>
                               </div>
                             </div>
-                            <p className="mt-4 border-t border-slate-100 pt-3 text-xs leading-relaxed text-slate-500 dark:border-white/8 dark:text-white/38">
+                            <p className="mt-4 border-t border-slate-200 pt-3 text-xs leading-relaxed text-slate-500 dark:border-white/8 dark:text-white/38">
                               <span className="font-medium text-slate-700 dark:text-white/60">Why this moment:</span> {clip.reason}
                             </p>
                             {personalizedQuery.data?.[index] && (
-                              <div className="mt-3 rounded-xl border border-lime-300 bg-lime-50/80 p-3 dark:border-[#c7ff4b]/14 dark:bg-[#c7ff4b]/[.045]">
+                              <div className="mt-3 rounded-xl border border-slate-300 bg-slate-100/80 p-3.5 dark:border-white/10 dark:bg-[#121217]">
                                 <div className="flex flex-wrap items-center justify-between gap-2">
-                                  <p className="text-[10px] font-bold uppercase tracking-[.13em] text-lime-800 dark:text-[#d8ff83]">Why it fits your Creative DNA</p>
-                                  <span className="font-mono text-[10px] font-semibold text-lime-700 dark:text-[#d8ff83]/70">Mind confidence {personalizedQuery.data[index].mindConfidence}%</span>
+                                  <p className="text-[10px] font-bold uppercase tracking-[.13em] text-slate-800 dark:text-white/80">Why it fits your Creative DNA</p>
+                                  <span className="font-mono text-[10px] font-semibold text-slate-600 dark:text-white/60">Mind confidence {personalizedQuery.data[index].mindConfidence}%</span>
                                 </div>
                                 {personalizedQuery.data[index].fit.length ? (
                                   <ul className="mt-2 space-y-1">
@@ -1177,7 +1177,7 @@ export default function Workspace() {
                                 ) : (
                                   <p className="mt-2 text-xs leading-relaxed text-slate-500 dark:text-white/42">No documented Creative DNA preference directly matches this recommendation yet.</p>
                                 )}
-                                <button type="button" onClick={() => setExpandedExplanation(expandedExplanation === index ? null : index)} aria-expanded={expandedExplanation === index} className="mt-3 text-[10px] font-semibold text-lime-700 transition hover:text-lime-800 dark:text-[#d8ff83] dark:hover:text-[#c7ff4b]">
+                                <button type="button" onClick={() => setExpandedExplanation(expandedExplanation === index ? null : index)} aria-expanded={expandedExplanation === index} className="mt-3 text-[10px] font-semibold text-slate-800 underline transition hover:text-black dark:text-[#d8ff83] dark:hover:text-[#c7ff4b]">
                                   {expandedExplanation === index ? "Hide why this" : "Why does my Mind think this?"}
                                 </button>
                                 {expandedExplanation === index && (
@@ -1193,7 +1193,7 @@ export default function Workspace() {
                                         ))}
                                       </ul>
                                     ) : null}
-                                    {personalizedQuery.data[index].explanation.confidence > 0 && <p className="mt-3 font-mono text-[10px] font-semibold text-lime-700 dark:text-[#d8ff83]/75">Evidence confidence {personalizedQuery.data[index].explanation.confidence}%</p>}
+                                    {personalizedQuery.data[index].explanation.confidence > 0 && <p className="mt-3 font-mono text-[10px] font-semibold text-slate-700 dark:text-[#d8ff83]/75">Evidence confidence {personalizedQuery.data[index].explanation.confidence}%</p>}
                                   </div>
                                 )}
                               </div>

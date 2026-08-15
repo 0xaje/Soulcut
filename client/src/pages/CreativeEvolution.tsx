@@ -60,15 +60,15 @@ export default function CreativeEvolution() {
       </header>
 
       <div className="mx-auto max-w-7xl px-4 py-7 sm:px-6 lg:py-10">
-        <section className="relative overflow-hidden rounded-[2rem] border border-lime-300/80 bg-gradient-to-br from-lime-50/70 via-white to-slate-50 p-6 shadow-lg dark:border-[#c7ff4b]/18 dark:bg-[#10140f] sm:p-9">
-          <div className="absolute -right-16 -top-20 h-64 w-64 rounded-full bg-lime-300/20 blur-3xl dark:bg-[#c7ff4b]/10" aria-hidden="true" />
+        <section className="relative overflow-hidden rounded-[2rem] border border-slate-300/80 bg-slate-100/90 p-6 shadow-sm dark:border-white/10 dark:bg-[#111116] sm:p-9">
+          <div className="absolute -right-16 -top-20 h-64 w-64 rounded-full bg-indigo-500/10 blur-3xl dark:bg-purple-500/[.07]" aria-hidden="true" />
           <div className="relative max-w-3xl">
-            <p className="eyebrow text-lime-700 dark:text-[#d8ff83]">Persistent creative memory</p>
+            <p className="eyebrow text-slate-700 dark:text-white/60">Persistent creative memory</p>
             <div className="mt-3 flex flex-wrap items-center gap-3">
               <h1 className="font-display text-3xl leading-[1.08] tracking-[-.04em] text-slate-900 sm:text-5xl dark:text-white">
                 Your Creative <span className="italic text-slate-500 dark:text-white/42">Evolution.</span>
               </h1>
-              <span className="inline-flex items-center gap-1 rounded-full border border-lime-300 bg-lime-100 px-2.5 py-1 font-mono text-[9px] font-semibold uppercase tracking-[.12em] text-lime-900 dark:border-[#c7ff4b]/20 dark:bg-[#c7ff4b]/10 dark:text-[#d8ff83]">
+              <span className="inline-flex items-center gap-1 rounded-full border border-slate-300 bg-white px-2.5 py-1 font-mono text-[9px] font-semibold uppercase tracking-[.12em] text-slate-800 dark:border-white/12 dark:bg-white/[.06] dark:text-white/80">
                 <Brain size={10} /> Mind learning history
               </span>
             </div>
