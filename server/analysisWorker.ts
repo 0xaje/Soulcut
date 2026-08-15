@@ -46,13 +46,14 @@ export async function processNextAnalysisJob() {
     const contextApplied = await updateClaimedVideoJob(job.id, workerToken, { mindContextSnapshot: mindContext });
     if (!contextApplied || await cancelled()) return { processed: true as const, status: "cancelled" as const };
     await addEvent("clips", "Shaping grounded short-form clip recommendations.");
+    const model = process.env.LLM_MODEL || "llama-3.3-70b-versatile";
     const completed = await updateClaimedVideoJob(job.id, workerToken, {
       status: "done",
       summary: analysis.summary,
       topics: analysis.topics,
       clips: analysis.clips,
       sourceNote: analysis.sourceNote,
-      model: "gpt-5-mini",
+      model,
       completedAt: new Date(),
       workerToken: null,
       workerClaimedAt: null,

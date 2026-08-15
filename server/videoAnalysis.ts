@@ -88,7 +88,16 @@ export function isPublicVideoUrl(value: string): boolean {
 }
 
 export function parseVideoAnalysis(content: string): VideoAnalysis {
-  return videoAnalysisSchema.parse(JSON.parse(content));
+  let cleaned = content.trim();
+  if (cleaned.startsWith("```")) {
+    cleaned = cleaned.replace(/^```(?:json)?\n?/, "").replace(/\n?```$/, "").trim();
+  }
+  const firstBrace = cleaned.indexOf("{");
+  const lastBrace = cleaned.lastIndexOf("}");
+  if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
+    cleaned = cleaned.slice(firstBrace, lastBrace + 1);
+  }
+  return videoAnalysisSchema.parse(JSON.parse(cleaned));
 }
 
 export function formatCreativeMindGuidance(context: CreativeMindAnalysisContext | null | undefined) {

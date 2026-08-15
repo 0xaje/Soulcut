@@ -9,6 +9,7 @@ import { appRouter } from "../routers";
 import { registerAnalysisProgressStream } from "../analysisProgressStream";
 import { registerReportShareRoute } from "../reportShareRoute";
 import { registerScheduledWorkerRoutes } from "../scheduledWorkers";
+import { processNextAnalysisJob } from "../analysisWorker";
 import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
 
@@ -66,6 +67,13 @@ async function startServer() {
 
   server.listen(port, () => {
     console.log(`Server running on http://localhost:${port}/`);
+
+    // Start background analysis processor loop
+    setInterval(() => {
+      processNextAnalysisJob().catch(err => {
+        // Suppress recurring empty queue logs
+      });
+    }, 2500);
   });
 }
 

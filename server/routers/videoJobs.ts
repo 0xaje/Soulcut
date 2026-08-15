@@ -26,6 +26,7 @@ import { buildJobPdfReport } from "../jobPdfReport";
 import { storageGet, storageGetSignedUrl, storagePut } from "../storage";
 import { parseCreatorTranscript } from "../transcriptIngestion";
 import { isPublicVideoUrl } from "../videoAnalysis";
+import { processNextAnalysisJob } from "../analysisWorker";
 import { protectedProcedure, router } from "../_core/trpc";
 
 const videoUrlInput = z
@@ -282,6 +283,7 @@ export const videoJobsRouter = router({
         stage: "queued",
         message: "Analysis queued. A worker will begin shortly.",
       });
+      processNextAnalysisJob().catch(err => console.error("[JobWorker] Error processing job:", err));
       return queuedJob;
     }),
 
@@ -306,6 +308,7 @@ export const videoJobsRouter = router({
         stage: "queued",
         message: `Analysis queued with an imported ${parsed.format.toUpperCase()} transcript.`,
       });
+      processNextAnalysisJob().catch(err => console.error("[JobWorker] Error processing job:", err));
       return queuedJob;
     }),
 
@@ -344,6 +347,7 @@ export const videoJobsRouter = router({
         stage: "queued",
         message: "Analysis queued. A worker will begin shortly.",
       });
+      processNextAnalysisJob().catch(err => console.error("[JobWorker] Error processing job:", err));
       return job;
     }),
 });

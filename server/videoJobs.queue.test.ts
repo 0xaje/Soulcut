@@ -23,6 +23,8 @@ const mocks = vi.hoisted(() => ({
   storagePut: vi.fn(),
   upsertPdfReportBranding: vi.fn(),
   updateVideoJobForUser: vi.fn(),
+  claimNextVideoJob: vi.fn(),
+  updateClaimedVideoJob: vi.fn(),
 }));
 
 vi.mock("./db", () => mocks);
