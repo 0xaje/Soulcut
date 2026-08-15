@@ -139,7 +139,7 @@ function drawCover(doc: InstanceType<typeof PDFDocument>, job: ReportJob, brandi
   doc.restore();
 }
 
-export async function buildJobPdfReport(job: ReportJob, events: ReportEvent[], branding?: ReportBranding, mindContext?: ReportMindContext | null): Promise<Buffer> {
+export async function buildJobPdfReport(job: ReportJob, events: ReportEvent[] = [], branding?: ReportBranding, mindContext?: ReportMindContext | null): Promise<Buffer> {
   return new Promise((resolve, reject) => {
     const doc = new PDFDocument({ size: "A4", margin: pageMargin, compress: false, info: {
       Title: `SoulCut report — ${job.id}`,
