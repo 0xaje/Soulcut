@@ -686,7 +686,7 @@ export default function Workspace() {
           </section>
         </div>
       )}
-      <header className="sticky top-0 z-30 border-b border-slate-200 bg-white/80 px-4 py-3 backdrop-blur-xl dark:border-white/8 dark:bg-[#08080b]/85 sm:px-6">
+      <header className="sticky top-0 z-30 border-b border-slate-300/80 bg-slate-100/95 px-4 py-3 backdrop-blur-xl dark:border-white/8 dark:bg-[#08080b]/85 sm:px-6">
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-3">
           <Link href="/" className="flex items-center gap-2.5">
             <span className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-900 text-white shadow-sm dark:bg-white dark:text-black">
@@ -694,38 +694,28 @@ export default function Workspace() {
             </span>
             <span className="font-display text-lg tracking-[-0.04em] text-slate-900 dark:text-white">SoulCut</span>
           </Link>
-          <div className="flex items-center gap-2 sm:gap-3">
-            <Link href="/dna" className="hidden rounded-full border border-slate-200 bg-slate-100/70 px-3 py-1.5 text-xs font-medium text-slate-700 transition hover:bg-slate-200 dark:border-white/10 dark:bg-white/[.04] dark:text-white/55 dark:hover:border-[#c7ff4b]/45 dark:hover:text-[#d8ff83] sm:block">
-              Creative DNA
+          <nav className="flex items-center gap-1.5 sm:gap-2.5">
+            <Link href="/dna" className="inline-flex items-center gap-1.5 rounded-full border border-slate-400 bg-white px-3 py-1.5 text-xs font-semibold text-slate-900 shadow-2xs transition hover:border-slate-600 hover:bg-slate-50 dark:border-white/12 dark:bg-white/[.06] dark:text-white dark:hover:border-white/25 dark:hover:bg-white/12">
+              <Network size={13} className="text-slate-700 dark:text-white/70" />
+              <span>Creative DNA</span>
             </Link>
-            <Link href="/evolution" className="hidden rounded-full border border-slate-200 bg-slate-100/70 px-3 py-1.5 text-xs font-medium text-slate-700 transition hover:bg-slate-200 dark:border-white/10 dark:bg-white/[.04] dark:text-white/55 dark:hover:border-[#c7ff4b]/45 dark:hover:text-[#d8ff83] lg:block">
-              Evolution
+            <Link href="/evolution" className="inline-flex items-center gap-1.5 rounded-full border border-slate-400 bg-white px-3 py-1.5 text-xs font-semibold text-slate-900 shadow-2xs transition hover:border-slate-600 hover:bg-slate-50 dark:border-white/12 dark:bg-white/[.06] dark:text-white dark:hover:border-white/25 dark:hover:bg-white/12">
+              <History size={13} className="text-slate-700 dark:text-white/70" />
+              <span>Evolution</span>
             </Link>
-            <Link href="/walkthrough" className="hidden rounded-full border border-lime-300 bg-lime-100 px-3 py-1.5 text-xs font-medium text-lime-900 transition hover:bg-lime-200 dark:border-[#c7ff4b]/20 dark:bg-[#c7ff4b]/[.07] dark:text-[#d8ff83] dark:hover:bg-[#c7ff4b]/14 xl:block">
-              Walkthrough
+            <Link href="/walkthrough" className="inline-flex items-center gap-1.5 rounded-full border border-slate-400 bg-white px-3 py-1.5 text-xs font-semibold text-slate-900 shadow-2xs transition hover:border-slate-600 hover:bg-slate-50 dark:border-white/12 dark:bg-white/[.06] dark:text-white dark:hover:border-white/25 dark:hover:bg-white/12">
+              <Sparkles size={13} className="text-slate-700 dark:text-white/70" />
+              <span>Walkthrough</span>
             </Link>
-            <span className="hidden max-w-40 truncate text-xs text-slate-500 dark:text-white/38 md:block">{user?.name ?? "Private workspace"}</span>
             <ThemeToggle />
             <button
               onClick={handleLogout}
               type="button"
-              className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-slate-100 px-3 py-1.5 text-xs font-medium text-slate-700 transition hover:bg-slate-200 active:scale-[.97] dark:border-white/10 dark:bg-white/[.04] dark:text-white/62 dark:hover:bg-white/10 dark:hover:text-white"
+              className="inline-flex items-center gap-1.5 rounded-full border border-slate-300 bg-slate-200/80 px-3 py-1.5 text-xs font-medium text-slate-700 transition hover:bg-slate-300 active:scale-[.97] dark:border-white/10 dark:bg-white/[.04] dark:text-white/62 dark:hover:bg-white/10 dark:hover:text-white"
             >
-              <LogOut size={14} /> <span className="hidden sm:inline">Sign out</span>
+              <LogOut size={13} /> <span className="hidden md:inline">Sign out</span>
             </button>
-          </div>
-        </div>
-        {/* Mobile quick links bar */}
-        <div className="mt-2.5 flex items-center gap-2 overflow-x-auto pb-1 sm:hidden">
-          <Link href="/dna" className="whitespace-nowrap rounded-full border border-slate-200 bg-slate-100 px-3 py-1 text-[11px] font-medium text-slate-700 dark:border-white/10 dark:bg-white/[.04] dark:text-white/60">
-            Creative DNA
-          </Link>
-          <Link href="/evolution" className="whitespace-nowrap rounded-full border border-slate-200 bg-slate-100 px-3 py-1 text-[11px] font-medium text-slate-700 dark:border-white/10 dark:bg-white/[.04] dark:text-white/60">
-            Evolution
-          </Link>
-          <Link href="/walkthrough" className="whitespace-nowrap rounded-full border border-lime-300 bg-lime-100 px-3 py-1 text-[11px] font-medium text-lime-900 dark:border-[#c7ff4b]/20 dark:bg-[#c7ff4b]/[.07] dark:text-[#d8ff83]">
-            Walkthrough
-          </Link>
+          </nav>
         </div>
       </header>
 
@@ -879,17 +869,20 @@ export default function Workspace() {
                     SoulCut is your focused creative workspace. Minds supplies the persistent intelligence layer; every lesson, approval, and correction becomes evidence your Mind can use for the next creative decision.
                   </p>
                 </div>
-                <div className="flex shrink-0 flex-wrap gap-2">
-                  <button type="button" onClick={() => setShowMindOnboarding(true)} className="inline-flex items-center justify-center gap-2 rounded-full border border-slate-300 bg-white px-4 py-2.5 text-xs font-semibold text-slate-800 shadow-xs transition hover:bg-slate-50 dark:border-white/12 dark:bg-white/[.06] dark:text-white dark:hover:bg-white/12">
-                    <Users size={14} /> Teach your Mind
+                <div className="flex shrink-0 flex-wrap items-center gap-2">
+                  <button type="button" onClick={() => setShowMindOnboarding(true)} className="inline-flex items-center justify-center gap-1.5 rounded-full border border-slate-900 bg-slate-900 px-3.5 py-2 text-xs font-semibold text-white shadow-xs transition hover:bg-slate-800 dark:border-white/20 dark:bg-white dark:text-black dark:hover:bg-slate-200">
+                    <Users size={13} /> Teach Mind
                   </button>
-                  <Link href="/dna" className="inline-flex items-center justify-center gap-2 rounded-full border border-slate-300 bg-white px-4 py-2.5 text-xs font-semibold text-slate-700 shadow-xs transition hover:border-slate-400 hover:bg-slate-50 dark:border-white/12 dark:bg-white/[.045] dark:text-white/72 dark:hover:border-white/25 dark:hover:bg-white/10 dark:hover:text-white">
-                    <Network size={14} /> Open Creative DNA
+                  <Link href="/dna" className="inline-flex items-center justify-center gap-1.5 rounded-full border border-slate-400 bg-white px-3.5 py-2 text-xs font-bold text-slate-900 shadow-2xs transition hover:border-slate-600 hover:bg-slate-50 dark:border-white/12 dark:bg-white/[.06] dark:text-white dark:hover:border-white/25 dark:hover:bg-white/12">
+                    <Network size={13} /> Creative DNA
                   </Link>
-                  <Link href="/evolution" className="inline-flex items-center justify-center gap-2 rounded-full border border-slate-300 bg-white px-4 py-2.5 text-xs font-semibold text-slate-700 shadow-xs transition hover:border-slate-400 hover:bg-slate-50 dark:border-white/12 dark:bg-white/[.045] dark:text-white/72 dark:hover:border-white/25 dark:hover:bg-white/10 dark:hover:text-white">
-                    <History size={14} /> Compare videos
+                  <Link href="/evolution" className="inline-flex items-center justify-center gap-1.5 rounded-full border border-slate-400 bg-white px-3.5 py-2 text-xs font-bold text-slate-900 shadow-2xs transition hover:border-slate-600 hover:bg-slate-50 dark:border-white/12 dark:bg-white/[.06] dark:text-white dark:hover:border-white/25 dark:hover:bg-white/12">
+                    <History size={13} /> Evolution
                   </Link>
-                  <button type="button" onClick={() => setMindPanelOpen(current => !current)} aria-expanded={mindPanelOpen} className="rounded-full px-3 py-2.5 text-xs font-medium text-slate-500 transition hover:text-slate-900 dark:text-white/45 dark:hover:text-white">
+                  <Link href="/walkthrough" className="inline-flex items-center justify-center gap-1.5 rounded-full border border-slate-400 bg-white px-3.5 py-2 text-xs font-bold text-slate-900 shadow-2xs transition hover:border-slate-600 hover:bg-slate-50 dark:border-white/12 dark:bg-white/[.06] dark:text-white dark:hover:border-white/25 dark:hover:bg-white/12">
+                    <Sparkles size={13} /> Walkthrough
+                  </Link>
+                  <button type="button" onClick={() => setMindPanelOpen(current => !current)} aria-expanded={mindPanelOpen} className="rounded-full px-2.5 py-2 text-xs font-medium text-slate-600 underline transition hover:text-slate-950 dark:text-white/50 dark:hover:text-white">
                     {mindPanelOpen ? "Hide preview" : "Preview"}
                   </button>
                 </div>

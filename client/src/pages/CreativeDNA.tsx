@@ -3,7 +3,7 @@ import { MindEvidenceDetails, type CreativeDnaMemory } from "@/components/MindEv
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { groupMindActivityByRecency } from "@/lib/mindPresentation";
 import { trpc } from "@/lib/trpc";
-import { ArrowLeft, Brain, CircleDot, Network, Sparkles, ThumbsUp } from "lucide-react";
+import { ArrowLeft, Brain, CircleDot, History, Network, Sparkles, ThumbsUp } from "lucide-react";
 import React, { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { Link } from "wouter";
@@ -62,7 +62,7 @@ export default function CreativeDNA() {
   };
   return (
     <main className="workspace-bg min-h-screen text-slate-900 dark:text-white">
-      <header className="sticky top-0 z-30 border-b border-slate-200 bg-white/80 px-4 py-3 backdrop-blur-xl dark:border-white/8 dark:bg-[#08080b]/85 sm:px-6">
+      <header className="sticky top-0 z-30 border-b border-slate-300/80 bg-slate-100/95 px-4 py-3 backdrop-blur-xl dark:border-white/8 dark:bg-[#08080b]/85 sm:px-6">
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-3">
           <Link href="/" className="flex items-center gap-2.5">
             <span className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-900 text-white shadow-sm dark:bg-white dark:text-black">
@@ -70,12 +70,21 @@ export default function CreativeDNA() {
             </span>
             <span className="font-display text-lg tracking-[-0.04em]">SoulCut</span>
           </Link>
-          <div className="flex items-center gap-2.5">
-            <ThemeToggle />
-            <Link href="/app" className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-slate-100 px-3.5 py-1.5 text-xs font-semibold text-slate-700 transition hover:bg-slate-200 dark:border-white/10 dark:bg-white/[.04] dark:text-white/65 dark:hover:border-[#c7ff4b]/45 dark:hover:text-[#d8ff83]">
-              <ArrowLeft size={14} /> Workspace
+          <nav className="flex items-center gap-1.5 sm:gap-2.5">
+            <Link href="/app" className="inline-flex items-center gap-1.5 rounded-full border border-slate-400 bg-white px-3 py-1.5 text-xs font-semibold text-slate-900 shadow-2xs transition hover:border-slate-600 hover:bg-slate-50 dark:border-white/12 dark:bg-white/[.06] dark:text-white dark:hover:border-white/25 dark:hover:bg-white/12">
+              <ArrowLeft size={13} />
+              <span>Workspace</span>
             </Link>
-          </div>
+            <Link href="/evolution" className="inline-flex items-center gap-1.5 rounded-full border border-slate-400 bg-white px-3 py-1.5 text-xs font-semibold text-slate-900 shadow-2xs transition hover:border-slate-600 hover:bg-slate-50 dark:border-white/12 dark:bg-white/[.06] dark:text-white dark:hover:border-white/25 dark:hover:bg-white/12">
+              <History size={13} className="text-slate-700 dark:text-white/70" />
+              <span>Evolution</span>
+            </Link>
+            <Link href="/walkthrough" className="inline-flex items-center gap-1.5 rounded-full border border-slate-400 bg-white px-3 py-1.5 text-xs font-semibold text-slate-900 shadow-2xs transition hover:border-slate-600 hover:bg-slate-50 dark:border-white/12 dark:bg-white/[.06] dark:text-white dark:hover:border-white/25 dark:hover:bg-white/12">
+              <Sparkles size={13} className="text-slate-700 dark:text-white/70" />
+              <span>Walkthrough</span>
+            </Link>
+            <ThemeToggle />
+          </nav>
         </div>
       </header>
 
