@@ -1,10 +1,11 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
 
-type Theme = "light" | "dark";
+export type Theme = "light" | "dark";
 
 interface ThemeContextType {
   theme: Theme;
-  toggleTheme?: () => void;
+  toggleTheme: () => void;
+  setTheme: (theme: Theme) => void;
   switchable: boolean;
 }
 
@@ -19,18 +20,40 @@ interface ThemeProviderProps {
 export function ThemeProvider({
   children,
   defaultTheme = "dark",
-  switchable = false,
+  switchable = true,
 }: ThemeProviderProps) {
-  const [theme] = useState<Theme>("dark");
+  const [theme, setThemeState] = useState<Theme>(() => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem("soulcut_theme");
+      if (saved === "light" || saved === "dark") return saved;
+    }
+    return defaultTheme;
+  });
 
   useEffect(() => {
     const root = document.documentElement;
-    root.classList.add("dark");
-    localStorage.setItem("theme", "dark");
-  }, []);
+    if (theme === "dark") {
+      root.classList.add("dark");
+      root.classList.remove("light");
+    } else {
+      root.classList.add("light");
+      root.classList.remove("dark");
+    }
+    try {
+      localStorage.setItem("soulcut_theme", theme);
+    } catch {}
+  }, [theme]);
+
+  const toggleTheme = () => {
+    setThemeState((prev) => (prev === "dark" ? "light" : "dark"));
+  };
+
+  const setTheme = (newTheme: Theme) => {
+    setThemeState(newTheme);
+  };
 
   return (
-    <ThemeContext.Provider value={{ theme, toggleTheme: undefined, switchable: false }}>
+    <ThemeContext.Provider value={{ theme, toggleTheme, setTheme, switchable }}>
       {children}
     </ThemeContext.Provider>
   );
@@ -41,8 +64,9 @@ export function useTheme() {
   if (!context) {
     return {
       theme: "dark" as Theme,
-      toggleTheme: undefined,
-      switchable: false,
+      toggleTheme: () => {},
+      setTheme: () => {},
+      switchable: true,
     };
   }
   return context;
