@@ -77,9 +77,9 @@ export default function Home() {
         </header>
 
         <div className="relative z-10 mx-auto flex max-w-5xl flex-col items-center px-4 pb-16 pt-12 text-center sm:px-5 sm:pb-20 sm:pt-24">
-          <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white/90 px-3.5 py-1.5 text-xs font-medium text-slate-700 shadow-sm backdrop-blur-md dark:border-white/10 dark:bg-white/[0.045] dark:text-white/70 dark:shadow-none">
+          <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-lime-400/40 bg-lime-400/10 px-3.5 py-1.5 text-xs font-bold text-lime-900 shadow-sm backdrop-blur-md dark:border-[#c7ff4b]/30 dark:bg-[#c7ff4b]/10 dark:text-[#d8ff83]">
             <Brain size={14} className="text-lime-600 dark:text-[#c7ff4b]" />
-            Your AI Creative Director
+            Built on Minds API · Persistent Cognitive Memory
           </div>
           
           <h1 className="max-w-4xl font-display text-[clamp(2.1rem,5.2vw,4.4rem)] leading-[1.08] tracking-[-0.05em] text-slate-900 dark:text-white">
