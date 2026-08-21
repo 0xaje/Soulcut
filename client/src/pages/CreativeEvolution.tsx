@@ -41,25 +41,27 @@ export default function CreativeEvolution() {
 
   return (
     <main className="workspace-bg min-h-screen text-slate-900 dark:text-white">
-      <header className="sticky top-0 z-30 border-b border-slate-300/80 bg-slate-100/95 px-4 py-3 backdrop-blur-xl dark:border-white/8 dark:bg-[#08080b]/85 sm:px-6">
-        <div className="mx-auto flex max-w-7xl items-center justify-between gap-3">
-          <Link href="/" className="flex items-center gap-2.5">
-            <span className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-900 text-white shadow-sm dark:bg-white dark:text-black">
-              <Sparkles size={15} strokeWidth={2.7} />
+      <header className="sticky top-0 z-30 border-b border-slate-300/80 bg-slate-100/95 px-3 py-2.5 backdrop-blur-xl dark:border-white/8 dark:bg-[#08080b]/85 sm:px-6 sm:py-3">
+        <div className="mx-auto flex max-w-7xl items-center justify-between gap-2">
+          <Link href="/" className="flex items-center gap-2">
+            <span className="flex h-7 w-7 sm:h-8 sm:w-8 items-center justify-center rounded-full bg-slate-900 text-white shadow-sm dark:bg-white dark:text-black">
+              <Sparkles size={14} strokeWidth={2.7} className="sm:scale-110" />
             </span>
-            <span className="font-display text-lg tracking-[-0.04em] text-slate-900 dark:text-white">SoulCut</span>
+            <span className="font-display text-base sm:text-lg tracking-[-0.04em]">SoulCut</span>
           </Link>
-          <nav className="flex items-center gap-1.5 sm:gap-2.5">
-            <Link href="/app" className="inline-flex items-center gap-1.5 rounded-full border border-slate-400 bg-white px-3 py-1.5 text-xs font-semibold text-slate-900 shadow-2xs transition hover:border-slate-600 hover:bg-slate-50 dark:border-white/12 dark:bg-white/[.06] dark:text-white dark:hover:border-white/25 dark:hover:bg-white/12">
-              <ArrowLeft size={13} />
-              <span>Workspace</span>
+          <nav className="flex items-center gap-1 sm:gap-2">
+            <Link href="/app" className="inline-flex items-center gap-1 rounded-full border border-slate-400 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-900 shadow-2xs transition hover:border-slate-600 hover:bg-slate-50 dark:border-white/12 dark:bg-white/[.06] dark:text-white dark:hover:border-white/25 dark:hover:bg-white/12">
+              <ArrowLeft size={12} />
+              <span className="hidden sm:inline">Workspace</span>
+              <span className="sm:hidden">App</span>
             </Link>
-            <Link href="/dna" className="inline-flex items-center gap-1.5 rounded-full border border-slate-400 bg-white px-3 py-1.5 text-xs font-semibold text-slate-900 shadow-2xs transition hover:border-slate-600 hover:bg-slate-50 dark:border-white/12 dark:bg-white/[.06] dark:text-white dark:hover:border-white/25 dark:hover:bg-white/12">
-              <Network size={13} className="text-slate-700 dark:text-white/70" />
-              <span>Creative DNA</span>
+            <Link href="/dna" className="inline-flex items-center gap-1 rounded-full border border-slate-400 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-900 shadow-2xs transition hover:border-slate-600 hover:bg-slate-50 dark:border-white/12 dark:bg-white/[.06] dark:text-white dark:hover:border-white/25 dark:hover:bg-white/12">
+              <Network size={12} className="text-slate-700 dark:text-white/70" />
+              <span className="hidden sm:inline">Creative DNA</span>
+              <span className="sm:hidden">DNA</span>
             </Link>
-            <Link href="/walkthrough" className="inline-flex items-center gap-1.5 rounded-full border border-slate-400 bg-white px-3 py-1.5 text-xs font-semibold text-slate-900 shadow-2xs transition hover:border-slate-600 hover:bg-slate-50 dark:border-white/12 dark:bg-white/[.06] dark:text-white dark:hover:border-white/25 dark:hover:bg-white/12">
-              <Sparkles size={13} className="text-slate-700 dark:text-white/70" />
+            <Link href="/walkthrough" className="hidden sm:inline-flex items-center gap-1 rounded-full border border-slate-400 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-900 shadow-2xs transition hover:border-slate-600 hover:bg-slate-50 dark:border-white/12 dark:bg-white/[.06] dark:text-white dark:hover:border-white/25 dark:hover:bg-white/12">
+              <Sparkles size={12} className="text-slate-700 dark:text-white/70" />
               <span>Walkthrough</span>
             </Link>
             <ThemeToggle />
@@ -69,15 +71,16 @@ export default function CreativeEvolution() {
                 toast.success("Signed out successfully.");
               }}
               type="button"
-              className="inline-flex items-center gap-1.5 rounded-full border border-slate-300 bg-slate-200/80 px-3 py-1.5 text-xs font-medium text-slate-700 transition hover:bg-slate-300 active:scale-[.97] dark:border-white/10 dark:bg-white/[.04] dark:text-white/62 dark:hover:bg-white/10 dark:hover:text-white"
+              className="inline-flex items-center gap-1 rounded-full border border-slate-300 bg-slate-200/80 px-2.5 py-1.5 text-xs font-medium text-slate-700 transition hover:bg-slate-300 active:scale-[.97] dark:border-white/10 dark:bg-white/[.04] dark:text-white/62 dark:hover:bg-white/10 dark:hover:text-white"
+              title="Sign out"
             >
-              <LogOut size={13} /> <span className="hidden md:inline">Sign out</span>
+              <LogOut size={12} /> <span className="hidden md:inline">Sign out</span>
             </button>
           </nav>
         </div>
       </header>
 
-      <div className="mx-auto max-w-7xl px-4 py-7 sm:px-6 lg:py-10">
+      <div className="mx-auto max-w-7xl px-3.5 py-5 sm:px-6 lg:py-10">
         <section className="relative overflow-hidden rounded-[2rem] border border-slate-300/80 bg-slate-100/90 p-6 shadow-sm dark:border-white/10 dark:bg-[#111116] sm:p-9">
           <div className="absolute -right-16 -top-20 h-64 w-64 rounded-full bg-indigo-500/10 blur-3xl dark:bg-purple-500/[.07]" aria-hidden="true" />
           <div className="relative max-w-3xl">

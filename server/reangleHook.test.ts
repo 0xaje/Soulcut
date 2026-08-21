@@ -18,6 +18,7 @@ vi.mock("./_core/llm", () => ({
       },
     ],
   }),
+  getDefaultModel: vi.fn().mockReturnValue("gpt-4o-mini"),
 }));
 
 describe("reangleHook mutation", () => {

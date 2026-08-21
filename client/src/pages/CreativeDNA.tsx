@@ -79,25 +79,27 @@ export default function CreativeDNA() {
   };
   return (
     <main className="workspace-bg min-h-screen text-slate-900 dark:text-white">
-      <header className="sticky top-0 z-30 border-b border-slate-300/80 bg-slate-100/95 px-4 py-3 backdrop-blur-xl dark:border-white/8 dark:bg-[#08080b]/85 sm:px-6">
-        <div className="mx-auto flex max-w-7xl items-center justify-between gap-3">
-          <Link href="/" className="flex items-center gap-2.5">
-            <span className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-900 text-white shadow-sm dark:bg-white dark:text-black">
-              <Sparkles size={15} strokeWidth={2.7} />
+      <header className="sticky top-0 z-30 border-b border-slate-300/80 bg-slate-100/95 px-3 py-2.5 backdrop-blur-xl dark:border-white/8 dark:bg-[#08080b]/85 sm:px-6 sm:py-3">
+        <div className="mx-auto flex max-w-7xl items-center justify-between gap-2">
+          <Link href="/" className="flex items-center gap-2">
+            <span className="flex h-7 w-7 sm:h-8 sm:w-8 items-center justify-center rounded-full bg-slate-900 text-white shadow-sm dark:bg-white dark:text-black">
+              <Sparkles size={14} strokeWidth={2.7} className="sm:scale-110" />
             </span>
-            <span className="font-display text-lg tracking-[-0.04em]">SoulCut</span>
+            <span className="font-display text-base sm:text-lg tracking-[-0.04em]">SoulCut</span>
           </Link>
-          <nav className="flex items-center gap-1.5 sm:gap-2.5">
-            <Link href="/app" className="inline-flex items-center gap-1.5 rounded-full border border-slate-400 bg-white px-3 py-1.5 text-xs font-semibold text-slate-900 shadow-2xs transition hover:border-slate-600 hover:bg-slate-50 dark:border-white/12 dark:bg-white/[.06] dark:text-white dark:hover:border-white/25 dark:hover:bg-white/12">
-              <ArrowLeft size={13} />
-              <span>Workspace</span>
+          <nav className="flex items-center gap-1 sm:gap-2">
+            <Link href="/app" className="inline-flex items-center gap-1 rounded-full border border-slate-400 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-900 shadow-2xs transition hover:border-slate-600 hover:bg-slate-50 dark:border-white/12 dark:bg-white/[.06] dark:text-white dark:hover:border-white/25 dark:hover:bg-white/12">
+              <ArrowLeft size={12} />
+              <span className="hidden sm:inline">Workspace</span>
+              <span className="sm:hidden">App</span>
             </Link>
-            <Link href="/evolution" className="inline-flex items-center gap-1.5 rounded-full border border-slate-400 bg-white px-3 py-1.5 text-xs font-semibold text-slate-900 shadow-2xs transition hover:border-slate-600 hover:bg-slate-50 dark:border-white/12 dark:bg-white/[.06] dark:text-white dark:hover:border-white/25 dark:hover:bg-white/12">
-              <History size={13} className="text-slate-700 dark:text-white/70" />
-              <span>Evolution</span>
+            <Link href="/evolution" className="inline-flex items-center gap-1 rounded-full border border-slate-400 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-900 shadow-2xs transition hover:border-slate-600 hover:bg-slate-50 dark:border-white/12 dark:bg-white/[.06] dark:text-white dark:hover:border-white/25 dark:hover:bg-white/12">
+              <History size={12} className="text-slate-700 dark:text-white/70" />
+              <span className="hidden sm:inline">Evolution</span>
+              <span className="sm:hidden">Evol</span>
             </Link>
-            <Link href="/walkthrough" className="inline-flex items-center gap-1.5 rounded-full border border-slate-400 bg-white px-3 py-1.5 text-xs font-semibold text-slate-900 shadow-2xs transition hover:border-slate-600 hover:bg-slate-50 dark:border-white/12 dark:bg-white/[.06] dark:text-white dark:hover:border-white/25 dark:hover:bg-white/12">
-              <Sparkles size={13} className="text-slate-700 dark:text-white/70" />
+            <Link href="/walkthrough" className="hidden sm:inline-flex items-center gap-1 rounded-full border border-slate-400 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-900 shadow-2xs transition hover:border-slate-600 hover:bg-slate-50 dark:border-white/12 dark:bg-white/[.06] dark:text-white dark:hover:border-white/25 dark:hover:bg-white/12">
+              <Sparkles size={12} className="text-slate-700 dark:text-white/70" />
               <span>Walkthrough</span>
             </Link>
             <ThemeToggle />
@@ -107,34 +109,35 @@ export default function CreativeDNA() {
                 toast.success("Signed out successfully.");
               }}
               type="button"
-              className="inline-flex items-center gap-1.5 rounded-full border border-slate-300 bg-slate-200/80 px-3 py-1.5 text-xs font-medium text-slate-700 transition hover:bg-slate-300 active:scale-[.97] dark:border-white/10 dark:bg-white/[.04] dark:text-white/62 dark:hover:bg-white/10 dark:hover:text-white"
+              className="inline-flex items-center gap-1 rounded-full border border-slate-300 bg-slate-200/80 px-2.5 py-1.5 text-xs font-medium text-slate-700 transition hover:bg-slate-300 active:scale-[.97] dark:border-white/10 dark:bg-white/[.04] dark:text-white/62 dark:hover:bg-white/10 dark:hover:text-white"
+              title="Sign out"
             >
-              <LogOut size={13} /> <span className="hidden md:inline">Sign out</span>
+              <LogOut size={12} /> <span className="hidden md:inline">Sign out</span>
             </button>
           </nav>
         </div>
       </header>
 
 
-      <div className="mx-auto max-w-7xl px-4 py-7 sm:px-6 lg:py-10">
-        <section className="relative overflow-hidden rounded-[2rem] border border-slate-300/80 bg-slate-100/90 p-6 shadow-sm dark:border-white/10 dark:bg-[#111116] sm:p-9">
+      <div className="mx-auto max-w-7xl px-3.5 py-5 sm:px-6 lg:py-10">
+        <section className="relative overflow-hidden rounded-[2rem] border border-slate-300/80 bg-slate-100/90 p-4.5 shadow-sm dark:border-white/10 dark:bg-[#111116] sm:p-9">
           <div className="absolute -right-16 -top-20 h-64 w-64 rounded-full bg-indigo-500/10 blur-3xl dark:bg-purple-500/[.07]" aria-hidden="true" />
           <div className="relative max-w-3xl">
             <p className="eyebrow text-slate-700 dark:text-white/60">Private Creative Intelligence</p>
-            <div className="mt-3 flex flex-wrap items-center gap-3">
-              <h1 className="font-display text-3xl leading-[1.08] tracking-[-.04em] text-slate-900 sm:text-5xl dark:text-white">
+            <div className="mt-2.5 flex flex-wrap items-center gap-2">
+              <h1 className="font-display text-2xl leading-[1.08] tracking-[-.04em] text-slate-900 sm:text-5xl dark:text-white">
                 Your Creative <span className="italic text-slate-500 dark:text-white/42">DNA.</span>
               </h1>
-              <span className="inline-flex items-center gap-1.5 rounded-full border border-lime-400/40 bg-lime-400/10 px-3 py-1 font-mono text-[9px] font-bold uppercase tracking-[.12em] text-lime-900 dark:border-[#c7ff4b]/30 dark:bg-[#c7ff4b]/10 dark:text-[#d8ff83]">
-                <Brain size={11} className="text-lime-600 dark:text-[#c7ff4b]" />
+              <span className="inline-flex items-center gap-1 rounded-full border border-lime-400/40 bg-lime-400/10 px-2.5 py-0.5 font-mono text-[9px] font-bold uppercase tracking-[.12em] text-lime-900 dark:border-[#c7ff4b]/30 dark:bg-[#c7ff4b]/10 dark:text-[#d8ff83]">
+                <Brain size={10} className="text-lime-600 dark:text-[#c7ff4b]" />
                 {mindQuery.data?.builderAvailability === "available" ? "Minds connected" : "Minds Persistent Memory"}
               </span>
             </div>
-            <p className="mt-3 text-sm leading-relaxed text-slate-600 sm:text-base dark:text-white/55">
+            <p className="mt-2 text-xs leading-relaxed text-slate-600 sm:mt-3 sm:text-base dark:text-white/55">
               The persistent taste profile governing your video analysis decisions. Unlike stateless prompts, every rule here is permanently synchronized into your personal Mind via the Minds API.
             </p>
           </div>
-          <div className="relative mt-8 grid gap-3 sm:grid-cols-4">
+          <div className="relative mt-6 grid grid-cols-2 gap-2 sm:mt-8 sm:grid-cols-4 sm:gap-3">
             {[
               ["Preferences", stats?.preferenceCount ?? 0, Brain],
               ["Feedback signals", stats?.feedbackCount ?? 0, ThumbsUp],
@@ -143,12 +146,12 @@ export default function CreativeDNA() {
             ].map(([label, value, Icon]) => {
               const StatIcon = Icon as typeof Brain;
               return (
-                <div key={label as string} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-xs dark:border-white/8 dark:bg-black/20 dark:shadow-none">
+                <div key={label as string} className="rounded-2xl border border-slate-200 bg-white p-3 shadow-xs dark:border-white/8 dark:bg-black/20 dark:shadow-none sm:p-4">
                   <div className="flex items-center justify-between text-slate-500 dark:text-white/35">
-                    <span className="text-[10px] font-semibold uppercase tracking-[.12em]">{label as string}</span>
-                    <StatIcon size={14} />
+                    <span className="text-[9px] sm:text-[10px] font-semibold uppercase tracking-[.12em]">{label as string}</span>
+                    <StatIcon size={12} />
                   </div>
-                  <p className="mt-3 font-display text-3xl tracking-[-.05em] text-slate-900 dark:text-white">{value as string | number}</p>
+                  <p className="mt-2 font-display text-2xl sm:text-3xl tracking-[-.05em] text-slate-900 dark:text-white">{value as string | number}</p>
                 </div>
               );
             })}
@@ -156,11 +159,11 @@ export default function CreativeDNA() {
         </section>
 
         <div className="mt-6 grid gap-6 lg:grid-cols-[minmax(0,1fr)_330px]">
-          <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-7 dark:border-white/9 dark:bg-white/[.025] dark:shadow-none">
+          <section className="rounded-3xl border border-slate-200 bg-white p-4.5 shadow-sm sm:p-7 dark:border-white/9 dark:bg-white/[.025] dark:shadow-none">
             <div className="flex flex-wrap items-end justify-between gap-3">
               <div>
                 <p className="eyebrow text-[9px] text-lime-700 dark:text-[#d8ff83]">Evidence-backed preferences</p>
-                <h2 className="mt-2 font-display text-4xl tracking-[-.06em] text-slate-900 dark:text-white">What your Mind knows.</h2>
+                <h2 className="mt-1.5 font-display text-2xl sm:text-4xl tracking-[-.06em] text-slate-900 dark:text-white">What your Mind knows.</h2>
               </div>
               <p className="max-w-xs text-xs leading-relaxed text-slate-500 dark:text-white/38">Refining preserves evidence. Retired preferences remain auditable but no longer guide new analysis.</p>
             </div>
@@ -185,15 +188,15 @@ export default function CreativeDNA() {
                 </div>
               </div>
             )}
-            {/* Category Filter and Search Bar */}
-            <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <div className="flex flex-wrap gap-1.5" role="group" aria-label="Filter preferences by category">
+            {/* Category Filter and Search Bar with Mobile Horizontal Scroll */}
+            <div className="mt-5 flex flex-col gap-2.5 sm:mt-6 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex items-center gap-1.5 overflow-x-auto pb-1 px-0.5 sm:flex-wrap" role="group" aria-label="Filter preferences by category">
                 {categories.map(cat => (
                   <button
                     key={cat}
                     type="button"
                     onClick={() => setCategoryFilter(cat)}
-                    className={`rounded-full px-3 py-1 text-xs font-semibold capitalize transition ${
+                    className={`shrink-0 rounded-full px-3 py-1 text-xs font-semibold capitalize transition ${
                       categoryFilter.toLowerCase() === cat.toLowerCase()
                         ? "bg-slate-900 text-white shadow-2xs dark:bg-white dark:text-black"
                         : "border border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:border-white/10 dark:bg-white/[.04] dark:text-white/60 dark:hover:bg-white/10 dark:hover:text-white"

@@ -916,74 +916,77 @@ export default function Workspace() {
           </section>
         </div>
       )}
-      <header className="sticky top-0 z-30 border-b border-slate-300/80 bg-slate-100/95 px-4 py-3 backdrop-blur-xl dark:border-white/8 dark:bg-[#08080b]/85 sm:px-6">
-        <div className="mx-auto flex max-w-7xl items-center justify-between gap-3">
-          <Link href="/" className="flex items-center gap-2.5">
-            <span className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-900 text-white shadow-sm dark:bg-white dark:text-black">
-              <Scissors size={15} strokeWidth={2.7} />
+      <header className="sticky top-0 z-30 border-b border-slate-300/80 bg-slate-100/95 px-3 py-2.5 backdrop-blur-xl dark:border-white/8 dark:bg-[#08080b]/85 sm:px-6 sm:py-3">
+        <div className="mx-auto flex max-w-7xl items-center justify-between gap-2">
+          <Link href="/" className="flex items-center gap-2">
+            <span className="flex h-7 w-7 sm:h-8 sm:w-8 items-center justify-center rounded-full bg-slate-900 text-white shadow-sm dark:bg-white dark:text-black">
+              <Scissors size={14} strokeWidth={2.7} className="sm:scale-110" />
             </span>
-            <span className="font-display text-lg tracking-[-0.04em] text-slate-900 dark:text-white">SoulCut</span>
+            <span className="font-display text-base sm:text-lg tracking-[-0.04em] text-slate-900 dark:text-white">SoulCut</span>
           </Link>
-          <nav className="flex items-center gap-1.5 sm:gap-2.5">
-            <Link href="/dna" className="inline-flex items-center gap-1.5 rounded-full border border-slate-400 bg-white px-3 py-1.5 text-xs font-semibold text-slate-900 shadow-2xs transition hover:border-slate-600 hover:bg-slate-50 dark:border-white/12 dark:bg-white/[.06] dark:text-white dark:hover:border-white/25 dark:hover:bg-white/12">
-              <Network size={13} className="text-slate-700 dark:text-white/70" />
-              <span>Creative DNA</span>
+          <nav className="flex items-center gap-1 sm:gap-2">
+            <Link href="/dna" className="inline-flex items-center gap-1 rounded-full border border-slate-400 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-900 shadow-2xs transition hover:border-slate-600 hover:bg-slate-50 dark:border-white/12 dark:bg-white/[.06] dark:text-white dark:hover:border-white/25 dark:hover:bg-white/12">
+              <Network size={12} className="text-slate-700 dark:text-white/70" />
+              <span className="hidden sm:inline">Creative DNA</span>
+              <span className="sm:hidden">DNA</span>
             </Link>
-            <Link href="/evolution" className="inline-flex items-center gap-1.5 rounded-full border border-slate-400 bg-white px-3 py-1.5 text-xs font-semibold text-slate-900 shadow-2xs transition hover:border-slate-600 hover:bg-slate-50 dark:border-white/12 dark:bg-white/[.06] dark:text-white dark:hover:border-white/25 dark:hover:bg-white/12">
-              <History size={13} className="text-slate-700 dark:text-white/70" />
-              <span>Evolution</span>
+            <Link href="/evolution" className="inline-flex items-center gap-1 rounded-full border border-slate-400 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-900 shadow-2xs transition hover:border-slate-600 hover:bg-slate-50 dark:border-white/12 dark:bg-white/[.06] dark:text-white dark:hover:border-white/25 dark:hover:bg-white/12">
+              <History size={12} className="text-slate-700 dark:text-white/70" />
+              <span className="hidden sm:inline">Evolution</span>
+              <span className="sm:hidden">Evol</span>
             </Link>
-            <Link href="/walkthrough" className="inline-flex items-center gap-1.5 rounded-full border border-slate-400 bg-white px-3 py-1.5 text-xs font-semibold text-slate-900 shadow-2xs transition hover:border-slate-600 hover:bg-slate-50 dark:border-white/12 dark:bg-white/[.06] dark:text-white dark:hover:border-white/25 dark:hover:bg-white/12">
-              <Sparkles size={13} className="text-slate-700 dark:text-white/70" />
+            <Link href="/walkthrough" className="hidden sm:inline-flex items-center gap-1 rounded-full border border-slate-400 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-900 shadow-2xs transition hover:border-slate-600 hover:bg-slate-50 dark:border-white/12 dark:bg-white/[.06] dark:text-white dark:hover:border-white/25 dark:hover:bg-white/12">
+              <Sparkles size={12} className="text-slate-700 dark:text-white/70" />
               <span>Walkthrough</span>
             </Link>
             <ThemeToggle />
             <button
               onClick={handleLogout}
               type="button"
-              className="inline-flex items-center gap-1.5 rounded-full border border-slate-300 bg-slate-200/80 px-3 py-1.5 text-xs font-medium text-slate-700 transition hover:bg-slate-300 active:scale-[.97] dark:border-white/10 dark:bg-white/[.04] dark:text-white/62 dark:hover:bg-white/10 dark:hover:text-white"
+              className="inline-flex items-center gap-1 rounded-full border border-slate-300 bg-slate-200/80 px-2.5 py-1.5 text-xs font-medium text-slate-700 transition hover:bg-slate-300 active:scale-[.97] dark:border-white/10 dark:bg-white/[.04] dark:text-white/62 dark:hover:bg-white/10 dark:hover:text-white"
+              title="Sign out"
             >
-              <LogOut size={13} /> <span className="hidden md:inline">Sign out</span>
+              <LogOut size={12} /> <span className="hidden md:inline">Sign out</span>
             </button>
           </nav>
         </div>
       </header>
 
-      {/* Mobile Tab Switcher */}
-      <div className="mx-auto max-w-7xl px-4 pt-4 lg:hidden">
-        <div className="grid grid-cols-3 gap-1 rounded-2xl border border-slate-300 bg-white/80 p-1 backdrop-blur-md dark:border-white/10 dark:bg-[#121218]">
+      {/* Mobile Sticky Tab Switcher */}
+      <div className="sticky top-[53px] z-20 mx-auto max-w-7xl px-3 pt-2.5 pb-1 lg:hidden bg-slate-50/90 dark:bg-[#060608]/90 backdrop-blur-md">
+        <div className="grid grid-cols-3 gap-1 rounded-2xl border border-slate-300 bg-white/90 p-1 shadow-sm dark:border-white/10 dark:bg-[#121218]">
           <button
             type="button"
             onClick={() => setMobileTab("analysis")}
-            className={`flex items-center justify-center gap-1.5 rounded-xl py-2 text-xs font-semibold transition ${
+            className={`flex items-center justify-center gap-1 rounded-xl py-2 text-xs font-semibold transition ${
               mobileTab === "analysis"
-                ? "bg-slate-900 text-white shadow-xs dark:bg-white dark:text-black"
+                ? "bg-slate-900 text-white shadow-xs dark:bg-[#c7ff4b] dark:text-black"
                 : "text-slate-600 hover:text-slate-900 dark:text-white/60 dark:hover:text-white"
             }`}
           >
-            <Play size={13} /> Video & Brief
+            <Play size={12} /> Video & Brief
           </button>
           <button
             type="button"
             onClick={() => setMobileTab("mind")}
-            className={`flex items-center justify-center gap-1.5 rounded-xl py-2 text-xs font-semibold transition ${
+            className={`flex items-center justify-center gap-1 rounded-xl py-2 text-xs font-semibold transition ${
               mobileTab === "mind"
-                ? "bg-slate-900 text-white shadow-xs dark:bg-white dark:text-black"
+                ? "bg-slate-900 text-white shadow-xs dark:bg-[#c7ff4b] dark:text-black"
                 : "text-slate-600 hover:text-slate-900 dark:text-white/60 dark:hover:text-white"
             }`}
           >
-            <Brain size={13} /> Mind
+            <Brain size={12} /> Mind & DNA
           </button>
           <button
             type="button"
             onClick={() => setMobileTab("history")}
-            className={`flex items-center justify-center gap-1.5 rounded-xl py-2 text-xs font-semibold transition ${
+            className={`flex items-center justify-center gap-1 rounded-xl py-2 text-xs font-semibold transition ${
               mobileTab === "history"
-                ? "bg-slate-900 text-white shadow-xs dark:bg-white dark:text-black"
+                ? "bg-slate-900 text-white shadow-xs dark:bg-[#c7ff4b] dark:text-black"
                 : "text-slate-600 hover:text-slate-900 dark:text-white/60 dark:hover:text-white"
             }`}
           >
-            <History size={13} /> Briefs ({filteredJobs.length})
+            <History size={12} /> Briefs ({filteredJobs.length})
           </button>
         </div>
       </div>
@@ -1119,13 +1122,37 @@ export default function Workspace() {
         </aside>
 
         <section className="order-1 min-w-0 lg:order-2">
+          {/* Mobile Quick Mind Banner (Shown on mobile when on Analysis tab) */}
+          {mobileTab === "analysis" && (
+            <div className="mb-4 flex items-center justify-between rounded-2xl border border-slate-300 bg-white/90 p-3 shadow-xs dark:border-white/10 dark:bg-[#121218] lg:hidden">
+              <div className="flex items-center gap-2.5">
+                <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-lime-400/20 text-lime-800 dark:bg-[#c7ff4b]/20 dark:text-[#d8ff83]">
+                  <Brain size={16} />
+                </span>
+                <div>
+                  <p className="text-xs font-bold text-slate-900 dark:text-white">Creative Mind Active</p>
+                  <p className="text-[10px] text-slate-500 dark:text-white/45">{creativeDnaQuery.data?.stats.preferenceCount ?? 0} rules · {creativeDnaQuery.data?.stats.averageConfidence ?? 0}% avg confidence</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setMobileTab("mind")}
+                className="rounded-full bg-slate-900 px-3 py-1.5 text-[10px] font-semibold text-white shadow-xs dark:bg-white dark:text-black"
+              >
+                Teach Mind →
+              </button>
+            </div>
+          )}
+
           {/* Creative Mind Hero Header */}
-          <section className="relative mb-8 overflow-hidden rounded-[2rem] border border-slate-300/80 bg-slate-100/90 p-5 shadow-sm dark:border-white/10 dark:bg-[#111116] sm:p-7">
+          <section className={`relative mb-8 overflow-hidden rounded-[2rem] border border-slate-300/80 bg-slate-100/90 p-4.5 shadow-sm dark:border-white/10 dark:bg-[#111116] sm:p-7 ${
+            mobileTab === "mind" ? "block" : "hidden lg:block"
+          }`}>
             <div className="absolute -right-16 -top-16 h-52 w-52 rounded-full bg-indigo-500/10 blur-3xl dark:bg-purple-500/[.07]" aria-hidden="true" />
-            <div className="relative flex flex-col gap-6">
-              <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
+            <div className="relative flex flex-col gap-5 sm:gap-6">
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                 <div className="max-w-2xl">
-                  <div className="flex items-center gap-2">
+                  <div className="flex flex-wrap items-center gap-2">
                     <span className="eyebrow text-slate-700 dark:text-white/60">Meet your Creative Mind</span>
                     <button
                       type="button"
@@ -1140,30 +1167,30 @@ export default function Workspace() {
                   <h1 className="mt-2.5 font-display text-2xl leading-[1.1] tracking-[-.04em] text-slate-900 sm:text-4xl dark:text-white">
                     SoulCut remembers <span className="italic text-slate-500 dark:text-white/42">how you create.</span>
                   </h1>
-                  <p className="mt-3 max-w-xl text-sm leading-relaxed text-slate-600 dark:text-white/54">
+                  <p className="mt-2.5 max-w-xl text-xs sm:text-sm leading-relaxed text-slate-600 dark:text-white/54">
                     SoulCut is your focused creative workspace. Minds supplies the persistent intelligence layer; every lesson, approval, and correction becomes evidence your Mind can use for the next creative decision.
                   </p>
                 </div>
-                <div className="flex shrink-0 flex-wrap items-center gap-2">
-                  <button type="button" onClick={() => setShowMindOnboarding(true)} className="inline-flex items-center justify-center gap-1.5 rounded-full border border-slate-900 bg-slate-900 px-3.5 py-2 text-xs font-semibold text-white shadow-xs transition hover:bg-slate-800 dark:border-white/20 dark:bg-white dark:text-black dark:hover:bg-slate-200">
-                    <Users size={13} /> Teach Mind
+                <div className="flex shrink-0 flex-wrap items-center gap-1.5 sm:gap-2">
+                  <button type="button" onClick={() => setShowMindOnboarding(true)} className="inline-flex items-center justify-center gap-1.5 rounded-full border border-slate-900 bg-slate-900 px-3 py-1.5 text-xs font-semibold text-white shadow-xs transition hover:bg-slate-800 dark:border-white/20 dark:bg-white dark:text-black dark:hover:bg-slate-200">
+                    <Users size={12} /> Teach Mind
                   </button>
-                  <Link href="/dna" className="inline-flex items-center justify-center gap-1.5 rounded-full border border-slate-400 bg-white px-3.5 py-2 text-xs font-bold text-slate-900 shadow-2xs transition hover:border-slate-600 hover:bg-slate-50 dark:border-white/12 dark:bg-white/[.06] dark:text-white dark:hover:border-white/25 dark:hover:bg-white/12">
-                    <Network size={13} /> Creative DNA
+                  <Link href="/dna" className="inline-flex items-center justify-center gap-1.5 rounded-full border border-slate-400 bg-white px-3 py-1.5 text-xs font-bold text-slate-900 shadow-2xs transition hover:border-slate-600 hover:bg-slate-50 dark:border-white/12 dark:bg-white/[.06] dark:text-white dark:hover:border-white/25 dark:hover:bg-white/12">
+                    <Network size={12} /> Creative DNA
                   </Link>
-                  <Link href="/evolution" className="inline-flex items-center justify-center gap-1.5 rounded-full border border-slate-400 bg-white px-3.5 py-2 text-xs font-bold text-slate-900 shadow-2xs transition hover:border-slate-600 hover:bg-slate-50 dark:border-white/12 dark:bg-white/[.06] dark:text-white dark:hover:border-white/25 dark:hover:bg-white/12">
-                    <History size={13} /> Evolution
+                  <Link href="/evolution" className="inline-flex items-center justify-center gap-1.5 rounded-full border border-slate-400 bg-white px-3 py-1.5 text-xs font-bold text-slate-900 shadow-2xs transition hover:border-slate-600 hover:bg-slate-50 dark:border-white/12 dark:bg-white/[.06] dark:text-white dark:hover:border-white/25 dark:hover:bg-white/12">
+                    <History size={12} /> Evolution
                   </Link>
-                  <Link href="/walkthrough" className="inline-flex items-center justify-center gap-1.5 rounded-full border border-slate-400 bg-white px-3.5 py-2 text-xs font-bold text-slate-900 shadow-2xs transition hover:border-slate-600 hover:bg-slate-50 dark:border-white/12 dark:bg-white/[.06] dark:text-white dark:hover:border-white/25 dark:hover:bg-white/12">
-                    <Sparkles size={13} /> Walkthrough
+                  <Link href="/walkthrough" className="hidden sm:inline-flex items-center justify-center gap-1.5 rounded-full border border-slate-400 bg-white px-3 py-1.5 text-xs font-bold text-slate-900 shadow-2xs transition hover:border-slate-600 hover:bg-slate-50 dark:border-white/12 dark:bg-white/[.06] dark:text-white dark:hover:border-white/25 dark:hover:bg-white/12">
+                    <Sparkles size={12} /> Walkthrough
                   </Link>
-                  <button type="button" onClick={() => setMindPanelOpen(current => !current)} aria-expanded={mindPanelOpen} className="rounded-full px-2.5 py-2 text-xs font-medium text-slate-600 underline transition hover:text-slate-950 dark:text-white/50 dark:hover:text-white">
+                  <button type="button" onClick={() => setMindPanelOpen(current => !current)} aria-expanded={mindPanelOpen} className="rounded-full px-2 py-1 text-xs font-medium text-slate-600 underline transition hover:text-slate-950 dark:text-white/50 dark:hover:text-white">
                     {mindPanelOpen ? "Hide preview" : "Preview"}
                   </button>
                 </div>
               </div>
 
-              <div className="grid gap-2 sm:grid-cols-4">
+              <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
                 {[
                   ["Preferences", creativeDnaQuery.data?.stats.preferenceCount ?? 0, Brain],
                   ["Feedback signals", creativeDnaQuery.data?.stats.feedbackCount ?? 0, ThumbsUp],
@@ -1172,12 +1199,12 @@ export default function Workspace() {
                 ].map(([label, value, Icon]) => {
                   const StatIcon = Icon as typeof Brain;
                   return (
-                    <div key={label as string} className="rounded-2xl border border-slate-200 bg-white p-3.5 shadow-xs dark:border-white/8 dark:bg-[#181820] dark:shadow-none">
+                    <div key={label as string} className="rounded-2xl border border-slate-200 bg-white p-3 shadow-xs dark:border-white/8 dark:bg-[#181820] dark:shadow-none sm:p-3.5">
                       <div className="flex items-center justify-between text-slate-500 dark:text-white/35">
-                        <span className="text-[10px] font-semibold uppercase tracking-[.12em]">{label as string}</span>
-                        <StatIcon size={13} />
+                        <span className="text-[9px] sm:text-[10px] font-semibold uppercase tracking-[.12em]">{label as string}</span>
+                        <StatIcon size={12} />
                       </div>
-                      <p className="mt-3 font-display text-3xl tracking-[-.05em] text-slate-900 dark:text-white">{value as string | number}</p>
+                      <p className="mt-2 sm:mt-3 font-display text-2xl sm:text-3xl tracking-[-.05em] text-slate-900 dark:text-white">{value as string | number}</p>
                     </div>
                   );
                 })}
@@ -1252,84 +1279,85 @@ export default function Workspace() {
             </div>
           </section>
 
-          {/* Section Hero Title */}
-          <div className="mb-9 flex flex-col justify-between gap-5 sm:flex-row sm:items-end">
-            <div>
-              <p className="eyebrow text-lime-700 dark:text-[#d8ff83]">Ask your Mind / 01</p>
-              <h1 className="mt-3 font-display text-4xl leading-[.92] tracking-[-.06em] text-slate-900 sm:text-6xl dark:text-white">
-                Find the moments <span className="italic text-slate-500 dark:text-white/35">worth creating from.</span>
-              </h1>
-            </div>
-            <p className="max-w-xs text-sm leading-relaxed text-slate-600 dark:text-white/42">
-              Give SoulCut a public video. Your Mind uses grounded source context to prioritize creative opportunities that fit how you create.
-            </p>
-          </div>
-
-          {/* Video Input Box */}
-          <section className="relative overflow-hidden rounded-[1.8rem] border border-slate-200 bg-white p-4 shadow-xl dark:border-white/10 dark:bg-[#121218] dark:shadow-[0_22px_60px_rgba(0,0,0,.2)] sm:p-5">
-            <div className="absolute right-0 top-0 h-36 w-36 rounded-full bg-lime-300/15 blur-3xl dark:bg-[#c7ff4b]/[.08]" />
-            <div className="relative flex flex-col gap-3 md:flex-row md:items-center">
-              <div className="flex min-w-0 flex-1 items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-3.5 py-3 dark:border-white/8 dark:bg-black/20">
-                <Link2 size={18} className="shrink-0 text-slate-400 dark:text-white/35" />
-                <input
-                  value={videoUrl}
-                  onChange={(event) => setVideoUrl(event.target.value)}
-                  onKeyDown={(event) => {
-                    if (event.key === "Enter" && !isWorking) void submitAnalysis();
-                  }}
-                  aria-label="Public video URL to analyze"
-                  placeholder="Paste a public video URL"
-                  className="min-w-0 flex-1 bg-transparent text-sm text-slate-900 outline-none placeholder:text-slate-400 dark:text-white dark:placeholder:text-white/28"
-                  disabled={isWorking}
-                />
+          {/* Section Hero Title & Video Ingestion (Controlled by analysis mobileTab) */}
+          <div className={`${mobileTab === "analysis" ? "block" : "hidden lg:block"}`}>
+            <div className="mb-7 flex flex-col justify-between gap-3 sm:mb-9 sm:flex-row sm:items-end sm:gap-5">
+              <div>
+                <p className="eyebrow text-lime-700 dark:text-[#d8ff83]">Ask your Mind / 01</p>
+                <h1 className="mt-2.5 font-display text-3xl leading-[.95] tracking-[-.06em] text-slate-900 sm:mt-3 sm:text-6xl dark:text-white">
+                  Find the moments <span className="italic text-slate-500 dark:text-white/35">worth creating from.</span>
+                </h1>
               </div>
-              <button
-                type="button"
-                onClick={() => void submitAnalysis()}
-                disabled={isWorking}
-                className="inline-flex items-center justify-center gap-2 rounded-2xl bg-slate-900 px-5 py-3.5 text-sm font-semibold text-white shadow-md transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-55 active:scale-[.97] dark:bg-[#e9ffe2] dark:text-[#111710] dark:hover:bg-[#c7ff4b]"
-              >
-                {isWorking ? <LoaderCircle size={17} className="animate-spin" /> : <Sparkles size={17} />}
-                {isWorking ? "Mind at work…" : "Ask your Mind"}
-              </button>
+              <p className="max-w-xs text-xs sm:text-sm leading-relaxed text-slate-600 dark:text-white/42">
+                Give SoulCut a public video. Your Mind uses grounded source context to prioritize creative opportunities that fit how you create.
+              </p>
             </div>
-            {/* 1-Click Quick-Fill Example Sources */}
-            <div className="mt-3 flex flex-wrap items-center gap-1.5 px-1">
-              <span className="text-[11px] font-medium text-slate-500 dark:text-white/40">Try a sample:</span>
-              <button
-                type="button"
-                onClick={() => {
-                  setVideoUrl("https://www.youtube.com/watch?v=u4ZoJKF_VuA");
-                  toast.success("Loaded Simon Sinek: How Great Leaders Inspire");
-                }}
-                disabled={isWorking}
-                className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-[11px] font-medium text-slate-700 transition hover:border-lime-400 hover:bg-lime-50 dark:border-white/10 dark:bg-white/[.04] dark:text-white/70 dark:hover:border-[#c7ff4b]/40 dark:hover:bg-[#c7ff4b]/10 dark:hover:text-[#d8ff83]"
-              >
-                💡 Simon Sinek (Leadership)
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setVideoUrl("https://www.youtube.com/watch?v=0lJKucu6HJc");
-                  toast.success("Loaded Y Combinator: How to Build the Future");
-                }}
-                disabled={isWorking}
-                className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-[11px] font-medium text-slate-700 transition hover:border-lime-400 hover:bg-lime-50 dark:border-white/10 dark:bg-white/[.04] dark:text-white/70 dark:hover:border-[#c7ff4b]/40 dark:hover:bg-[#c7ff4b]/10 dark:hover:text-[#d8ff83]"
-              >
-                🚀 Y Combinator (Startups)
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setVideoUrl("https://www.youtube.com/watch?v=gXDMoiEkyu8");
-                  toast.success("Loaded Huberman Lab: Focus & Dopamine");
-                }}
-                disabled={isWorking}
-                className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-[11px] font-medium text-slate-700 transition hover:border-lime-400 hover:bg-lime-50 dark:border-white/10 dark:bg-white/[.04] dark:text-white/70 dark:hover:border-[#c7ff4b]/40 dark:hover:bg-[#c7ff4b]/10 dark:hover:text-[#d8ff83]"
-              >
-                🎙️ Huberman Lab (Neuroscience)
-              </button>
-            </div>
+
+            {/* Video Input Box */}
+            <section className="relative overflow-hidden rounded-[1.8rem] border border-slate-200 bg-white p-3.5 shadow-xl dark:border-white/10 dark:bg-[#121218] dark:shadow-[0_22px_60px_rgba(0,0,0,.2)] sm:p-5">
+              <div className="absolute right-0 top-0 h-36 w-36 rounded-full bg-lime-300/15 blur-3xl dark:bg-[#c7ff4b]/[.08]" />
+              <div className="relative flex flex-col gap-2.5 sm:gap-3 md:flex-row md:items-center">
+                <div className="flex min-w-0 flex-1 items-center gap-2.5 rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2.5 sm:px-3.5 sm:py-3 dark:border-white/8 dark:bg-black/20">
+                  <Link2 size={16} className="shrink-0 text-slate-400 dark:text-white/35 sm:scale-110" />
+                  <input
+                    value={videoUrl}
+                    onChange={(event) => setVideoUrl(event.target.value)}
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter" && !isWorking) void submitAnalysis();
+                    }}
+                    aria-label="Public video URL to analyze"
+                    placeholder="Paste a public video URL"
+                    className="min-w-0 flex-1 bg-transparent text-xs sm:text-sm text-slate-900 outline-none placeholder:text-slate-400 dark:text-white dark:placeholder:text-white/28"
+                    disabled={isWorking}
+                  />
+                </div>
+                <button
+                  type="button"
+                  onClick={() => void submitAnalysis()}
+                  disabled={isWorking}
+                  className="inline-flex w-full md:w-auto items-center justify-center gap-2 rounded-2xl bg-slate-900 px-5 py-3 sm:py-3.5 text-xs sm:text-sm font-semibold text-white shadow-md transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-55 active:scale-[.97] dark:bg-[#e9ffe2] dark:text-[#111710] dark:hover:bg-[#c7ff4b]"
+                >
+                  {isWorking ? <LoaderCircle size={15} className="animate-spin" /> : <Sparkles size={15} />}
+                  {isWorking ? "Mind at work…" : "Ask your Mind"}
+                </button>
+              </div>
+              {/* 1-Click Quick-Fill Example Sources with Horizontal Scroll on Mobile */}
+              <div className="mt-3 flex items-center gap-1.5 overflow-x-auto pb-1 px-0.5 sm:flex-wrap">
+                <span className="shrink-0 text-[11px] font-medium text-slate-500 dark:text-white/40">Try a sample:</span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setVideoUrl("https://www.youtube.com/watch?v=u4ZoJKF_VuA");
+                    toast.success("Loaded Simon Sinek: How Great Leaders Inspire");
+                  }}
+                  disabled={isWorking}
+                  className="shrink-0 inline-flex items-center gap-1 rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-[10.5px] font-medium text-slate-700 transition hover:border-lime-400 hover:bg-lime-50 active:scale-95 dark:border-white/10 dark:bg-white/[.04] dark:text-white/70 dark:hover:border-[#c7ff4b]/40 dark:hover:bg-[#c7ff4b]/10 dark:hover:text-[#d8ff83]"
+                >
+                  💡 Simon Sinek (Leadership)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setVideoUrl("https://www.youtube.com/watch?v=0lJKucu6HJc");
+                    toast.success("Loaded Y Combinator: How to Build the Future");
+                  }}
+                  disabled={isWorking}
+                  className="shrink-0 inline-flex items-center gap-1 rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-[10.5px] font-medium text-slate-700 transition hover:border-lime-400 hover:bg-lime-50 active:scale-95 dark:border-white/10 dark:bg-white/[.04] dark:text-white/70 dark:hover:border-[#c7ff4b]/40 dark:hover:bg-[#c7ff4b]/10 dark:hover:text-[#d8ff83]"
+                >
+                  🚀 Y Combinator (Startups)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setVideoUrl("https://www.youtube.com/watch?v=gXDMoiEkyu8");
+                    toast.success("Loaded Huberman Lab: Focus & Dopamine");
+                  }}
+                  disabled={isWorking}
+                  className="shrink-0 inline-flex items-center gap-1 rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-[10.5px] font-medium text-slate-700 transition hover:border-lime-400 hover:bg-lime-50 active:scale-95 dark:border-white/10 dark:bg-white/[.04] dark:text-white/70 dark:hover:border-[#c7ff4b]/40 dark:hover:bg-[#c7ff4b]/10 dark:hover:text-[#d8ff83]"
+                >
+                  🎙️ Huberman Lab (Neuroscience)
+                </button>
+              </div>
 
             <input ref={transcriptInputRef} type="file" accept=".txt,.srt,.vtt,text/plain,text/vtt,application/x-subrip" className="sr-only" onChange={event => { const file = event.target.files?.[0]; if (!file) return; if (file.size > 400_000) { toast.error("Transcript files must be 400 KB or smaller."); event.target.value = ""; return; } if (!/\.(txt|srt|vtt)$/i.test(file.name)) { toast.error("Use a .txt, .srt, or .vtt transcript file."); event.target.value = ""; return; } setTranscriptFile(file); }} />
             <div className="relative mt-3 flex flex-wrap items-center justify-between gap-2 px-1">
@@ -1928,6 +1956,7 @@ export default function Workspace() {
               </div>
             </section>
           )}
+          </div>
         </section>
       </div>
     </main>
