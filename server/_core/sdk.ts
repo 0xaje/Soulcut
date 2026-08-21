@@ -289,35 +289,40 @@ class SDKServer {
     const signedInAt = new Date();
     let user = await db.getUserByOpenId(sessionUserId);
 
-    // If user not in DB, sync from OAuth server automatically or fallback for local dev
+    // If user not in DB, sync from OAuth server automatically or create local record
     if (!user) {
       const dbInstance = await db.getDb();
       if (!dbInstance) {
-        return {
-          id: 1,
+        await db.upsertUser({
           openId: session.openId,
           name: session.name || "Creator",
-          email: "ajeseun11@gmail.com",
-          loginMethod: "builder",
-          role: "user",
-          createdAt: signedInAt,
-          updatedAt: signedInAt,
-          lastSignedIn: signedInAt,
-        } as any;
-      }
-      try {
-        const userInfo = await this.getUserInfoWithJwt(sessionToken ?? "");
-        await db.upsertUser({
-          openId: userInfo.openId,
-          name: userInfo.name || null,
-          email: userInfo.email ?? null,
-          loginMethod: userInfo.loginMethod ?? userInfo.platform ?? null,
+          email: null,
+          loginMethod: "device_session",
           lastSignedIn: signedInAt,
         });
-        user = await db.getUserByOpenId(userInfo.openId);
-      } catch (error) {
-        console.error("[Auth] Failed to sync user from OAuth:", error);
-        throw ForbiddenError("Failed to sync user info");
+        user = await db.getUserByOpenId(session.openId);
+      } else {
+        try {
+          const userInfo = await this.getUserInfoWithJwt(sessionToken ?? "");
+          await db.upsertUser({
+            openId: userInfo.openId,
+            name: userInfo.name || null,
+            email: userInfo.email ?? null,
+            loginMethod: userInfo.loginMethod ?? userInfo.platform ?? null,
+            lastSignedIn: signedInAt,
+          });
+          user = await db.getUserByOpenId(userInfo.openId);
+        } catch {
+          // If external OAuth is not available, create local user record
+          await db.upsertUser({
+            openId: session.openId,
+            name: session.name || "Creator",
+            email: null,
+            loginMethod: "device_session",
+            lastSignedIn: signedInAt,
+          });
+          user = await db.getUserByOpenId(session.openId);
+        }
       }
     }
 

@@ -10,6 +10,8 @@ function getQueryParam(req: Request, key: string): string | undefined {
   return typeof value === "string" ? value : undefined;
 }
 
+import { nanoid } from "nanoid";
+
 export function registerOAuthRoutes(app: Express) {
   app.get("/api/oauth/callback", async (req: Request, res: Response) => {
     const code = getQueryParam(req, "code");
@@ -65,15 +67,28 @@ export function registerOAuthRoutes(app: Express) {
 
   app.get("/api/auth/dev-login", async (req: Request, res: Response) => {
     try {
-      const openId = "creator_3c32483e_f36b";
-      const name = "Seun (Creator)";
-      const email = "ajeseun11@gmail.com";
+      const redirectPath = (req.query.redirect as string) || "/app";
+
+      // Check if current browser already has a valid session token
+      const cookies = parseCookieHeader(req.headers.cookie ?? "");
+      const existingToken = cookies[COOKIE_NAME];
+      if (existingToken) {
+        const verified = await sdk.verifySession(existingToken);
+        if (verified && verified.openId) {
+          res.redirect(302, redirectPath);
+          return;
+        }
+      }
+
+      // Generate a unique creator session ID for this browser/device
+      const openId = `creator_${nanoid(12)}`;
+      const name = "Creator";
 
       await db.upsertUser({
         openId,
         name,
-        email,
-        loginMethod: "builder",
+        email: null,
+        loginMethod: "device_session",
         lastSignedIn: new Date(),
       });
 
@@ -85,10 +100,9 @@ export function registerOAuthRoutes(app: Express) {
       const cookieOptions = getSessionCookieOptions(req);
       res.cookie(COOKIE_NAME, sessionToken, { ...cookieOptions, maxAge: ONE_YEAR_MS });
 
-      const redirectPath = (req.query.redirect as string) || "/app";
       res.redirect(302, redirectPath);
     } catch (error) {
-      console.error("[Auth] Dev login failed:", error);
+      console.error("[Auth] Device login failed:", error);
       res.redirect(302, "/app");
     }
   });
