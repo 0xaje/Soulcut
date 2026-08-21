@@ -19,6 +19,9 @@ import {
 } from "../db";
 import { getMindsBuilderConnection } from "../mindsBuilder";
 import { protectedProcedure, router } from "../_core/trpc";
+import { invokeLLM } from "../_core/llm";
+import { formatCreativeMindGuidance } from "../videoAnalysis";
+import { getCreativeMindAnalysisContextForUser } from "../mindAnalysisContext";
 
 const categories = ["voice", "hook", "pacing", "caption", "visual", "audience", "editing", "storytelling", "topics", "avoidances", "format", "tone"] as const;
 const feedbackReasons = ["too_slow", "wrong_tone", "wrong_hook", "too_generic", "too_much_text", "not_my_audience", "other"] as const;
@@ -290,5 +293,54 @@ export const mindRouter = router({
           },
         };
       });
+    }),
+
+  reangleHook: protectedProcedure
+    .input(
+      z.object({
+        originalHook: z.string().min(3).max(300),
+        clipTitle: z.string().max(200).optional(),
+        angle: z.enum(["urgent", "question", "contrarian", "story"]),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      const mindContext = await getCreativeMindAnalysisContextForUser(ctx.user.id);
+      const anglePrompts: Record<string, string> = {
+        urgent: "High urgency and FOMO opening that creates immediate stakes in under 14 words.",
+        question: "Compelling open-ended question that triggers intense curiosity and psychological tension.",
+        contrarian: "Counter-intuitive hot take or myth-buster that challenges common industry assumptions.",
+        story: "Immersive personal epiphany opening ('The moment I realized...').",
+      };
+
+      const prompt = `You are SoulCut's AI Creative Director. Re-angle this video hook according to the requested angle: "${anglePrompts[input.angle] || input.angle}".
+Original hook: "${input.originalHook}"
+${input.clipTitle ? `Clip Title: "${input.clipTitle}"` : ""}
+${formatCreativeMindGuidance(mindContext)}
+
+Respond ONLY with a valid JSON object matching this schema:
+{
+  "hook": "re-angled hook text string (max 180 chars)"
+}`;
+
+      try {
+        const response = await invokeLLM({
+          model: process.env.LLM_MODEL || "llama-3.3-70b-versatile",
+          response_format: { type: "json_object" },
+          messages: [{ role: "user", content: prompt }],
+          maxTokens: 150,
+        });
+        const rawContent = response.choices[0]?.message?.content;
+        const contentStr = typeof rawContent === "string" ? rawContent : "{}";
+        const parsed = JSON.parse(contentStr || "{}");
+        return {
+          hook: (parsed.hook as string) || input.originalHook,
+          angle: input.angle,
+        };
+      } catch {
+        return {
+          hook: input.originalHook,
+          angle: input.angle,
+        };
+      }
     }),
 });

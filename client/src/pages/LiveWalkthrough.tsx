@@ -1,8 +1,9 @@
 import { useAuth } from "@/_core/hooks/useAuth";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { trpc } from "@/lib/trpc";
-import { ArrowLeft, Brain, CheckCircle2, CircleDot, History, Network, Sparkles } from "lucide-react";
+import { ArrowLeft, Brain, CheckCircle2, CircleDot, History, LogOut, Network, Sparkles } from "lucide-react";
 import React from "react";
+import { toast } from "sonner";
 import { Link } from "wouter";
 
 type WalkthroughStep = {
@@ -16,7 +17,9 @@ type WalkthroughStep = {
 };
 
 export default function LiveWalkthrough() {
-  const { loading, isAuthenticated } = useAuth({ redirectOnUnauthenticated: true });
+  const { loading, isAuthenticated, logout } = useAuth({ redirectOnUnauthenticated: true });
+  const [activeComparisonTab, setActiveComparisonTab] = React.useState<"generic" | "soulcut">("soulcut");
+
   const mindQuery = trpc.mind.getMind.useQuery(undefined, { enabled: isAuthenticated });
   const dnaQuery = trpc.mind.getCreativeDNA.useQuery(undefined, { enabled: isAuthenticated });
   const jobsQuery = trpc.videoJobs.list.useQuery(undefined, { enabled: isAuthenticated });
@@ -66,6 +69,16 @@ export default function LiveWalkthrough() {
               <span>Evolution</span>
             </Link>
             <ThemeToggle />
+            <button
+              onClick={async () => {
+                await logout();
+                toast.success("Signed out successfully.");
+              }}
+              type="button"
+              className="inline-flex items-center gap-1.5 rounded-full border border-slate-300 bg-slate-200/80 px-3 py-1.5 text-xs font-medium text-slate-700 transition hover:bg-slate-300 active:scale-[.97] dark:border-white/10 dark:bg-white/[.04] dark:text-white/62 dark:hover:bg-white/10 dark:hover:text-white"
+            >
+              <LogOut size={13} /> <span className="hidden md:inline">Sign out</span>
+            </button>
           </nav>
         </div>
       </header>
@@ -115,6 +128,76 @@ export default function LiveWalkthrough() {
                 </span>
               </Link>
             ))}
+          </div>
+        </section>
+
+        {/* Interactive Side-by-Side Proof Card */}
+        <section className="mt-6 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8 dark:border-white/9 dark:bg-[#111116] dark:shadow-none">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="eyebrow text-lime-700 dark:text-[#d8ff83]">The Secret Sauce</p>
+              <h2 className="mt-1 font-display text-2xl tracking-[-.04em] text-slate-900 dark:text-white">Generic AI Clipping vs. SoulCut Creative Mind</h2>
+            </div>
+            <div className="inline-flex rounded-full border border-slate-200 bg-slate-100 p-1 dark:border-white/10 dark:bg-white/[.04]">
+              <button
+                type="button"
+                onClick={() => setActiveComparisonTab("generic")}
+                className={`rounded-full px-3.5 py-1 text-xs font-semibold transition ${
+                  activeComparisonTab === "generic"
+                    ? "bg-slate-900 text-white dark:bg-white/20 dark:text-white shadow-xs"
+                    : "text-slate-600 hover:text-slate-900 dark:text-white/50 dark:hover:text-white"
+                }`}
+              >
+                Generic AI (0-Memory)
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveComparisonTab("soulcut")}
+                className={`rounded-full px-3.5 py-1 text-xs font-semibold transition ${
+                  activeComparisonTab === "soulcut"
+                    ? "bg-lime-400 text-black shadow-xs font-bold"
+                    : "text-slate-600 hover:text-slate-900 dark:text-white/50 dark:hover:text-white"
+                }`}
+              >
+                SoulCut + Minds API
+              </button>
+            </div>
+          </div>
+
+          <div className="mt-6 grid gap-4 sm:grid-cols-2">
+            <div className={`rounded-2xl border p-5 transition ${
+              activeComparisonTab === "generic"
+                ? "border-red-300 bg-red-50/50 dark:border-red-500/30 dark:bg-red-500/[.04]"
+                : "border-slate-200 bg-slate-50/50 opacity-60 dark:border-white/5 dark:bg-white/[.01]"
+            }`}>
+              <div className="flex items-center justify-between">
+                <span className="font-mono text-xs font-bold text-red-700 dark:text-red-400">GENERIC AI TOOLS</span>
+                <span className="rounded-full bg-red-100 px-2 py-0.5 text-[10px] font-semibold text-red-800 dark:bg-red-950 dark:text-red-300">Stateless</span>
+              </div>
+              <ul className="mt-4 space-y-2.5 text-xs text-slate-700 dark:text-white/70">
+                <li className="flex items-start gap-2">❌ <strong>Cookie-Cutter Clips:</strong> Same generic quotes generated for every single user.</li>
+                <li className="flex items-start gap-2">❌ <strong>Zero Memory:</strong> Forgets your pacing, hook styles, and corrections immediately after every run.</li>
+                <li className="flex items-start gap-2">❌ <strong>Black-Box Scoring:</strong> Gives a meaningless "Virality 87/100" with no audit trail or evidence.</li>
+                <li className="flex items-start gap-2">❌ <strong>No Pro Workflow:</strong> Cannot export to NLE timelines (Premiere, FCPXML, CapCut).</li>
+              </ul>
+            </div>
+
+            <div className={`rounded-2xl border p-5 transition ${
+              activeComparisonTab === "soulcut"
+                ? "border-lime-400/60 bg-lime-400/10 shadow-md dark:border-[#c7ff4b]/40 dark:bg-[#c7ff4b]/[0.05]"
+                : "border-slate-200 bg-slate-50/50 opacity-60 dark:border-white/5 dark:bg-white/[.01]"
+            }`}>
+              <div className="flex items-center justify-between">
+                <span className="font-mono text-xs font-bold text-lime-800 dark:text-[#d8ff83]">SOULCUT + MINDS API</span>
+                <span className="rounded-full bg-lime-200 px-2 py-0.5 text-[10px] font-bold text-lime-900 dark:bg-[#c7ff4b]/20 dark:text-[#d8ff83]">Evolving Mind</span>
+              </div>
+              <ul className="mt-4 space-y-2.5 text-xs text-slate-800 dark:text-white/90">
+                <li className="flex items-start gap-2">✅ <strong>Persistent Creative DNA:</strong> Remembers your hooks, pacing, and editorial preferences across all videos.</li>
+                <li className="flex items-start gap-2">✅ <strong>Adaptive Feedback Loop:</strong> Every "Keep" or "Not My Style" refines dynamic confidence ratings (1-100%).</li>
+                <li className="flex items-start gap-2">✅ <strong>Evidence-Backed Citing:</strong> Every clip recommendation cites exact creator rules and historical evidence.</li>
+                <li className="flex items-start gap-2">✅ <strong>Pro Editor Suite:</strong> 1-click export to Premiere EDL, Final Cut Pro XML, CapCut JSON, SRT subtitles, and PDF briefs.</li>
+              </ul>
+            </div>
           </div>
         </section>
 

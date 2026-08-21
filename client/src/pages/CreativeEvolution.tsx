@@ -1,9 +1,11 @@
 import { useAuth } from "@/_core/hooks/useAuth";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { trpc } from "@/lib/trpc";
-import { ArrowLeft, Brain, Film, Network, Sparkles } from "lucide-react";
+import { ArrowLeft, Brain, Film, LogOut, Network, Sparkles } from "lucide-react";
 import React, { useMemo } from "react";
+import { toast } from "sonner";
 import { Link } from "wouter";
+
 
 function sourceLabel(url: string) {
   try { return new URL(url).hostname.replace(/^www\./, ""); } catch { return "Public source"; }
@@ -25,7 +27,7 @@ function MetricBar({ label, value, max, accent = "bg-lime-500 dark:bg-[#c7ff4b]"
 }
 
 export default function CreativeEvolution() {
-  const { loading, isAuthenticated } = useAuth({ redirectOnUnauthenticated: true });
+  const { loading, isAuthenticated, logout } = useAuth({ redirectOnUnauthenticated: true });
   const comparisonQuery = trpc.mind.getRecommendationComparison.useQuery(undefined, { enabled: isAuthenticated });
   const comparison = comparisonQuery.data ?? [];
   const maxApplied = useMemo(() => Math.max(1, ...comparison.map(item => item.appliedPreferenceCount)), [comparison]);
@@ -61,6 +63,16 @@ export default function CreativeEvolution() {
               <span>Walkthrough</span>
             </Link>
             <ThemeToggle />
+            <button
+              onClick={async () => {
+                await logout();
+                toast.success("Signed out successfully.");
+              }}
+              type="button"
+              className="inline-flex items-center gap-1.5 rounded-full border border-slate-300 bg-slate-200/80 px-3 py-1.5 text-xs font-medium text-slate-700 transition hover:bg-slate-300 active:scale-[.97] dark:border-white/10 dark:bg-white/[.04] dark:text-white/62 dark:hover:bg-white/10 dark:hover:text-white"
+            >
+              <LogOut size={13} /> <span className="hidden md:inline">Sign out</span>
+            </button>
           </nav>
         </div>
       </header>

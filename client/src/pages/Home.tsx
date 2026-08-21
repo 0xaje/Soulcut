@@ -101,10 +101,10 @@ export default function Home() {
             </button>
             <button
               type="button"
-              onClick={() => openWorkspace("/app")}
-              className="rounded-full border border-slate-300 bg-white px-5 py-2.5 text-xs font-medium text-slate-700 shadow-sm transition hover:border-slate-400 dark:border-white/12 dark:bg-white/[.035] dark:text-white/75 dark:shadow-none dark:hover:border-[#c7ff4b]/45 dark:hover:text-[#d8ff83]"
+              onClick={() => setLocation("/walkthrough")}
+              className="inline-flex items-center justify-center gap-2 rounded-full border border-slate-300 bg-white/80 px-4 py-2.5 text-xs font-semibold text-slate-800 backdrop-blur-md transition hover:bg-slate-100 dark:border-white/12 dark:bg-white/[.06] dark:text-white dark:hover:bg-white/10 active:scale-[0.97]"
             >
-              Analyze a video
+              <Sparkles size={14} className="text-lime-500" /> 60s Judge Walkthrough
             </button>
           </div>
 

@@ -3,18 +3,21 @@ import { MindEvidenceDetails, type CreativeDnaMemory } from "@/components/MindEv
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { groupMindActivityByRecency } from "@/lib/mindPresentation";
 import { trpc } from "@/lib/trpc";
-import { ArrowLeft, Brain, CircleDot, History, Network, Sparkles, ThumbsUp } from "lucide-react";
+import { ArrowLeft, Brain, CircleDot, History, LogOut, Network, Search, Sparkles, ThumbsUp } from "lucide-react";
 import React, { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { Link } from "wouter";
 
+
 export default function CreativeDNA() {
-  const { loading, isAuthenticated } = useAuth({ redirectOnUnauthenticated: true });
+  const { loading, isAuthenticated, logout } = useAuth({ redirectOnUnauthenticated: true });
   const [selectedMemoryId, setSelectedMemoryId] = useState<number | null>(null);
   const [editingMemory, setEditingMemory] = useState<CreativeDnaMemory | null>(null);
   const [editingValue, setEditingValue] = useState("");
   const [retiringMemory, setRetiringMemory] = useState<CreativeDnaMemory | null>(null);
   const [retirementReason, setRetirementReason] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState<string>("all");
+  const [dnaSearch, setDnaSearch] = useState<string>("");
   const mindQuery = trpc.mind.getMind.useQuery(undefined, { enabled: isAuthenticated });
   const creativeDnaQuery = trpc.mind.getCreativeDNA.useQuery({ includeRetired: true }, { enabled: isAuthenticated });
   const mindActivityQuery = trpc.mind.getMindActivity.useQuery({ limit: 24 }, { enabled: isAuthenticated });
@@ -24,6 +27,20 @@ export default function CreativeDNA() {
   const retirePreference = trpc.mind.retirePreference.useMutation();
   const restorePreference = trpc.mind.restorePreference.useMutation();
   const activityGroups = useMemo(() => groupMindActivityByRecency(mindActivityQuery.data ?? []), [mindActivityQuery.data]);
+
+  const allMemories = useMemo(() => creativeDnaQuery.data?.memories ?? [], [creativeDnaQuery.data?.memories]);
+  const categories = useMemo(() => {
+    const set = new Set(allMemories.map(m => m.category));
+    return ["all", ...Array.from(set)];
+  }, [allMemories]);
+
+  const filteredMemories = useMemo(() => {
+    return allMemories.filter(m => {
+      if (categoryFilter !== "all" && m.category.toLowerCase() !== categoryFilter.toLowerCase()) return false;
+      if (dnaSearch.trim() && !m.value.toLowerCase().includes(dnaSearch.toLowerCase()) && !m.category.toLowerCase().includes(dnaSearch.toLowerCase())) return false;
+      return true;
+    });
+  }, [allMemories, categoryFilter, dnaSearch]);
 
   if (loading || !isAuthenticated) {
     return <main className="workspace-bg grid min-h-screen place-items-center px-6 text-sm text-slate-500 dark:text-white/55">Opening your private Creative DNA…</main>;
@@ -84,9 +101,20 @@ export default function CreativeDNA() {
               <span>Walkthrough</span>
             </Link>
             <ThemeToggle />
+            <button
+              onClick={async () => {
+                await logout();
+                toast.success("Signed out successfully.");
+              }}
+              type="button"
+              className="inline-flex items-center gap-1.5 rounded-full border border-slate-300 bg-slate-200/80 px-3 py-1.5 text-xs font-medium text-slate-700 transition hover:bg-slate-300 active:scale-[.97] dark:border-white/10 dark:bg-white/[.04] dark:text-white/62 dark:hover:bg-white/10 dark:hover:text-white"
+            >
+              <LogOut size={13} /> <span className="hidden md:inline">Sign out</span>
+            </button>
           </nav>
         </div>
       </header>
+
 
       <div className="mx-auto max-w-7xl px-4 py-7 sm:px-6 lg:py-10">
         <section className="relative overflow-hidden rounded-[2rem] border border-slate-300/80 bg-slate-100/90 p-6 shadow-sm dark:border-white/10 dark:bg-[#111116] sm:p-9">
@@ -156,9 +184,40 @@ export default function CreativeDNA() {
                 </div>
               </div>
             )}
+            {/* Category Filter and Search Bar */}
+            <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex flex-wrap gap-1.5" role="group" aria-label="Filter preferences by category">
+                {categories.map(cat => (
+                  <button
+                    key={cat}
+                    type="button"
+                    onClick={() => setCategoryFilter(cat)}
+                    className={`rounded-full px-3 py-1 text-xs font-semibold capitalize transition ${
+                      categoryFilter.toLowerCase() === cat.toLowerCase()
+                        ? "bg-slate-900 text-white shadow-2xs dark:bg-white dark:text-black"
+                        : "border border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:border-white/10 dark:bg-white/[.04] dark:text-white/60 dark:hover:bg-white/10 dark:hover:text-white"
+                    }`}
+                  >
+                    {cat}
+                  </button>
+                ))}
+              </div>
+
+              <div className="flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-1.5 dark:border-white/10 dark:bg-black/20">
+                <Search size={13} className="text-slate-400 dark:text-white/35" />
+                <input
+                  type="text"
+                  value={dnaSearch}
+                  onChange={e => setDnaSearch(e.target.value)}
+                  placeholder="Search DNA signals…"
+                  className="bg-transparent text-xs text-slate-900 outline-none placeholder:text-slate-400 dark:text-white dark:placeholder:text-white/30"
+                />
+              </div>
+            </div>
+
             <div className="mt-6 grid gap-3 sm:grid-cols-2">
               <MindEvidenceDetails
-                memories={creativeDnaQuery.data?.memories ?? []}
+                memories={filteredMemories}
                 selectedMemoryId={selectedMemoryId}
                 onSelectMemory={setSelectedMemoryId}
                 onCloseEvidence={() => setSelectedMemoryId(null)}

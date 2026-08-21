@@ -3,12 +3,23 @@ import { useAuth } from "@/_core/hooks/useAuth";
 import { MindEvidenceDetails } from "@/components/MindEvidenceDetails";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { type AnalysisProgressEvent, type AnalysisProgressStage, useAnalysisProgress } from "@/hooks/useAnalysisProgress";
+import {
+  downloadFile,
+  generateCapCutJson,
+  generateCmx3600Edl,
+  generateFcpxml,
+  generateMarkdownScript,
+  generateSrt,
+  getVideoEmbedInfo,
+  type ClipItem,
+} from "@/lib/exportUtils";
 import { filterJobHistory, getVisibleHistorySelection, type HistoryFilter } from "@/lib/jobHistory";
 import { groupMindActivityByRecency } from "@/lib/mindPresentation";
 import { trpc } from "@/lib/trpc";
 import {
   Archive,
   ArrowLeft,
+  BookOpen,
   Brain,
   Check,
   ChevronRight,
@@ -17,7 +28,11 @@ import {
   Copy,
   Download,
   ExternalLink,
+  FileSpreadsheet,
   FileText,
+  Film,
+  Flame,
+  HelpCircle,
   History,
   Link2,
   LoaderCircle,
@@ -30,19 +45,24 @@ import {
   Search,
   Send,
   Share2,
+  Smartphone,
   Sparkles,
   Tag,
   ThumbsDown,
   ThumbsUp,
   Trash2,
+  Tv,
   Users,
+  Volume2,
   X,
+  Zap,
 } from "lucide-react";
 import { type CSSProperties, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { Link, useLocation } from "wouter";
 
 type Clip = {
+
   startSeconds: number;
   endSeconds: number;
   title: string;
@@ -261,6 +281,39 @@ export default function Workspace() {
   const [feedbackTarget, setFeedbackTarget] = useState<number | null>(null);
   const [feedbackReason, setFeedbackReason] = useState<FeedbackReason>("too_slow");
   const [feedbackText, setFeedbackText] = useState("");
+  const [activeSeekTime, setActiveSeekTime] = useState<number | null>(null);
+  const [activePlayingClip, setActivePlayingClip] = useState<number | null>(null);
+  const [isVerticalMaskOpen, setIsVerticalMaskOpen] = useState(false);
+  const [selectedPlatform, setSelectedPlatform] = useState<"tiktok" | "reels" | "shorts">("tiktok");
+  const [showExportMenu, setShowExportMenu] = useState(false);
+  const [customHooks, setCustomHooks] = useState<Record<number, string>>({});
+  const [reanglingHookIndex, setReanglingHookIndex] = useState<number | null>(null);
+  const [reangleHookMenuIndex, setReangleHookMenuIndex] = useState<number | null>(null);
+  const [copiedHookIndex, setCopiedHookIndex] = useState<number | null>(null);
+  const [mobileTab, setMobileTab] = useState<"analysis" | "mind" | "history">("analysis");
+  const videoPlayerRef = useRef<HTMLDivElement>(null);
+  const reangleHookMutation = trpc.mind.reangleHook.useMutation();
+
+  const handleReangleHook = async (index: number, angle: "urgent" | "question" | "contrarian" | "story") => {
+    const clip = activeClips[index];
+    if (!clip) return;
+    setReanglingHookIndex(index);
+    setReangleHookMenuIndex(null);
+    try {
+      const currentHook = customHooks[index] || clip.hook;
+      const result = await reangleHookMutation.mutateAsync({
+        originalHook: currentHook,
+        clipTitle: clip.title,
+        angle,
+      });
+      setCustomHooks(prev => ({ ...prev, [index]: result.hook }));
+      toast.success(`Hook re-angled (${angle.toUpperCase()} style)!`);
+    } catch {
+      toast.error("Could not re-angle hook.");
+    } finally {
+      setReanglingHookIndex(null);
+    }
+  };
   const listFilters = useMemo(() => ({
     includeArchived,
     search: historySearch.trim() || undefined,
@@ -314,6 +367,8 @@ export default function Workspace() {
     [filteredJobs, visibleActiveId]
   );
   const activityGroups = useMemo(() => groupMindActivityByRecency(mindActivityQuery.data ?? []), [mindActivityQuery.data]);
+  const embedInfo = useMemo(() => getVideoEmbedInfo(activeJob?.videoUrl || ""), [activeJob?.videoUrl]);
+
 
   useEffect(() => {
     if (!isAuthenticated || pendingFromLandingLoaded) return;
@@ -602,6 +657,64 @@ export default function Workspace() {
   const appliedMindPreferences = activeJob?.mindContextSnapshot?.preferences ?? [];
   const hasMindOnboardingInput = onboardingVoice.length + onboardingHooks.length + onboardingPacing.length > 0 || Boolean(onboardingAudience.trim()) || Boolean(onboardingNotes.trim());
 
+  const handleExportEdl = () => {
+    if (!activeClips.length) {
+      toast.error("No clips available to export.");
+      return;
+    }
+    const edlContent = generateCmx3600Edl(activeClips as ClipItem[], activeJob?.videoUrl || "SoulCut_Clips");
+    downloadFile(`SoulCut_Timeline_${activeJob?.id ?? "export"}.edl`, edlContent, "text/plain");
+    toast.success("Downloaded CMX 3600 EDL (Premiere & DaVinci Resolve timeline).");
+  };
+
+  const handleExportFcpxml = () => {
+    if (!activeClips.length) {
+      toast.error("No clips available to export.");
+      return;
+    }
+    const fcpxmlContent = generateFcpxml(activeClips as ClipItem[], activeJob?.summary ? activeJob.summary.slice(0, 30) : "SoulCut_Clips");
+    downloadFile(`SoulCut_Timeline_${activeJob?.id ?? "export"}.fcpxml`, fcpxmlContent, "application/xml");
+    toast.success("Downloaded Final Cut Pro XML (.fcpxml).");
+  };
+
+  const handleExportCapCut = () => {
+    if (!activeClips.length) {
+      toast.error("No clips available to export.");
+      return;
+    }
+    const capCutJson = generateCapCutJson(activeClips as ClipItem[], activeJob?.videoUrl || "", activeJob?.summary ? activeJob.summary.slice(0, 30) : "SoulCut Project");
+    downloadFile(`SoulCut_CapCut_${activeJob?.id ?? "export"}.json`, capCutJson, "application/json");
+    toast.success("Downloaded CapCut Timeline JSON (.json).");
+  };
+
+  const handleExportSrt = () => {
+    if (!activeClips.length) {
+      toast.error("No clips available to export.");
+      return;
+    }
+    const srtContent = generateSrt(activeClips as ClipItem[]);
+    downloadFile(`SoulCut_Subtitles_${activeJob?.id ?? "export"}.srt`, srtContent, "application/x-subrip");
+    toast.success("Downloaded Subtitles & Hooks (.srt).");
+  };
+
+  const handleExportMarkdownScript = () => {
+    if (!activeClips.length) {
+      toast.error("No clips available to export.");
+      return;
+    }
+    const mdContent = generateMarkdownScript(activeClips as ClipItem[], activeJob?.videoUrl || "", activeJob?.summary || "");
+    downloadFile(`SoulCut_Script_${activeJob?.id ?? "export"}.md`, mdContent, "text/markdown");
+    toast.success("Downloaded Creator Markdown script.");
+  };
+
+  const handlePlayClip = (startSeconds: number, index: number) => {
+    setActiveSeekTime(startSeconds);
+    setActivePlayingClip(index);
+    if (videoPlayerRef.current) {
+      videoPlayerRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+  };
+
   return (
     <main className="workspace-bg min-h-screen text-white">
       {showMindOnboarding && (
@@ -719,8 +832,47 @@ export default function Workspace() {
         </div>
       </header>
 
+      {/* Mobile Tab Switcher */}
+      <div className="mx-auto max-w-7xl px-4 pt-4 lg:hidden">
+        <div className="grid grid-cols-3 gap-1 rounded-2xl border border-slate-300 bg-white/80 p-1 backdrop-blur-md dark:border-white/10 dark:bg-[#121218]">
+          <button
+            type="button"
+            onClick={() => setMobileTab("analysis")}
+            className={`flex items-center justify-center gap-1.5 rounded-xl py-2 text-xs font-semibold transition ${
+              mobileTab === "analysis"
+                ? "bg-slate-900 text-white shadow-xs dark:bg-white dark:text-black"
+                : "text-slate-600 hover:text-slate-900 dark:text-white/60 dark:hover:text-white"
+            }`}
+          >
+            <Play size={13} /> Video & Brief
+          </button>
+          <button
+            type="button"
+            onClick={() => setMobileTab("mind")}
+            className={`flex items-center justify-center gap-1.5 rounded-xl py-2 text-xs font-semibold transition ${
+              mobileTab === "mind"
+                ? "bg-slate-900 text-white shadow-xs dark:bg-white dark:text-black"
+                : "text-slate-600 hover:text-slate-900 dark:text-white/60 dark:hover:text-white"
+            }`}
+          >
+            <Brain size={13} /> Mind
+          </button>
+          <button
+            type="button"
+            onClick={() => setMobileTab("history")}
+            className={`flex items-center justify-center gap-1.5 rounded-xl py-2 text-xs font-semibold transition ${
+              mobileTab === "history"
+                ? "bg-slate-900 text-white shadow-xs dark:bg-white dark:text-black"
+                : "text-slate-600 hover:text-slate-900 dark:text-white/60 dark:hover:text-white"
+            }`}
+          >
+            <History size={13} /> Briefs ({filteredJobs.length})
+          </button>
+        </div>
+      </div>
+
       <div className="mx-auto grid max-w-7xl gap-6 px-4 py-7 sm:px-6 lg:grid-cols-[275px_minmax(0,1fr)] lg:py-9">
-        <aside id="history" className="order-2 lg:order-1">
+        <aside id="history" className={`order-2 lg:order-1 ${mobileTab === "history" ? "block" : "hidden lg:block"}`}>
           <div className="sticky top-24 rounded-3xl border border-slate-200 bg-white p-3.5 shadow-sm dark:border-white/9 dark:bg-white/[.025] dark:shadow-none">
             <div className="flex items-center justify-between px-2 pb-3 pt-1">
               <div>
@@ -1018,9 +1170,47 @@ export default function Workspace() {
                 {isWorking ? "Mind at work…" : "Ask your Mind"}
               </button>
             </div>
+            {/* 1-Click Quick-Fill Example Sources */}
+            <div className="mt-3 flex flex-wrap items-center gap-1.5 px-1">
+              <span className="text-[11px] font-medium text-slate-500 dark:text-white/40">Try a sample:</span>
+              <button
+                type="button"
+                onClick={() => {
+                  setVideoUrl("https://www.youtube.com/watch?v=u4ZoJKF_VuA");
+                  toast.success("Loaded Simon Sinek: How Great Leaders Inspire");
+                }}
+                disabled={isWorking}
+                className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-[11px] font-medium text-slate-700 transition hover:border-lime-400 hover:bg-lime-50 dark:border-white/10 dark:bg-white/[.04] dark:text-white/70 dark:hover:border-[#c7ff4b]/40 dark:hover:bg-[#c7ff4b]/10 dark:hover:text-[#d8ff83]"
+              >
+                💡 Simon Sinek (Leadership)
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setVideoUrl("https://www.youtube.com/watch?v=0lJKucu6HJc");
+                  toast.success("Loaded Y Combinator: How to Build the Future");
+                }}
+                disabled={isWorking}
+                className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-[11px] font-medium text-slate-700 transition hover:border-lime-400 hover:bg-lime-50 dark:border-white/10 dark:bg-white/[.04] dark:text-white/70 dark:hover:border-[#c7ff4b]/40 dark:hover:bg-[#c7ff4b]/10 dark:hover:text-[#d8ff83]"
+              >
+                🚀 Y Combinator (Startups)
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setVideoUrl("https://www.youtube.com/watch?v=gXDMoiEkyu8");
+                  toast.success("Loaded Huberman Lab: Focus & Dopamine");
+                }}
+                disabled={isWorking}
+                className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-[11px] font-medium text-slate-700 transition hover:border-lime-400 hover:bg-lime-50 dark:border-white/10 dark:bg-white/[.04] dark:text-white/70 dark:hover:border-[#c7ff4b]/40 dark:hover:bg-[#c7ff4b]/10 dark:hover:text-[#d8ff83]"
+              >
+                🎙️ Huberman Lab (Neuroscience)
+              </button>
+            </div>
+
             <input ref={transcriptInputRef} type="file" accept=".txt,.srt,.vtt,text/plain,text/vtt,application/x-subrip" className="sr-only" onChange={event => { const file = event.target.files?.[0]; if (!file) return; if (file.size > 400_000) { toast.error("Transcript files must be 400 KB or smaller."); event.target.value = ""; return; } if (!/\.(txt|srt|vtt)$/i.test(file.name)) { toast.error("Use a .txt, .srt, or .vtt transcript file."); event.target.value = ""; return; } setTranscriptFile(file); }} />
             <div className="relative mt-3 flex flex-wrap items-center justify-between gap-2 px-1">
-              <p className="text-xs text-slate-500 dark:text-white/32">SoulCut only analyzes public sources it can access. Your Mind guides creative prioritization; the source remains the evidence.</p>
+              <p className="text-xs text-slate-500 dark:text-white/32">SoulCut automatically extracts public captions and grounds all timestamps.</p>
               <div className="flex items-center gap-2">
                 {transcriptFile ? (
                   <>
@@ -1045,9 +1235,63 @@ export default function Workspace() {
                   <p className="mt-4 break-all text-sm font-medium leading-relaxed text-slate-800 dark:text-white/65">{activeJob.videoUrl}</p>
                   {activeJob.transcriptFormat && <p className="mt-2 text-[11px] font-semibold text-lime-700 dark:text-[#d8ff83]/70">Imported {activeJob.transcriptFormat.toUpperCase()} transcript · {activeJob.transcriptCharacterCount?.toLocaleString() ?? "—"} characters</p>}
                 </div>
-                <div className="flex shrink-0 flex-wrap gap-2">
+                <div className="flex shrink-0 flex-wrap items-center gap-2">
+                  {activeClips.length > 0 && (
+                    <div className="relative">
+                      <button
+                        type="button"
+                        onClick={() => setShowExportMenu(!showExportMenu)}
+                        className="inline-flex items-center gap-1.5 rounded-full border border-lime-400/40 bg-lime-400/10 px-3.5 py-2 text-xs font-semibold text-lime-900 transition hover:bg-lime-400/20 dark:border-[#c7ff4b]/30 dark:bg-[#c7ff4b]/10 dark:text-[#d8ff83] dark:hover:bg-[#c7ff4b]/20"
+                        title="Export to video editing software"
+                      >
+                        <Scissors size={13} /> Export Timeline ▾
+                      </button>
+                      {showExportMenu && (
+                        <div className="absolute right-0 top-full z-30 mt-2 w-56 rounded-2xl border border-slate-200 bg-white p-2 shadow-xl dark:border-white/10 dark:bg-[#15151a]">
+                          <p className="px-3 py-1.5 font-mono text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-white/40">
+                            NLE Editor Formats
+                          </p>
+                          <button
+                            type="button"
+                            onClick={() => { handleExportEdl(); setShowExportMenu(false); }}
+                            className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-xs font-medium text-slate-800 transition hover:bg-slate-100 dark:text-white/80 dark:hover:bg-white/10"
+                          >
+                            <Film size={13} className="text-lime-500" /> Premiere & DaVinci (.edl)
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => { handleExportFcpxml(); setShowExportMenu(false); }}
+                            className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-xs font-medium text-slate-800 transition hover:bg-slate-100 dark:text-white/80 dark:hover:bg-white/10"
+                          >
+                            <Scissors size={13} className="text-cyan-400" /> Final Cut Pro XML (.fcpxml)
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => { handleExportCapCut(); setShowExportMenu(false); }}
+                            className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-xs font-medium text-slate-800 transition hover:bg-slate-100 dark:text-white/80 dark:hover:bg-white/10"
+                          >
+                            <Smartphone size={13} className="text-amber-400" /> CapCut Project (.json)
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => { handleExportSrt(); setShowExportMenu(false); }}
+                            className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-xs font-medium text-slate-800 transition hover:bg-slate-100 dark:text-white/80 dark:hover:bg-white/10"
+                          >
+                            <FileText size={13} className="text-emerald-400" /> Subtitles & Hooks (.srt)
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => { handleExportMarkdownScript(); setShowExportMenu(false); }}
+                            className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-xs font-medium text-slate-800 transition hover:bg-slate-100 dark:text-white/80 dark:hover:bg-white/10"
+                          >
+                            <FileText size={13} className="text-purple-400" /> Markdown Script (.md)
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  )}
                   <button type="button" onClick={() => void downloadJobPdf(activeJob.id)} disabled={exportPdf.isPending} className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-slate-100 px-3.5 py-2 text-xs font-medium text-slate-700 transition hover:bg-slate-200 disabled:opacity-50 dark:border-white/10 dark:bg-white/[.04] dark:text-white/60 dark:hover:bg-white/8 dark:hover:text-white">
-                    <FileText size={13} /> {exportPdf.isPending ? "Preparing PDF" : activeJob.status === "failed" ? "Error report" : "PDF report"}
+                    <Download size={13} /> {exportPdf.isPending ? "Preparing PDF" : activeJob.status === "failed" ? "Error report" : "PDF report"}
                   </button>
                   <label className="flex items-center rounded-full border border-slate-200 bg-slate-100 px-2 text-xs text-slate-700 dark:border-white/10 dark:bg-white/[.04] dark:text-white/52">
                     <span className="sr-only">Share link expiry</span>
@@ -1096,6 +1340,175 @@ export default function Workspace() {
                     </article>
                   )}
 
+                  {/* Embedded Live Video Player */}
+                  {embedInfo.type !== "unknown" && (
+                    <article ref={videoPlayerRef} className="rounded-3xl border border-slate-300 bg-white p-5 shadow-sm sm:p-6 dark:border-white/9 dark:bg-[#111116] dark:shadow-none">
+                      <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                        <div className="flex items-center gap-2.5">
+                          <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-slate-900 text-white dark:bg-[#c7ff4b]/15 dark:text-[#d8ff83]">
+                            <Tv size={15} />
+                          </span>
+                          <div>
+                            <h3 className="font-display text-2xl tracking-[-.04em] text-slate-900 dark:text-white">Live Source Player</h3>
+                            <p className="text-xs text-slate-600 dark:text-white/45">
+                              {activeSeekTime !== null
+                                ? `Scrubbed to ${formatTime(activeSeekTime)} · Clip ${activePlayingClip !== null ? activePlayingClip + 1 : ""}`
+                                : "Select any clip below to jump to timestamp and preview moment"}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex flex-wrap items-center gap-2">
+                          <div className="flex items-center rounded-full border border-slate-200 bg-slate-100 p-0.5 dark:border-white/10 dark:bg-white/[.04]">
+                            <button
+                              type="button"
+                              onClick={() => setIsVerticalMaskOpen(!isVerticalMaskOpen)}
+                              className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold transition ${
+                                isVerticalMaskOpen
+                                  ? "border border-lime-400/50 bg-lime-400/20 text-lime-900 shadow-xs dark:border-[#c7ff4b]/50 dark:bg-[#c7ff4b]/20 dark:text-[#d8ff83]"
+                                  : "text-slate-700 hover:text-black dark:text-white/60 dark:hover:text-white"
+                              }`}
+                              title="Toggle 9:16 vertical framing and safe-zone guides"
+                            >
+                              <Smartphone size={13} /> {isVerticalMaskOpen ? "9:16 Mask" : "9:16 Framing"}
+                            </button>
+                            {isVerticalMaskOpen && (
+                              <div className="ml-1 flex items-center gap-1 border-l border-slate-200 pl-1 dark:border-white/10">
+                                <button
+                                  type="button"
+                                  onClick={() => setSelectedPlatform("tiktok")}
+                                  className={`rounded-full px-2 py-0.5 text-[10px] font-semibold transition ${
+                                    selectedPlatform === "tiktok"
+                                      ? "bg-slate-900 text-white dark:bg-white dark:text-black"
+                                      : "text-slate-500 hover:text-slate-800 dark:text-white/40 dark:hover:text-white"
+                                  }`}
+                                >
+                                  TikTok
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => setSelectedPlatform("reels")}
+                                  className={`rounded-full px-2 py-0.5 text-[10px] font-semibold transition ${
+                                    selectedPlatform === "reels"
+                                      ? "bg-slate-900 text-white dark:bg-white dark:text-black"
+                                      : "text-slate-500 hover:text-slate-800 dark:text-white/40 dark:hover:text-white"
+                                  }`}
+                                >
+                                  Reels
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => setSelectedPlatform("shorts")}
+                                  className={`rounded-full px-2 py-0.5 text-[10px] font-semibold transition ${
+                                    selectedPlatform === "shorts"
+                                      ? "bg-slate-900 text-white dark:bg-white dark:text-black"
+                                      : "text-slate-500 hover:text-slate-800 dark:text-white/40 dark:hover:text-white"
+                                  }`}
+                                >
+                                  Shorts
+                                </button>
+                              </div>
+                            )}
+                          </div>
+                          {activeSeekTime !== null && (
+                            <button
+                              type="button"
+                              onClick={() => { setActiveSeekTime(null); setActivePlayingClip(null); }}
+                              className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-slate-100 px-3 py-1.5 text-xs font-medium text-slate-700 transition hover:bg-slate-200 dark:border-white/10 dark:bg-white/[.05] dark:text-white/60 dark:hover:bg-white/10 dark:hover:text-white"
+                            >
+                              <RotateCcw size={12} /> Reset player
+                            </button>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="relative aspect-video w-full overflow-hidden rounded-2xl border border-slate-200 bg-black shadow-inner dark:border-white/10">
+                        {embedInfo.type === "youtube" && (
+                          <iframe
+                            src={`${embedInfo.embedUrl}${activeSeekTime !== null ? `&start=${Math.floor(activeSeekTime)}&autoplay=1` : ""}`}
+                            title="YouTube video player"
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                            allowFullScreen
+                            className="h-full w-full border-0"
+                          />
+                        )}
+                        {embedInfo.type === "vimeo" && (
+                          <iframe
+                            src={`${embedInfo.embedUrl}${activeSeekTime !== null ? `#t=${Math.floor(activeSeekTime)}s` : ""}`}
+                            title="Vimeo video player"
+                            allow="autoplay; fullscreen; picture-in-picture"
+                            allowFullScreen
+                            className="h-full w-full border-0"
+                          />
+                        )}
+                        {embedInfo.type === "direct" && (
+                          <video
+                            key={activeSeekTime}
+                            controls
+                            autoPlay={activeSeekTime !== null}
+                            src={`${embedInfo.embedUrl}${activeSeekTime !== null ? `#t=${activeSeekTime}` : ""}`}
+                            className="h-full w-full object-contain"
+                          />
+                        )}
+
+                        {/* 9:16 Vertical Video Framing Mask */}
+                        {isVerticalMaskOpen && (
+                          <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
+                            {/* Left dimmed wing */}
+                            <div className="h-full flex-1 bg-black/75 backdrop-blur-[2px] border-r border-white/20" />
+
+                            {/* Centered 9:16 vertical viewport frame */}
+                            <div className="relative aspect-[9/16] h-full border-2 border-lime-400 shadow-[0_0_30px_rgba(199,255,75,0.3)]">
+                              {/* Top safe zone tag */}
+                              <div className="absolute top-2 left-2 right-2 flex items-center justify-between">
+                                <span className="rounded-full bg-black/70 px-2 py-0.5 font-mono text-[9px] font-bold uppercase tracking-wider text-lime-400 backdrop-blur-md">
+                                  9:16 {selectedPlatform.toUpperCase()} SAFE-ZONE
+                                </span>
+                                <span className="rounded-full bg-black/70 px-1.5 py-0.5 font-mono text-[8px] text-white/70">
+                                  1080×1920
+                                </span>
+                              </div>
+
+                              {/* Center crosshair */}
+                              <div className="absolute inset-0 flex items-center justify-center opacity-30">
+                                <div className="h-4 w-0.5 bg-lime-400" />
+                                <div className="h-0.5 w-4 bg-lime-400 absolute" />
+                              </div>
+
+                              {/* Right preview interaction icons (TikTok/Reels UI safe zone) */}
+                              <div className={`absolute right-2 flex flex-col items-center gap-3 text-white/80 drop-shadow-md ${
+                                selectedPlatform === "reels" ? "bottom-24" : "bottom-16"
+                              }`}>
+                                <div className="flex h-7 w-7 items-center justify-center rounded-full bg-black/40 text-[10px]">❤️</div>
+                                <div className="flex h-7 w-7 items-center justify-center rounded-full bg-black/40 text-[10px]">💬</div>
+                                <div className="flex h-7 w-7 items-center justify-center rounded-full bg-black/40 text-[10px]">↗️</div>
+                                <div className="h-6 w-6 rounded-full border border-lime-400 bg-black/60 text-[8px] flex items-center justify-center">🎵</div>
+                              </div>
+
+                              {/* Bottom caption safe-zone guide */}
+                              <div className={`absolute left-2 right-12 rounded-lg border border-dashed border-white/30 bg-black/50 p-1.5 backdrop-blur-xs ${
+                                selectedPlatform === "shorts" ? "bottom-4" : "bottom-2"
+                              }`}>
+                                <p className="truncate text-[10px] font-bold text-white">
+                                  {activePlayingClip !== null && activeClips[activePlayingClip]
+                                    ? activeClips[activePlayingClip].title
+                                    : "Hook & Title Safe Zone"}
+                                </p>
+                                <p className="truncate text-[8px] text-lime-300">
+                                  {activePlayingClip !== null && activeClips[activePlayingClip]
+                                    ? `"${customHooks[activePlayingClip] || activeClips[activePlayingClip].hook}"`
+                                    : "Keep text clear of bottom margin"}
+                                </p>
+                              </div>
+                            </div>
+
+                            {/* Right dimmed wing */}
+                            <div className="h-full flex-1 bg-black/75 backdrop-blur-[2px] border-l border-white/20" />
+                          </div>
+                        )}
+                      </div>
+                    </article>
+                  )}
+
                   {/* Executive Brief Card */}
                   <article className="result-card result-card--summary rounded-3xl border border-slate-300 bg-white p-6 shadow-sm sm:p-8 dark:border-white/9 dark:bg-[#111116] dark:shadow-none">
                     <div className="flex flex-col justify-between gap-6 sm:flex-row sm:items-start">
@@ -1125,27 +1538,140 @@ export default function Workspace() {
                         <p className="mt-2 text-sm text-slate-600 dark:text-white/44">Grounded in the available source and prioritized through your Creative DNA.</p>
                       </div>
                       {activeClips.length > 0 && (
-                        <button type="button" onClick={() => void copyText(activeClips.map(clipText).join("\n\n"), "All clip notes copied.")} className="inline-flex items-center gap-2 text-xs font-semibold text-slate-600 transition hover:text-slate-900 dark:text-white/52 dark:hover:text-white">
-                          <Copy size={14} /> Copy all
-                        </button>
+                        <div className="flex flex-wrap items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => void copyText(activeClips.map(clipText).join("\n\n"), "All clip notes copied.")}
+                            className="inline-flex items-center gap-1.5 rounded-full border border-slate-300 bg-white px-3.5 py-1.5 text-xs font-medium text-slate-700 shadow-2xs transition hover:bg-slate-50 dark:border-white/10 dark:bg-white/[.04] dark:text-white/60 dark:hover:bg-white/8 dark:hover:text-white"
+                          >
+                            <Copy size={13} /> Copy all notes
+                          </button>
+                        </div>
                       )}
                     </div>
                     {activeClips.length > 0 ? (
                       <div className="mt-7 grid gap-3">
                         {activeClips.map((clip, index) => (
-                          <article key={`${clip.startSeconds}-${clip.endSeconds}-${clip.title}`} className="clip-card group rounded-2xl border border-slate-300 bg-white p-4 shadow-sm sm:p-5 dark:border-white/8 dark:bg-[#15151c] dark:shadow-none">
+                          <article
+                            key={`${clip.startSeconds}-${clip.endSeconds}-${clip.title}`}
+                            className={`clip-card group rounded-2xl border bg-white p-4 shadow-sm transition sm:p-5 dark:bg-[#15151c] dark:shadow-none ${
+                              activePlayingClip === index
+                                ? "border-slate-900 ring-2 ring-slate-900/15 dark:border-[#c7ff4b] dark:ring-[#c7ff4b]/25"
+                                : "border-slate-300 dark:border-white/8"
+                            }`}
+                          >
                             <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                               <div className="flex min-w-0 gap-4">
-                                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-slate-900 text-white shadow-sm dark:bg-white dark:text-black">
+                                <button
+                                  type="button"
+                                  onClick={() => handlePlayClip(clip.startSeconds, index)}
+                                  title="Jump to clip timestamp"
+                                  className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl shadow-sm transition active:scale-95 ${
+                                    activePlayingClip === index
+                                      ? "bg-lime-400 text-lime-950 dark:bg-[#c7ff4b] dark:text-black"
+                                      : "bg-slate-900 text-white hover:bg-slate-800 dark:bg-white dark:text-black dark:hover:bg-slate-200"
+                                  }`}
+                                >
                                   <Play size={16} fill="currentColor" />
-                                </span>
+                                </button>
                                 <div className="min-w-0">
-                                  <p className="font-mono text-[11px] font-semibold tracking-[.12em] text-slate-700 dark:text-white/70">{formatTime(clip.startSeconds)} — {formatTime(clip.endSeconds)}</p>
+                                  <div className="flex items-center gap-2">
+                                    <button
+                                      type="button"
+                                      onClick={() => handlePlayClip(clip.startSeconds, index)}
+                                      className="font-mono text-[11px] font-semibold tracking-[.12em] text-slate-700 underline transition hover:text-black dark:text-[#d8ff83] dark:hover:text-white"
+                                    >
+                                      {formatTime(clip.startSeconds)} — {formatTime(clip.endSeconds)}
+                                    </button>
+                                    <span className="text-[10px] text-slate-400 dark:text-white/30">({Math.round(clip.endSeconds - clip.startSeconds)}s)</span>
+                                    {/* Audio equalizer animation */}
+                                    {activePlayingClip === index && (
+                                      <span className="flex items-center gap-0.5 ml-1" title="Playing clip source">
+                                        <span className="h-3 w-0.5 animate-pulse rounded-full bg-lime-500" />
+                                        <span className="h-4 w-0.5 animate-pulse rounded-full bg-lime-400 delay-75" />
+                                        <span className="h-2 w-0.5 animate-pulse rounded-full bg-lime-500 delay-150" />
+                                        <span className="h-3.5 w-0.5 animate-pulse rounded-full bg-lime-400 delay-300" />
+                                      </span>
+                                    )}
+                                  </div>
                                   <h3 className="mt-1 font-display text-2xl tracking-[-.045em] text-slate-900 dark:text-white">{clip.title}</h3>
-                                  <p className="mt-2 text-sm leading-relaxed text-slate-600 dark:text-white/52">“{clip.hook}”</p>
+                                  <div className="mt-2 flex items-start gap-2">
+                                    <p className="text-sm leading-relaxed text-slate-600 dark:text-white/52">
+                                      “{customHooks[index] || clip.hook}”
+                                    </p>
+                                    {customHooks[index] && (
+                                      <span className="shrink-0 rounded-full bg-lime-100 px-2 py-0.5 font-mono text-[9px] font-bold text-lime-800 dark:bg-[#c7ff4b]/20 dark:text-[#d8ff83]">
+                                        Re-angled
+                                      </span>
+                                    )}
+                                  </div>
                                 </div>
                               </div>
-                              <div className="flex shrink-0 gap-2 sm:opacity-0 sm:transition sm:group-hover:opacity-100">
+                              <div className="flex shrink-0 flex-wrap items-center gap-2">
+                                {/* Re-Angle Hook Dropdown */}
+                                <div className="relative">
+                                  <button
+                                    type="button"
+                                    onClick={() => setReangleHookMenuIndex(reangleHookMenuIndex === index ? null : index)}
+                                    disabled={reanglingHookIndex === index}
+                                    className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-slate-100 px-2.5 py-1 text-[11px] font-semibold text-slate-800 transition hover:bg-slate-200 disabled:opacity-50 dark:border-white/10 dark:bg-white/[.05] dark:text-white/80 dark:hover:bg-white/10"
+                                    title="Generate alternate hook angles based on your Creative DNA"
+                                  >
+                                    {reanglingHookIndex === index ? (
+                                      <LoaderCircle size={11} className="animate-spin text-lime-500" />
+                                    ) : (
+                                      <Zap size={11} className="text-amber-500" />
+                                    )}
+                                    {reanglingHookIndex === index ? "Re-angling…" : "Re-angle Hook ▾"}
+                                  </button>
+                                  {reangleHookMenuIndex === index && (
+                                    <div className="absolute right-0 top-full z-30 mt-1.5 w-48 rounded-xl border border-slate-200 bg-white p-1.5 shadow-xl dark:border-white/10 dark:bg-[#181820]">
+                                      <p className="px-2 py-1 font-mono text-[9px] font-bold uppercase tracking-wider text-slate-400 dark:text-white/40">
+                                        Creative Hook Angles
+                                      </p>
+                                      <button
+                                        type="button"
+                                        onClick={() => void handleReangleHook(index, "urgent")}
+                                        className="flex w-full items-center gap-1.5 rounded-lg px-2 py-1.5 text-left text-xs font-medium text-slate-800 transition hover:bg-slate-100 dark:text-white/80 dark:hover:bg-white/10"
+                                      >
+                                        <Zap size={12} className="text-amber-400" /> ⚡ Urgent / FOMO
+                                      </button>
+                                      <button
+                                        type="button"
+                                        onClick={() => void handleReangleHook(index, "question")}
+                                        className="flex w-full items-center gap-1.5 rounded-lg px-2 py-1.5 text-left text-xs font-medium text-slate-800 transition hover:bg-slate-100 dark:text-white/80 dark:hover:bg-white/10"
+                                      >
+                                        <HelpCircle size={12} className="text-cyan-400" /> ❓ Question / Curiosity
+                                      </button>
+                                      <button
+                                        type="button"
+                                        onClick={() => void handleReangleHook(index, "contrarian")}
+                                        className="flex w-full items-center gap-1.5 rounded-lg px-2 py-1.5 text-left text-xs font-medium text-slate-800 transition hover:bg-slate-100 dark:text-white/80 dark:hover:bg-white/10"
+                                      >
+                                        <Flame size={12} className="text-rose-400" /> 🔥 Contrarian Hot Take
+                                      </button>
+                                      <button
+                                        type="button"
+                                        onClick={() => void handleReangleHook(index, "story")}
+                                        className="flex w-full items-center gap-1.5 rounded-lg px-2 py-1.5 text-left text-xs font-medium text-slate-800 transition hover:bg-slate-100 dark:text-white/80 dark:hover:bg-white/10"
+                                      >
+                                        <BookOpen size={12} className="text-purple-400" /> 📖 Personal Story
+                                      </button>
+                                    </div>
+                                  )}
+                                </div>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    void copyText(customHooks[index] || clip.hook, "Hook copied to clipboard.");
+                                    setCopiedHookIndex(index);
+                                    window.setTimeout(() => setCopiedHookIndex(null), 1400);
+                                  }}
+                                  className="rounded-full border border-slate-200 bg-slate-100 px-2.5 py-1 text-[11px] font-medium text-slate-700 transition hover:bg-slate-200 dark:border-white/10 dark:bg-white/[.05] dark:text-white/60 dark:hover:bg-white/10 dark:hover:text-white"
+                                  title="Copy opening hook"
+                                >
+                                  {copiedHookIndex === index ? "Copied!" : "Copy"}
+                                </button>
                                 <button type="button" className="icon-button" aria-label="Copy clip note" onClick={() => { void copyText(clipText(clip), "Clip note copied."); setCopiedClip(index); window.setTimeout(() => setCopiedClip(null), 1400); }}>{copiedClip === index ? <Check size={16} /> : <Copy size={16} />}</button>
                                 <button type="button" className="icon-button" aria-label="Share clip note" onClick={() => void shareText("SoulCut clip idea", clipText(clip))}><Share2 size={16} /></button>
                               </div>

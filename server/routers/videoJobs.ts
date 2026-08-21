@@ -23,6 +23,7 @@ import {
 } from "../db";
 import { buildJobHistoryCsv } from "../jobHistoryCsv";
 import { buildJobPdfReport } from "../jobPdfReport";
+import { buildCapCutJsonExport, buildEdlExport, buildFcpxmlExport, buildSrtExport, type TimelineClip } from "../timelineExport";
 import { storageGet, storageGetSignedUrl, storagePut } from "../storage";
 import { parseCreatorTranscript } from "../transcriptIngestion";
 import { isPublicVideoUrl } from "../videoAnalysis";
@@ -142,6 +143,51 @@ export const videoJobsRouter = router({
         filename: `soulcut-report-${job.id}.pdf`,
         base64: pdf.toString("base64"),
       };
+    }),
+
+  exportTimeline: protectedProcedure
+    .input(
+      z.object({
+        id: z.string().min(8).max(32),
+        format: z.enum(["edl", "fcpxml", "capcut", "srt"]),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      const job = await getVideoJobForUser(input.id, ctx.user.id);
+      if (!job) throw new TRPCError({ code: "NOT_FOUND", message: "Video job not found." });
+      const clips = (job.clips || []) as TimelineClip[];
+      if (!clips.length) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "No timestamped clips available to export." });
+      }
+
+      const jobTitle = job.summary ? job.summary.slice(0, 40) : `SoulCut-${job.id}`;
+
+      switch (input.format) {
+        case "edl":
+          return {
+            filename: `soulcut-${job.id}.edl`,
+            mimeType: "text/plain",
+            content: buildEdlExport(jobTitle, clips),
+          };
+        case "fcpxml":
+          return {
+            filename: `soulcut-${job.id}.fcpxml`,
+            mimeType: "application/xml",
+            content: buildFcpxmlExport(jobTitle, clips),
+          };
+        case "capcut":
+          return {
+            filename: `soulcut-${job.id}-capcut.json`,
+            mimeType: "application/json",
+            content: buildCapCutJsonExport(jobTitle, job.videoUrl, clips),
+          };
+        case "srt":
+          return {
+            filename: `soulcut-${job.id}-captions.srt`,
+            mimeType: "application/x-subrip",
+            content: buildSrtExport(clips),
+          };
+      }
     }),
 
   createPdfShare: protectedProcedure
