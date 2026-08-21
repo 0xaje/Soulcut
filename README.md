@@ -11,9 +11,9 @@
 [![tRPC](https://img.shields.io/badge/tRPC-v11-2596be.svg?style=flat-square)](https://trpc.io/)
 [![Minds API](https://img.shields.io/badge/Minds%20API-Persistent%20Memory-8A2BE2.svg?style=flat-square)](https://useminds.com/)
 [![Groq](https://img.shields.io/badge/Groq-Llama%203.3%2070B-orange.svg?style=flat-square)](https://groq.com/)
-[![Vitest](https://img.shields.io/badge/Tests-71%20Passing-brightgreen.svg?style=flat-square)](https://vitest.dev/)
+[![Vitest](https://img.shields.io/badge/Tests-89%20Passing-brightgreen.svg?style=flat-square)](https://vitest.dev/)
 
-[**Quick Start**](#quick-start) • [**Documentation**](./docs/GETTING_STARTED.md) • [**Architecture**](./docs/ARCHITECTURE.md) • [**Workflow**](#core-workflow) • [**Configuration**](#configuration)
+[**Quick Start**](#quick-start) • [**Live Walkthrough**](/walkthrough) • [**Documentation**](./docs/GETTING_STARTED.md) • [**Architecture**](./docs/ARCHITECTURE.md) • [**Workflow**](#core-workflow) • [**Configuration**](#configuration)
 
 ---
 
@@ -23,25 +23,38 @@
 
 Traditional video AI tools generate generic, cookie-cutter clips because they have **no memory** of what you actually like. 
 
-**SoulCut is different.** It combines **Groq's fast LLM inference** with **Minds API persistent memory** to create a personalized AI Creative Director that:
+**SoulCut is different.** It combines **Groq's fast LLM inference** with **Minds API persistent memory** (`@animocabrands/minds-client-lib`) to create a personalized AI Creative Director that:
 1. **Remembers Your Style**: Learns your pacing, hook preferences, emotional resonance rules, and editing aesthetics.
-2. **Evolves With Every Clip**: Improves its recommendations over time as you accept (Keep) or reject (Not My Style) suggestions.
-3. **Distills Long-Form Content**: Automatically analyzes hours of footage to isolate high-impact short-form clips with exact timestamps, hook scripts, and virality rationales.
-4. **Client-Ready Deliverables**: Generates branded PDF briefs and tokenized, secure public share links for your editors and clients.
+2. **Evolves With Every Clip**: Dynamically updates confidence weights as you accept (Keep) or reject (Not My Style) suggestions.
+3. **Automated Zero-Dependency Ingestion**: Automatically extracts transcripts directly from public YouTube URLs with grounded timestamp alignment.
+4. **Pro NLE Timeline Exports**: Generates 1-click timeline project files for **Adobe Premiere Pro / DaVinci Resolve (`.edl`)**, **Final Cut Pro (`.fcpxml`)**, **CapCut Project (`.json`)**, **Subtitles (`.srt`)**, and **Executive PDF Briefs**.
+5. **AI Hook Re-Angle Engine**: Reframes any clip hook into 4 distinct angles (*Urgent*, *Question*, *Contrarian*, *Story*) based on your Creative DNA.
+6. **Multi-Platform 9:16 Safe Zones**: Interactive mobile framing guides for **TikTok**, **Instagram Reels**, and **YouTube Shorts**.
 
 ---
 
 ## Core Features
 
-### Persistent Creative Mind
+### 🧠 Persistent Creative Mind (Powered by Minds API)
 - **Creative DNA Profile**: Maintains explicit, auditable memory records of your editorial preferences.
-- **Confidence Scoring**: Each rule has a dynamic confidence rating (1-100%) reinforced by evidence from real videos.
-- **Teach Your Mind**: Train your AI by analyzing reference YouTube videos or writing direct creator rules.
+- **Dynamic Confidence Graph**: Each rule has an evolving confidence rating (1-100%) reinforced by evidence from real videos.
+- **Zero Prompt Restatements**: Teach your Mind once; it automatically guides every future video analysis.
 
-### Grounded Video Distillation
-- **Instant YouTube Ingestion**: Paste any public YouTube link to extract summary narratives, topic pillars, and timestamped clips.
+### 🎬 Grounded Video Distillation
+- **Automated YouTube Scraping**: Instant zero-click transcript ingestion from any public YouTube URL.
 - **Transcript Support**: Attach `.txt`, `.srt`, or `.vtt` caption files for frame-accurate timing.
 - **Anti-Hallucination Grounding**: Clip boundaries and quotes are strictly validated against verified transcript timestamps.
+
+### ✂️ Pro Studio NLE Project Exports
+- **CMX 3600 EDL**: Direct timeline import for Adobe Premiere Pro & DaVinci Resolve.
+- **Final Cut Pro XML (`.fcpxml`)**: Full event and clip sequence metadata for Apple Final Cut Pro.
+- **CapCut Timeline JSON**: Project JSON for mobile and desktop CapCut workflows.
+- **Subtitles & Timed Hooks (`.srt`)**: Frame-accurate closed captions.
+- **Markdown Script (`.md`) & Executive PDF Briefs**: Comprehensive client-ready production notes.
+
+### 📱 9:16 Safe-Zone Framing & Audio Equalizer
+- Segmented viewport toggles for **TikTok**, **Instagram Reels**, and **YouTube Shorts**.
+- Live pulsating 4-bar equalizer visualizer on active playing clip cards.
 
 ### Adaptive Feedback Loop
 - **Positive Reinforcement (Keep)**: Boosts the weight and confidence of the editorial rules that produced the clip.
