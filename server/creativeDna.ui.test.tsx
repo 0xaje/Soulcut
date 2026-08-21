@@ -17,6 +17,7 @@ vi.mock("../client/src/lib/trpc", () => ({
       updatePreference: { useMutation: () => ({ mutateAsync: vi.fn(), isPending: false }) },
       retirePreference: { useMutation: () => ({ mutateAsync: vi.fn(), isPending: false }) },
       restorePreference: { useMutation: () => ({ mutateAsync: vi.fn(), isPending: false }) },
+      resetMind: { useMutation: () => ({ mutateAsync: vi.fn(), isPending: false }) },
     },
   },
 }));

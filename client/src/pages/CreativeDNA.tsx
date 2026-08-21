@@ -3,13 +3,14 @@ import { MindEvidenceDetails, type CreativeDnaMemory } from "@/components/MindEv
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { groupMindActivityByRecency } from "@/lib/mindPresentation";
 import { trpc } from "@/lib/trpc";
-import { ArrowLeft, Brain, CircleDot, History, LogOut, Network, Search, Sparkles, ThumbsUp } from "lucide-react";
+import { ArrowLeft, Brain, CircleDot, History, LogOut, Network, RotateCcw, Search, Sparkles, ThumbsUp } from "lucide-react";
 import React, { useMemo, useState } from "react";
 import { toast } from "sonner";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 
 
 export default function CreativeDNA() {
+  const [, setLocation] = useLocation();
   const { loading, isAuthenticated, logout } = useAuth({ redirectOnUnauthenticated: true });
   const [selectedMemoryId, setSelectedMemoryId] = useState<number | null>(null);
   const [editingMemory, setEditingMemory] = useState<CreativeDnaMemory | null>(null);
@@ -26,6 +27,7 @@ export default function CreativeDNA() {
   const updatePreference = trpc.mind.updatePreference.useMutation();
   const retirePreference = trpc.mind.retirePreference.useMutation();
   const restorePreference = trpc.mind.restorePreference.useMutation();
+  const resetMindMutation = trpc.mind.resetMind.useMutation();
   const activityGroups = useMemo(() => groupMindActivityByRecency(mindActivityQuery.data ?? []), [mindActivityQuery.data]);
 
   const allMemories = useMemo(() => creativeDnaQuery.data?.memories ?? [], [creativeDnaQuery.data?.memories]);
@@ -77,6 +79,20 @@ export default function CreativeDNA() {
       toast.success(result.message);
     } catch (error) { toast.error(error instanceof Error ? error.message : "Preference could not be restored."); }
   };
+
+  const handleResetMind = async () => {
+    if (!window.confirm("Reset your Creative Mind to a clean slate? This will clear all learned preferences, feedback signals, and restart onboarding.")) {
+      return;
+    }
+    try {
+      const result = await resetMindMutation.mutateAsync();
+      await refreshDna();
+      toast.success(result.message || "Creative Mind reset to a clean slate.");
+      setLocation("/app");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Could not reset Mind.");
+    }
+  };
   return (
     <main className="workspace-bg min-h-screen text-slate-900 dark:text-white">
       <header className="sticky top-0 z-30 border-b border-slate-300/80 bg-slate-100/95 px-3 py-2.5 backdrop-blur-xl dark:border-white/8 dark:bg-[#08080b]/85 sm:px-6 sm:py-3">
@@ -102,6 +118,15 @@ export default function CreativeDNA() {
               <Sparkles size={12} className="text-slate-700 dark:text-white/70" />
               <span>Walkthrough</span>
             </Link>
+            <button
+              type="button"
+              onClick={() => void handleResetMind()}
+              disabled={resetMindMutation.isPending}
+              className="inline-flex items-center gap-1 rounded-full border border-red-300 bg-red-50/80 px-2.5 py-1.5 text-xs font-medium text-red-700 shadow-2xs transition hover:bg-red-100 disabled:opacity-50 dark:border-red-400/20 dark:bg-red-400/10 dark:text-red-300 dark:hover:bg-red-400/20"
+              title="Reset Creative Mind to clean slate"
+            >
+              <RotateCcw size={11} /> <span className="hidden md:inline">{resetMindMutation.isPending ? "Resetting…" : "Reset Mind"}</span>
+            </button>
             <ThemeToggle />
             <button
               onClick={async () => {

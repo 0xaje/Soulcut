@@ -15,6 +15,7 @@ import {
   setMindMemoryRetirementForUser,
   updateMindMemoryForUser,
   upsertMindMemoryForUser,
+  resetCreativeMindForUser,
   type MindMemoryCategory,
 } from "../db";
 import { getMindsBuilderConnection } from "../mindsBuilder";
@@ -343,4 +344,8 @@ Respond ONLY with a valid JSON object matching this schema:
         };
       }
     }),
+
+  resetMind: protectedProcedure.mutation(async ({ ctx }) => {
+    return resetCreativeMindForUser(ctx.user.id);
+  }),
 });

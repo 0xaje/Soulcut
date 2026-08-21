@@ -350,6 +350,7 @@ export default function Workspace() {
   const completeMindOnboarding = trpc.mind.completeOnboarding.useMutation();
   const teachMind = trpc.mind.teachMind.useMutation();
   const submitMindFeedback = trpc.mind.submitFeedback.useMutation();
+  const resetMindMutation = trpc.mind.resetMind.useMutation();
   const progress = useAnalysisProgress(processingJobId);
   const timelineInput = useMemo(() => (timelineJobId ? { id: timelineJobId } : { id: "__inactive__" }), [timelineJobId]);
   const timelineQuery = trpc.videoJobs.timeline.useQuery(timelineInput, {
@@ -498,6 +499,25 @@ export default function Workspace() {
       toast.success(result.message);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "We could not record that feedback.");
+    }
+  };
+
+  const handleResetMind = async () => {
+    if (!window.confirm("Reset your Creative Mind to a clean slate? This will clear all learned preferences, feedback signals, and restart onboarding.")) {
+      return;
+    }
+    try {
+      const result = await resetMindMutation.mutateAsync();
+      setOnboardingVoice([]);
+      setOnboardingHooks([]);
+      setOnboardingPacing([]);
+      setOnboardingAudience("");
+      setOnboardingNotes("");
+      await refreshMindData();
+      setShowMindOnboarding(true);
+      toast.success(result.message || "Creative Mind reset to a clean slate.");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Could not reset Mind.");
     }
   };
 
@@ -1184,6 +1204,15 @@ export default function Workspace() {
                   <Link href="/walkthrough" className="hidden sm:inline-flex items-center justify-center gap-1.5 rounded-full border border-slate-400 bg-white px-3 py-1.5 text-xs font-bold text-slate-900 shadow-2xs transition hover:border-slate-600 hover:bg-slate-50 dark:border-white/12 dark:bg-white/[.06] dark:text-white dark:hover:border-white/25 dark:hover:bg-white/12">
                     <Sparkles size={12} /> Walkthrough
                   </Link>
+                  <button
+                    type="button"
+                    onClick={() => void handleResetMind()}
+                    disabled={resetMindMutation.isPending}
+                    className="inline-flex items-center justify-center gap-1 rounded-full border border-red-300 bg-red-50/80 px-2.5 py-1.5 text-xs font-medium text-red-700 shadow-2xs transition hover:bg-red-100 disabled:opacity-50 dark:border-red-400/20 dark:bg-red-400/10 dark:text-red-300 dark:hover:bg-red-400/20"
+                    title="Reset Creative Mind and start fresh from onboarding"
+                  >
+                    <RotateCcw size={11} /> {resetMindMutation.isPending ? "Resetting…" : "Reset Mind"}
+                  </button>
                   <button type="button" onClick={() => setMindPanelOpen(current => !current)} aria-expanded={mindPanelOpen} className="rounded-full px-2 py-1 text-xs font-medium text-slate-600 underline transition hover:text-slate-950 dark:text-white/50 dark:hover:text-white">
                     {mindPanelOpen ? "Hide preview" : "Preview"}
                   </button>

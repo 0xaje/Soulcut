@@ -703,6 +703,70 @@ export async function getMindStatsForUser(userId: number) {
   return { mind, preferenceCount: memories.length, feedbackCount: feedback.length, strongPatterns, averageConfidence };
 }
 
+export async function resetCreativeMindForUser(userId: number): Promise<{ success: boolean; message: string }> {
+  const mind = await getCreativeMindForUser(userId);
+  if (!mind) return { success: true, message: "No active mind found." };
+  const db = await getDb();
+  const now = new Date();
+
+  if (!db) {
+    const userMemories = Array.from(memoryMindMemories.values()).filter(m => m.mindId === mind.id);
+    const memoryIds = new Set(userMemories.map(m => m.id));
+
+    for (const [key, mem] of Array.from(memoryMindMemories.entries())) {
+      if (mem.mindId === mind.id) {
+        memoryMindMemories.delete(key);
+      }
+    }
+
+    for (let i = memoryEvidenceList.length - 1; i >= 0; i--) {
+      if (memoryIds.has(memoryEvidenceList[i].memoryId)) {
+        memoryEvidenceList.splice(i, 1);
+      }
+    }
+
+    for (const [key, pref] of Array.from(memoryPreferences.entries())) {
+      if (pref.mindId === mind.id) {
+        memoryPreferences.delete(key);
+      }
+    }
+
+    for (let i = memoryActivities.length - 1; i >= 0; i--) {
+      if (memoryActivities[i].mindId === mind.id || memoryActivities[i].userId === userId) {
+        memoryActivities.splice(i, 1);
+      }
+    }
+
+    for (let i = memoryFeedbackEvents.length - 1; i >= 0; i--) {
+      if (memoryFeedbackEvents[i].mindId === mind.id || memoryFeedbackEvents[i].userId === userId) {
+        memoryFeedbackEvents.splice(i, 1);
+      }
+    }
+
+    mind.onboardedAt = null;
+    mind.updatedAt = now;
+
+    return { success: true, message: "Creative Mind reset to a clean slate." };
+  }
+
+  const userMemories = await db.select({ id: mindMemories.id }).from(mindMemories).where(eq(mindMemories.mindId, mind.id));
+  const memoryIds = userMemories.map(m => m.id);
+
+  if (memoryIds.length > 0) {
+    for (const memId of memoryIds) {
+      await db.delete(memoryEvidence).where(eq(memoryEvidence.memoryId, memId));
+    }
+    await db.delete(mindMemories).where(eq(mindMemories.mindId, mind.id));
+  }
+
+  await db.delete(creativePreferences).where(eq(creativePreferences.mindId, mind.id));
+  await db.delete(mindActivity).where(and(eq(mindActivity.mindId, mind.id), eq(mindActivity.userId, userId)));
+  await db.delete(feedbackEvents).where(and(eq(feedbackEvents.mindId, mind.id), eq(feedbackEvents.userId, userId)));
+  await db.update(creativeMinds).set({ onboardedAt: null, updatedAt: now }).where(and(eq(creativeMinds.id, mind.id), eq(creativeMinds.userId, userId)));
+
+  return { success: true, message: "Creative Mind reset to a clean slate." };
+}
+
 export type VideoJobStatus = "pending" | "processing" | "retrying" | "done" | "failed" | "cancelled";
 
 type VideoJobUpdate = Partial<{

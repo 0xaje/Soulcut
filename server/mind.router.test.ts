@@ -16,6 +16,7 @@ const dbMocks = vi.hoisted(() => ({
   setMindMemoryRetirementForUser: vi.fn(),
   updateMindMemoryForUser: vi.fn(),
   upsertMindMemoryForUser: vi.fn(),
+  resetCreativeMindForUser: vi.fn(),
 }));
 
 vi.mock("./db", () => dbMocks);
@@ -221,5 +222,15 @@ describe("Mind router", () => {
 
     expect(results[0]?.fit).toEqual([]);
     expect(results[0]?.explanation).toEqual(expect.objectContaining({ confidence: 0, evidence: [] }));
+  });
+
+  it("resets the creative mind to a clean slate", async () => {
+    dbMocks.resetCreativeMindForUser.mockResolvedValue({ success: true, message: "Creative Mind reset to a clean slate." });
+    const caller = mindRouter.createCaller(context);
+
+    const result = await caller.resetMind();
+
+    expect(dbMocks.resetCreativeMindForUser).toHaveBeenCalledWith(7);
+    expect(result.success).toBe(true);
   });
 });
