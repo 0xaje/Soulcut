@@ -125,12 +125,13 @@ export default function CreativeDNA() {
               <h1 className="font-display text-3xl leading-[1.08] tracking-[-.04em] text-slate-900 sm:text-5xl dark:text-white">
                 Your Creative <span className="italic text-slate-500 dark:text-white/42">DNA.</span>
               </h1>
-              <span className="inline-flex items-center gap-1 rounded-full border border-slate-300 bg-white px-2.5 py-1 font-mono text-[9px] font-semibold uppercase tracking-[.12em] text-slate-800 dark:border-white/12 dark:bg-white/[.06] dark:text-white/80">
-                <CircleDot size={10} /> {mindQuery.data?.builderAvailability === "available" ? "Minds connected" : "Learning"}
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-lime-400/40 bg-lime-400/10 px-3 py-1 font-mono text-[9px] font-bold uppercase tracking-[.12em] text-lime-900 dark:border-[#c7ff4b]/30 dark:bg-[#c7ff4b]/10 dark:text-[#d8ff83]">
+                <Brain size={11} className="text-lime-600 dark:text-[#c7ff4b]" />
+                {mindQuery.data?.builderAvailability === "available" ? "Minds connected" : "Minds Persistent Memory"}
               </span>
             </div>
-            <p className="mt-4 max-w-2xl text-sm leading-relaxed text-slate-600 dark:text-white/55">
-              SoulCut Creative Director keeps only evidence-backed preferences here. Direct teaching is explicit; repeated choices become behavioral patterns only after sufficient real feedback.
+            <p className="mt-3 text-sm leading-relaxed text-slate-600 sm:text-base dark:text-white/55">
+              The persistent taste profile governing your video analysis decisions. Unlike stateless prompts, every rule here is permanently synchronized into your personal Mind via the Minds API.
             </p>
           </div>
           <div className="relative mt-8 grid gap-3 sm:grid-cols-4">

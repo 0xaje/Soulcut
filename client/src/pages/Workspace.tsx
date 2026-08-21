@@ -26,6 +26,7 @@ import {
   CircleDot,
   Clock3,
   Copy,
+  Cpu,
   Download,
   ExternalLink,
   FileSpreadsheet,
@@ -34,6 +35,7 @@ import {
   Flame,
   HelpCircle,
   History,
+  Layers,
   Link2,
   LoaderCircle,
   LogOut,
@@ -45,6 +47,7 @@ import {
   Search,
   Send,
   Share2,
+  ShieldCheck,
   Smartphone,
   Sparkles,
   Tag,
@@ -286,6 +289,7 @@ export default function Workspace() {
   const [isVerticalMaskOpen, setIsVerticalMaskOpen] = useState(false);
   const [selectedPlatform, setSelectedPlatform] = useState<"tiktok" | "reels" | "shorts">("tiktok");
   const [showExportMenu, setShowExportMenu] = useState(false);
+  const [showMindsModal, setShowMindsModal] = useState(false);
   const [customHooks, setCustomHooks] = useState<Record<number, string>>({});
   const [reanglingHookIndex, setReanglingHookIndex] = useState<number | null>(null);
   const [reangleHookMenuIndex, setReangleHookMenuIndex] = useState<number | null>(null);
@@ -717,6 +721,119 @@ export default function Workspace() {
 
   return (
     <main className="workspace-bg min-h-screen text-white">
+      {/* Minds Persistent Intelligence Layer Architecture Modal */}
+      {showMindsModal && (
+        <div className="fixed inset-0 z-50 grid place-items-center overflow-y-auto bg-slate-950/75 p-4 backdrop-blur-md" role="dialog" aria-modal="true">
+          <section className="my-8 w-full max-w-2xl rounded-[2rem] border border-lime-400/40 bg-white p-6 shadow-2xl dark:bg-[#121218] dark:shadow-[0_30px_120px_rgba(0,0,0,.8)] sm:p-8">
+            <div className="flex items-start justify-between">
+              <div className="flex items-center gap-3">
+                <div className="grid h-12 w-12 place-items-center rounded-2xl border border-lime-400/30 bg-lime-400/10 text-lime-600 dark:text-[#c7ff4b]">
+                  <Brain size={24} />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-lime-600 dark:text-[#d8ff83]">
+                      Animoca Brands Minds Protocol
+                    </span>
+                    <span className="rounded-full bg-lime-400/20 px-2 py-0.5 font-mono text-[9px] font-bold text-lime-800 dark:text-[#d8ff83]">
+                      @animocabrands/minds-client-lib
+                    </span>
+                  </div>
+                  <h2 className="font-display text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
+                    Minds Persistent Intelligence Layer
+                  </h2>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowMindsModal(false)}
+                className="rounded-full p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-700 dark:text-white/40 dark:hover:bg-white/10 dark:hover:text-white"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <p className="mt-4 text-sm leading-relaxed text-slate-600 dark:text-white/60">
+              Unlike generic AI tools that start with a blank slate on every video, SoulCut connects directly to your persistent <strong>Mind</strong> via the Minds API. Every approval, rejection, and editorial teaching rule is permanently weighted and remembered.
+            </p>
+
+            <div className="mt-6 grid gap-3 sm:grid-cols-2">
+              <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-white/8 dark:bg-white/[.03]">
+                <div className="flex items-center gap-2 text-xs font-semibold text-slate-900 dark:text-white">
+                  <ShieldCheck size={16} className="text-lime-500" /> Grounded Source Integrity
+                </div>
+                <p className="mt-1.5 text-xs leading-relaxed text-slate-600 dark:text-white/50">
+                  Timestamps and quotes are strictly derived from verifiable video evidence. Minds never hallucinates fictitious timecodes.
+                </p>
+              </div>
+
+              <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-white/8 dark:bg-white/[.03]">
+                <div className="flex items-center gap-2 text-xs font-semibold text-slate-900 dark:text-white">
+                  <Cpu size={16} className="text-cyan-400" /> Bounded Context Injection
+                </div>
+                <p className="mt-1.5 text-xs leading-relaxed text-slate-600 dark:text-white/50">
+                  Your Creative DNA preferences (Voice, Hook, Pacing) are securely injected at inference time to steer curation.
+                </p>
+              </div>
+
+              <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-white/8 dark:bg-white/[.03]">
+                <div className="flex items-center gap-2 text-xs font-semibold text-slate-900 dark:text-white">
+                  <Layers size={16} className="text-amber-400" /> Continuous Confidence Graph
+                </div>
+                <p className="mt-1.5 text-xs leading-relaxed text-slate-600 dark:text-white/50">
+                  Every keep (+4%) and correction (-8%) dynamically shifts confidence ratings across 12 creative DNA dimensions.
+                </p>
+              </div>
+
+              <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-white/8 dark:bg-white/[.03]">
+                <div className="flex items-center gap-2 text-xs font-semibold text-slate-900 dark:text-white">
+                  <Network size={16} className="text-purple-400" /> Zero Prompt Restatements
+                </div>
+                <p className="mt-1.5 text-xs leading-relaxed text-slate-600 dark:text-white/50">
+                  You teach your style once. Your Mind automatically applies it across all future video projects.
+                </p>
+              </div>
+            </div>
+
+            <div className="mt-6 rounded-2xl border border-lime-400/20 bg-lime-400/5 p-4 dark:bg-[#c7ff4b]/[0.04]">
+              <div className="flex items-center justify-between">
+                <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-lime-700 dark:text-[#d8ff83]">
+                  Live Minds Connection Status
+                </span>
+                <span className="inline-flex items-center gap-1 font-mono text-[10px] font-bold text-lime-600 dark:text-[#c7ff4b]">
+                  <span className="h-2 w-2 rounded-full bg-lime-400 animate-pulse" />
+                  Active & Synced
+                </span>
+              </div>
+              <div className="mt-2.5 flex flex-wrap gap-4 text-xs text-slate-700 dark:text-white/70">
+                <div>
+                  <span className="text-slate-400 dark:text-white/40">Active Preferences:</span>{" "}
+                  <strong>{creativeDnaQuery.data?.stats.preferenceCount ?? 0} rules</strong>
+                </div>
+                <div>
+                  <span className="text-slate-400 dark:text-white/40">Feedback Evidence:</span>{" "}
+                  <strong>{creativeDnaQuery.data?.stats.feedbackCount ?? 0} signals</strong>
+                </div>
+                <div>
+                  <span className="text-slate-400 dark:text-white/40">Avg Confidence:</span>{" "}
+                  <strong>{creativeDnaQuery.data?.stats.averageConfidence ?? 0}%</strong>
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-6 flex justify-end">
+              <button
+                type="button"
+                onClick={() => setShowMindsModal(false)}
+                className="rounded-full bg-slate-900 px-5 py-2.5 text-xs font-semibold text-white transition hover:bg-slate-800 dark:bg-white dark:text-black dark:hover:bg-slate-200"
+              >
+                Done
+              </button>
+            </div>
+          </section>
+        </div>
+      )}
+
       {showMindOnboarding && (
         <div className="fixed inset-0 z-50 grid place-items-center overflow-y-auto bg-slate-900/60 p-4 backdrop-blur-md dark:bg-[#050507]/90" role="dialog" aria-modal="true" aria-labelledby="mind-onboarding-title">
           <section className="my-8 w-full max-w-3xl rounded-[2rem] border border-lime-300 bg-white p-5 shadow-2xl sm:p-8 dark:border-[#c7ff4b]/25 dark:bg-[#101014] dark:shadow-[0_30px_120px_rgba(0,0,0,.65)]">
@@ -1010,9 +1127,15 @@ export default function Workspace() {
                 <div className="max-w-2xl">
                   <div className="flex items-center gap-2">
                     <span className="eyebrow text-slate-700 dark:text-white/60">Meet your Creative Mind</span>
-                    <span className="inline-flex items-center gap-1 rounded-full border border-slate-300 bg-white px-2.5 py-1 font-mono text-[9px] font-semibold uppercase tracking-[.12em] text-slate-800 dark:border-white/12 dark:bg-white/[.06] dark:text-white/80">
-                      <CircleDot size={10} /> {mindQuery.data?.builderAvailability === "available" ? "Powered by Minds" : "Persistent memory"}
-                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setShowMindsModal(true)}
+                      className="inline-flex items-center gap-1 rounded-full border border-lime-400/40 bg-lime-400/10 px-2.5 py-1 font-mono text-[9px] font-bold uppercase tracking-[.12em] text-lime-900 transition hover:bg-lime-400/20 active:scale-95 dark:border-[#c7ff4b]/30 dark:bg-[#c7ff4b]/10 dark:text-[#d8ff83]"
+                      title="Inspect Minds Persistent Intelligence Layer Architecture"
+                    >
+                      <Brain size={11} className="text-lime-600 dark:text-[#c7ff4b]" />
+                      {mindQuery.data?.builderAvailability === "available" ? "Minds Intelligence Layer · Connected" : "Minds Persistent Memory"}
+                    </button>
                   </div>
                   <h1 className="mt-2.5 font-display text-2xl leading-[1.1] tracking-[-.04em] text-slate-900 sm:text-4xl dark:text-white">
                     SoulCut remembers <span className="italic text-slate-500 dark:text-white/42">how you create.</span>

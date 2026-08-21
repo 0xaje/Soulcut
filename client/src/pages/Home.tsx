@@ -173,6 +173,52 @@ export default function Home() {
         </div>
       </section>
 
+      {/* Built on Minds Intelligence Layer Spotlight */}
+      <section className="relative overflow-hidden border-b border-slate-200 bg-slate-900 px-4 py-16 text-white sm:px-8 sm:py-20 lg:py-24 dark:border-white/10 dark:bg-[#0c0c10]">
+        <div className="absolute -left-20 top-1/2 h-72 w-72 -translate-y-1/2 rounded-full bg-lime-500/10 blur-3xl dark:bg-[#c7ff4b]/[0.08]" aria-hidden="true" />
+        <div className="mx-auto max-w-6xl">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <div className="inline-flex items-center gap-2 rounded-full border border-lime-400/30 bg-lime-400/10 px-3 py-1 font-mono text-[10px] font-bold uppercase tracking-wider text-lime-400">
+                <Brain size={12} /> The Minds Memory Layer
+              </div>
+              <h2 className="mt-3 font-display text-3xl tracking-[-0.05em] text-white sm:text-5xl">
+                Why SoulCut is built on Minds.
+              </h2>
+            </div>
+            <p className="max-w-md text-sm leading-relaxed text-slate-300 dark:text-white/60">
+              Stateless LLMs forget your creative taste between every video. Minds provides the decentralized persistent cognitive memory layer that gives SoulCut long-term memory.
+            </p>
+          </div>
+
+          <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-5 backdrop-blur-sm">
+              <span className="font-mono text-xs font-bold text-lime-400">01 / PERSISTENCE</span>
+              <h3 className="mt-3 font-display text-xl text-white">No Blank Slates</h3>
+              <p className="mt-2 text-xs leading-relaxed text-slate-400">Every preference you teach and every clip you approve is permanently recorded in your Mind.</p>
+            </div>
+
+            <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-5 backdrop-blur-sm">
+              <span className="font-mono text-xs font-bold text-lime-400">02 / EVIDENCE</span>
+              <h3 className="mt-3 font-display text-xl text-white">Full Attribution</h3>
+              <p className="mt-2 text-xs leading-relaxed text-slate-400">Your Mind links every recommendation back to exact feedback signals and confidence ratings.</p>
+            </div>
+
+            <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-5 backdrop-blur-sm">
+              <span className="font-mono text-xs font-bold text-lime-400">03 / ADAPTATION</span>
+              <h3 className="mt-3 font-display text-xl text-white">Dynamic Evolution</h3>
+              <p className="mt-2 text-xs leading-relaxed text-slate-400">Disliking a hook angle reduces its weight automatically—no prompting or re-training required.</p>
+            </div>
+
+            <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-5 backdrop-blur-sm">
+              <span className="font-mono text-xs font-bold text-lime-400">04 / INTEGRATION</span>
+              <h3 className="mt-3 font-display text-xl text-white">Animoca Protocol</h3>
+              <p className="mt-2 text-xs leading-relaxed text-slate-400">Built on the official Minds client library (@animocabrands/minds-client-lib) for sovereign intelligence.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
       <section id="features" className="bg-slate-50 px-4 py-14 sm:px-8 sm:py-16 lg:py-24 dark:bg-[#060608]">
         <div className="mx-auto max-w-6xl">
           <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end sm:gap-6">
