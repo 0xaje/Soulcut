@@ -1,5 +1,5 @@
 import "dotenv/config";
-import { invokeLLM } from "./_core/llm";
+import { invokeLLM, getDefaultModel } from "./_core/llm";
 import { getMindsBuilderConnection, getVerifiedBuilderMind } from "./mindsBuilder";
 import { analyzeVideoUrl } from "./videoAnalysis";
 import { processNextAnalysisJob } from "./analysisWorker";
@@ -20,11 +20,12 @@ async function verifyAllApis() {
 
   const results: Record<string, { status: "PASS" | "FAIL"; details: string }> = {};
 
-  // 1. Test Groq LLM API
-  console.log("1. Testing Groq Cloud LLM API (Inference Engine)...");
+  // 1. Test LLM API (Inference Engine)
+  const currentModel = getDefaultModel();
+  console.log(`1. Testing LLM API (Inference Engine with model: ${currentModel})...`);
   try {
     const response = await invokeLLM({
-      model: process.env.LLM_MODEL || "llama-3.3-70b-versatile",
+      model: currentModel,
       messages: [
         { role: "system", content: "You are a test assistant. Respond in JSON." },
         { role: "user", content: "Return a JSON with key 'status' set to 'ok'." },
@@ -32,11 +33,11 @@ async function verifyAllApis() {
       response_format: { type: "json_object" },
     });
     const content = response.choices[0]?.message.content;
-    console.log("   -> Groq Response:", content);
-    results["Groq LLM API"] = { status: "PASS", details: `Model: ${process.env.LLM_MODEL || "llama-3.3-70b-versatile"} responded successfully.` };
+    console.log("   -> LLM Response:", content);
+    results["LLM API"] = { status: "PASS", details: `Model: ${currentModel} responded successfully.` };
   } catch (error) {
-    console.error("   -> Groq Error:", error);
-    results["Groq LLM API"] = { status: "FAIL", details: error instanceof Error ? error.message : String(error) };
+    console.error("   -> LLM Error:", error);
+    results["LLM API"] = { status: "FAIL", details: error instanceof Error ? error.message : String(error) };
   }
 
   // 2. Test Video Analysis Pipeline with LLM

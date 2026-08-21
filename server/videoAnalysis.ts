@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { ENV } from "./_core/env";
-import { invokeLLM, type Tool } from "./_core/llm";
+import { invokeLLM, getDefaultModel, type Tool } from "./_core/llm";
 import type { CreativeMindAnalysisContext } from "./mindAnalysisContext";
 import { formatTranscriptAnalysisContext, type ParsedTranscript } from "./transcriptIngestion";
 
@@ -108,7 +108,7 @@ export function formatCreativeMindGuidance(context: CreativeMindAnalysisContext 
 
 export async function analyzeVideoUrl(videoUrl: string, mindContext?: CreativeMindAnalysisContext | null, transcript?: ParsedTranscript | null): Promise<VideoAnalysis> {
   const isCustomProvider = Boolean(ENV.forgeApiUrl && !ENV.forgeApiUrl.includes("forge.manus.im"));
-  const model = process.env.LLM_MODEL || (ENV.forgeApiUrl.includes("groq") ? "llama-3.3-70b-versatile" : "gpt-5-mini");
+  const model = getDefaultModel();
 
   const response = await invokeLLM({
     model,

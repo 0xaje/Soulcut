@@ -19,7 +19,7 @@ import {
 } from "../db";
 import { getMindsBuilderConnection } from "../mindsBuilder";
 import { protectedProcedure, router } from "../_core/trpc";
-import { invokeLLM } from "../_core/llm";
+import { invokeLLM, getDefaultModel } from "../_core/llm";
 import { formatCreativeMindGuidance } from "../videoAnalysis";
 import { getCreativeMindAnalysisContextForUser } from "../mindAnalysisContext";
 
@@ -324,7 +324,7 @@ Respond ONLY with a valid JSON object matching this schema:
 
       try {
         const response = await invokeLLM({
-          model: process.env.LLM_MODEL || "llama-3.3-70b-versatile",
+          model: getDefaultModel(),
           response_format: { type: "json_object" },
           messages: [{ role: "user", content: prompt }],
           maxTokens: 150,

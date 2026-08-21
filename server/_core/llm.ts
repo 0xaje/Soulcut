@@ -222,6 +222,20 @@ const resolveApiUrl = () => {
   return `${base}/v1/chat/completions`;
 };
 
+export const getDefaultModel = (): string => {
+  const isForge = !ENV.forgeApiUrl || ENV.forgeApiUrl.includes("forge.manus.im");
+  if (isForge) {
+    if (process.env.LLM_MODEL && !process.env.LLM_MODEL.toLowerCase().includes("llama")) {
+      return process.env.LLM_MODEL.trim();
+    }
+    return "gpt-4o-mini";
+  }
+  if (ENV.forgeApiKey.startsWith("gsk_") || ENV.forgeApiUrl.includes("groq")) {
+    return process.env.LLM_MODEL || "llama-3.3-70b-versatile";
+  }
+  return process.env.LLM_MODEL || "gpt-4o-mini";
+};
+
 const assertApiKey = () => {
   if (!ENV.forgeApiKey) {
     throw new Error("OPENAI_API_KEY is not configured");
