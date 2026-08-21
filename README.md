@@ -6,6 +6,8 @@
 
 *Transform long-form YouTube videos and podcasts into viral short-form video briefs powered by your own persistent, evolving Creative Mind.*
 
+[![Live Demo](https://img.shields.io/badge/Live%20App-soulcut.onrender.com-brightgreen?style=for-the-badge&logo=render)](https://soulcut.onrender.com)
+
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.9-blue.svg?style=flat-square)](https://www.typescriptlang.org/)
 [![React](https://img.shields.io/badge/React-18-61dafb.svg?style=flat-square)](https://react.dev/)
 [![tRPC](https://img.shields.io/badge/tRPC-v11-2596be.svg?style=flat-square)](https://trpc.io/)
@@ -13,7 +15,7 @@
 [![Groq](https://img.shields.io/badge/Groq-Llama%203.3%2070B-orange.svg?style=flat-square)](https://groq.com/)
 [![Vitest](https://img.shields.io/badge/Tests-89%20Passing-brightgreen.svg?style=flat-square)](https://vitest.dev/)
 
-[**Quick Start**](#quick-start) • [**Live Walkthrough**](/walkthrough) • [**Documentation**](./docs/GETTING_STARTED.md) • [**Architecture**](./docs/ARCHITECTURE.md) • [**Workflow**](#core-workflow) • [**Configuration**](#configuration)
+[🚀 **Live App**](https://soulcut.onrender.com) • [**Quick Start**](#quick-start) • [**Live Walkthrough**](https://soulcut.onrender.com/walkthrough) • [**Documentation**](./docs/GETTING_STARTED.md) • [**Architecture**](./docs/ARCHITECTURE.md) • [**Pitch Script**](./docs/HACKATHON_PITCH_SCRIPT.md)
 
 ---
 

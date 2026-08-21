@@ -2,6 +2,8 @@
 
 Welcome to **SoulCut** — an AI-native Creative Director that learns your unique editorial style and distills long-form YouTube videos and podcasts into high-impact short-form video briefs.
 
+> 🚀 **Official Live Application**: [https://soulcut.onrender.com](https://soulcut.onrender.com)
+
 This guide walks you through setup, running the application, teaching your Creative Mind, analyzing videos, and exporting production briefs.
 
 ---

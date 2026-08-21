@@ -1,6 +1,8 @@
 {
-  "name": "short-it-ai-clone",
+  "name": "soulcut",
   "version": "1.0.0",
+  "description": "AI-Native Creative Director for Short-Form Distillation Powered by Minds API Persistent Memory",
+  "homepage": "https://soulcut.onrender.com",
   "type": "module",
   "license": "MIT",
   "scripts": {

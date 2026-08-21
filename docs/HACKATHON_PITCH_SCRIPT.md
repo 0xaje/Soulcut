@@ -175,7 +175,7 @@ Try SoulCut today and meet your Creative Mind.
 4. Export as `soulcut_pitch_voiceover.mp3`.
 
 ### Step 2: Record Screen Actions (Screen Studio / OBS)
-1. Open `http://localhost:5173/` (or your live deployment URL).
+1. Open the live app: **[https://soulcut.onrender.com](https://soulcut.onrender.com)**.
 2. Follow the 5 acts in the storyboard:
    - **Clip 1**: Hero landing page + click *"60s Judge Walkthrough"*.
    - **Clip 2**: In `/app`, click `💡 Simon Sinek (Leadership)` sample pill -> Click *"Ask your Mind"*.
