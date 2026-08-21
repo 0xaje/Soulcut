@@ -1,7 +1,7 @@
 import { useAuth } from "@/_core/hooks/useAuth";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { trpc } from "@/lib/trpc";
-import { ArrowLeft, Brain, CheckCircle2, CircleDot, History, LogOut, Network, Sparkles } from "lucide-react";
+import { ArrowLeft, Brain, CheckCircle2, CircleDot, History, LogOut, Network, Sparkles, XCircle } from "lucide-react";
 import React from "react";
 import { toast } from "sonner";
 import { Link } from "wouter";
@@ -112,58 +112,81 @@ export default function LiveWalkthrough() {
             </div>
             <p className="max-w-xs text-xs leading-relaxed text-slate-500 dark:text-white/38">Each status below is derived from the authenticated creator’s saved state.</p>
           </div>
-          <div className="mt-6 space-y-3">
-            {steps.map(step => (
-              <Link
-                key={step.time}
-                href={step.href}
-                className="group grid gap-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-xs transition hover:border-lime-400 hover:shadow-md dark:border-white/8 dark:bg-white/[.025] dark:shadow-none dark:hover:border-[#c7ff4b]/30 dark:hover:bg-[#c7ff4b]/[.035] sm:grid-cols-[72px_minmax(0,1fr)_auto] sm:items-center"
+
+          <div className="mt-8 space-y-4">
+            {steps.map((step, idx) => (
+              <div
+                key={idx}
+                className="flex flex-col gap-3 rounded-2xl border border-slate-200 bg-slate-50/50 p-4 transition sm:flex-row sm:items-center sm:justify-between dark:border-white/6 dark:bg-white/[.02]"
               >
-                <div>
-                  <p className="font-mono text-[10px] font-bold tracking-[.13em] text-lime-700 dark:text-[#d8ff83]">{step.time}</p>
+                <div className="flex items-start gap-3.5">
+                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-white font-mono text-xs font-bold text-slate-700 dark:border-white/10 dark:bg-white/[.05] dark:text-white/80">
+                    0{idx + 1}
+                  </div>
+                  <div>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="rounded-md bg-slate-200/80 px-1.5 py-0.5 font-mono text-[10px] font-semibold text-slate-700 dark:bg-white/10 dark:text-white/60">
+                        {step.time}
+                      </span>
+                      <h2 className="text-sm font-bold text-slate-900 dark:text-white">{step.title}</h2>
+                    </div>
+                    <p className="mt-1 text-xs text-slate-600 dark:text-white/60">{step.description}</p>
+                  </div>
                 </div>
-                <div>
-                  <p className="font-display text-xl tracking-[-.03em] text-slate-900 dark:text-white">{step.title}</p>
-                  <p className="mt-1 max-w-2xl text-xs leading-relaxed text-slate-600 dark:text-white/47">{step.description}</p>
+
+                <div className="flex items-center gap-3 self-end sm:self-center">
+                  <span
+                    className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${
+                      step.ready
+                        ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300"
+                        : "bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300"
+                    }`}
+                  >
+                    {step.ready ? <CheckCircle2 size={12} /> : <CircleDot size={12} />}
+                    {step.ready ? step.readyLabel : step.pendingLabel}
+                  </span>
+                  <Link
+                    href={step.href}
+                    className="rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 shadow-xs transition hover:bg-slate-50 dark:border-white/10 dark:bg-white/[.05] dark:text-white/80 dark:hover:bg-white/10"
+                  >
+                    Open
+                  </Link>
                 </div>
-                <span className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1.5 text-[10px] font-semibold ${step.ready ? "border-lime-300 bg-lime-100 text-lime-900 dark:border-[#c7ff4b]/25 dark:bg-[#c7ff4b]/10 dark:text-[#d8ff83]" : "border-slate-200 bg-slate-100 text-slate-600 dark:border-white/10 dark:bg-transparent dark:text-white/48"}`}>
-                  {step.ready ? <CheckCircle2 size={12} /> : <CircleDot size={12} />}
-                  {step.ready ? step.readyLabel : step.pendingLabel}
-                </span>
-              </Link>
+              </div>
             ))}
           </div>
         </section>
 
-        {/* Interactive Side-by-Side Proof Card */}
-        <section className="mt-6 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8 dark:border-white/9 dark:bg-[#111116] dark:shadow-none">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <section className="mt-8 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8 dark:border-white/10 dark:bg-white/[.03] dark:shadow-none">
+          <div className="flex flex-wrap items-center justify-between gap-4">
             <div>
-              <p className="eyebrow text-lime-700 dark:text-[#d8ff83]">The Secret Sauce</p>
-              <h2 className="mt-1 font-display text-2xl tracking-[-.04em] text-slate-900 dark:text-white">Generic AI Clipping vs. SoulCut Creative Mind</h2>
+              <p className="eyebrow text-[9px] text-lime-700 dark:text-[#d8ff83]">Architecture differentiation</p>
+              <h2 className="mt-1 text-lg font-bold text-slate-900 sm:text-xl dark:text-white">
+                Generic AI Tools vs. SoulCut + Minds
+              </h2>
             </div>
-            <div className="inline-flex rounded-full border border-slate-200 bg-slate-100 p-1 dark:border-white/10 dark:bg-white/[.04]">
+            <div className="flex rounded-xl border border-slate-200 bg-slate-100 p-1 dark:border-white/10 dark:bg-white/[.05]">
               <button
                 type="button"
                 onClick={() => setActiveComparisonTab("generic")}
-                className={`rounded-full px-3.5 py-1 text-xs font-semibold transition ${
+                className={`rounded-lg px-3 py-1 text-xs font-semibold transition ${
                   activeComparisonTab === "generic"
-                    ? "bg-slate-900 text-white dark:bg-white/20 dark:text-white shadow-xs"
-                    : "text-slate-600 hover:text-slate-900 dark:text-white/50 dark:hover:text-white"
+                    ? "bg-white text-slate-900 shadow-xs dark:bg-white/15 dark:text-white"
+                    : "text-slate-600 hover:text-slate-900 dark:text-white/60 dark:hover:text-white"
                 }`}
               >
-                Generic AI (0-Memory)
+                Generic Tools
               </button>
               <button
                 type="button"
                 onClick={() => setActiveComparisonTab("soulcut")}
-                className={`rounded-full px-3.5 py-1 text-xs font-semibold transition ${
+                className={`rounded-lg px-3 py-1 text-xs font-semibold transition ${
                   activeComparisonTab === "soulcut"
-                    ? "bg-lime-400 text-black shadow-xs font-bold"
-                    : "text-slate-600 hover:text-slate-900 dark:text-white/50 dark:hover:text-white"
+                    ? "bg-lime-400 text-slate-950 font-bold shadow-xs dark:bg-[#c7ff4b] dark:text-black"
+                    : "text-slate-600 hover:text-slate-900 dark:text-white/60 dark:hover:text-white"
                 }`}
               >
-                SoulCut + Minds API
+                SoulCut + Minds
               </button>
             </div>
           </div>
@@ -179,10 +202,10 @@ export default function LiveWalkthrough() {
                 <span className="rounded-full bg-red-100 px-2 py-0.5 text-[10px] font-semibold text-red-800 dark:bg-red-950 dark:text-red-300">Stateless</span>
               </div>
               <ul className="mt-4 space-y-2.5 text-xs text-slate-700 dark:text-white/70">
-                <li className="flex items-start gap-2">❌ <strong>Cookie-Cutter Clips:</strong> Same generic quotes generated for every single user.</li>
-                <li className="flex items-start gap-2">❌ <strong>Zero Memory:</strong> Forgets your pacing, hook styles, and corrections immediately after every run.</li>
-                <li className="flex items-start gap-2">❌ <strong>Black-Box Scoring:</strong> Gives a meaningless "Virality 87/100" with no audit trail or evidence.</li>
-                <li className="flex items-start gap-2">❌ <strong>No Pro Workflow:</strong> Cannot export to NLE timelines (Premiere, FCPXML, CapCut).</li>
+                <li className="flex items-start gap-2.5"><XCircle size={15} className="text-red-500 shrink-0 mt-0.5" /> <span><strong>Cookie-Cutter Clips:</strong> Same generic quotes generated for every single user.</span></li>
+                <li className="flex items-start gap-2.5"><XCircle size={15} className="text-red-500 shrink-0 mt-0.5" /> <span><strong>Zero Memory:</strong> Forgets your pacing, hook styles, and corrections immediately after every run.</span></li>
+                <li className="flex items-start gap-2.5"><XCircle size={15} className="text-red-500 shrink-0 mt-0.5" /> <span><strong>Black-Box Scoring:</strong> Gives a meaningless "Virality 87/100" with no audit trail or evidence.</span></li>
+                <li className="flex items-start gap-2.5"><XCircle size={15} className="text-red-500 shrink-0 mt-0.5" /> <span><strong>No Pro Workflow:</strong> Cannot export to NLE timelines (Premiere, FCPXML, CapCut).</span></li>
               </ul>
             </div>
 
@@ -196,10 +219,10 @@ export default function LiveWalkthrough() {
                 <span className="rounded-full bg-lime-200 px-2 py-0.5 text-[10px] font-bold text-lime-900 dark:bg-[#c7ff4b]/20 dark:text-[#d8ff83]">Evolving Mind</span>
               </div>
               <ul className="mt-4 space-y-2.5 text-xs text-slate-800 dark:text-white/90">
-                <li className="flex items-start gap-2">✅ <strong>Persistent Creative DNA:</strong> Remembers your hooks, pacing, and editorial preferences across all videos.</li>
-                <li className="flex items-start gap-2">✅ <strong>Adaptive Feedback Loop:</strong> Every "Keep" or "Not My Style" refines dynamic confidence ratings (1-100%).</li>
-                <li className="flex items-start gap-2">✅ <strong>Evidence-Backed Citing:</strong> Every clip recommendation cites exact creator rules and historical evidence.</li>
-                <li className="flex items-start gap-2">✅ <strong>Pro Editor Suite:</strong> 1-click export to Premiere EDL, Final Cut Pro XML, CapCut JSON, SRT subtitles, and PDF briefs.</li>
+                <li className="flex items-start gap-2.5"><CheckCircle2 size={15} className="text-lime-600 dark:text-[#c7ff4b] shrink-0 mt-0.5" /> <span><strong>Persistent Creative DNA:</strong> Remembers your hooks, pacing, and editorial preferences across all videos.</span></li>
+                <li className="flex items-start gap-2.5"><CheckCircle2 size={15} className="text-lime-600 dark:text-[#c7ff4b] shrink-0 mt-0.5" /> <span><strong>Adaptive Feedback Loop:</strong> Every "Keep" or "Not My Style" refines dynamic confidence ratings (1-100%).</span></li>
+                <li className="flex items-start gap-2.5"><CheckCircle2 size={15} className="text-lime-600 dark:text-[#c7ff4b] shrink-0 mt-0.5" /> <span><strong>Evidence-Backed Citing:</strong> Every clip recommendation cites exact creator rules and historical evidence.</span></li>
+                <li className="flex items-start gap-2.5"><CheckCircle2 size={15} className="text-lime-600 dark:text-[#c7ff4b] shrink-0 mt-0.5" /> <span><strong>Pro Editor Suite:</strong> 1-click export to Premiere EDL, Final Cut Pro XML, CapCut JSON, SRT subtitles, and PDF briefs.</span></li>
               </ul>
             </div>
           </div>

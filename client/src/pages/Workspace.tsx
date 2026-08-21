@@ -33,12 +33,16 @@ import {
   FileText,
   Film,
   Flame,
+  Heart,
   HelpCircle,
   History,
   Layers,
   Link2,
   LoaderCircle,
   LogOut,
+  MessageCircle,
+  Mic,
+  Music,
   Network,
   Play,
   Plus,
@@ -1360,9 +1364,9 @@ export default function Workspace() {
                     toast.success("Loaded Simon Sinek: How Great Leaders Inspire");
                   }}
                   disabled={isWorking}
-                  className="shrink-0 inline-flex items-center gap-1 rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-[10.5px] font-medium text-slate-700 transition hover:border-lime-400 hover:bg-lime-50 active:scale-95 dark:border-white/10 dark:bg-white/[.04] dark:text-white/70 dark:hover:border-[#c7ff4b]/40 dark:hover:bg-[#c7ff4b]/10 dark:hover:text-[#d8ff83]"
+                  className="shrink-0 inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-[10.5px] font-medium text-slate-700 transition hover:border-lime-400 hover:bg-lime-50 active:scale-95 dark:border-white/10 dark:bg-white/[.04] dark:text-white/70 dark:hover:border-[#c7ff4b]/40 dark:hover:bg-[#c7ff4b]/10 dark:hover:text-[#d8ff83]"
                 >
-                  💡 Simon Sinek (Leadership)
+                  <Sparkles size={11} className="text-amber-500 dark:text-amber-400" /> Simon Sinek (Leadership)
                 </button>
                 <button
                   type="button"
@@ -1371,9 +1375,9 @@ export default function Workspace() {
                     toast.success("Loaded Y Combinator: How to Build the Future");
                   }}
                   disabled={isWorking}
-                  className="shrink-0 inline-flex items-center gap-1 rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-[10.5px] font-medium text-slate-700 transition hover:border-lime-400 hover:bg-lime-50 active:scale-95 dark:border-white/10 dark:bg-white/[.04] dark:text-white/70 dark:hover:border-[#c7ff4b]/40 dark:hover:bg-[#c7ff4b]/10 dark:hover:text-[#d8ff83]"
+                  className="shrink-0 inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-[10.5px] font-medium text-slate-700 transition hover:border-lime-400 hover:bg-lime-50 active:scale-95 dark:border-white/10 dark:bg-white/[.04] dark:text-white/70 dark:hover:border-[#c7ff4b]/40 dark:hover:bg-[#c7ff4b]/10 dark:hover:text-[#d8ff83]"
                 >
-                  🚀 Y Combinator (Startups)
+                  <Zap size={11} className="text-cyan-500 dark:text-cyan-400" /> Y Combinator (Startups)
                 </button>
                 <button
                   type="button"
@@ -1382,9 +1386,9 @@ export default function Workspace() {
                     toast.success("Loaded Huberman Lab: Focus & Dopamine");
                   }}
                   disabled={isWorking}
-                  className="shrink-0 inline-flex items-center gap-1 rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-[10.5px] font-medium text-slate-700 transition hover:border-lime-400 hover:bg-lime-50 active:scale-95 dark:border-white/10 dark:bg-white/[.04] dark:text-white/70 dark:hover:border-[#c7ff4b]/40 dark:hover:bg-[#c7ff4b]/10 dark:hover:text-[#d8ff83]"
+                  className="shrink-0 inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-[10.5px] font-medium text-slate-700 transition hover:border-lime-400 hover:bg-lime-50 active:scale-95 dark:border-white/10 dark:bg-white/[.04] dark:text-white/70 dark:hover:border-[#c7ff4b]/40 dark:hover:bg-[#c7ff4b]/10 dark:hover:text-[#d8ff83]"
                 >
-                  🎙️ Huberman Lab (Neuroscience)
+                  <Mic size={11} className="text-purple-500 dark:text-purple-400" /> Huberman Lab (Neuroscience)
                 </button>
               </div>
 
@@ -1658,10 +1662,10 @@ export default function Workspace() {
                               <div className={`absolute right-2 flex flex-col items-center gap-3 text-white/80 drop-shadow-md ${
                                 selectedPlatform === "reels" ? "bottom-24" : "bottom-16"
                               }`}>
-                                <div className="flex h-7 w-7 items-center justify-center rounded-full bg-black/40 text-[10px]">❤️</div>
-                                <div className="flex h-7 w-7 items-center justify-center rounded-full bg-black/40 text-[10px]">💬</div>
-                                <div className="flex h-7 w-7 items-center justify-center rounded-full bg-black/40 text-[10px]">↗️</div>
-                                <div className="h-6 w-6 rounded-full border border-lime-400 bg-black/60 text-[8px] flex items-center justify-center">🎵</div>
+                                <div className="flex h-7 w-7 items-center justify-center rounded-full bg-black/40"><Heart size={13} className="text-white fill-rose-500/80" /></div>
+                                <div className="flex h-7 w-7 items-center justify-center rounded-full bg-black/40"><MessageCircle size={13} className="text-white" /></div>
+                                <div className="flex h-7 w-7 items-center justify-center rounded-full bg-black/40"><Share2 size={13} className="text-white" /></div>
+                                <div className="h-6 w-6 rounded-full border border-lime-400 bg-black/60 flex items-center justify-center"><Music size={11} className="text-lime-400" /></div>
                               </div>
 
                               {/* Bottom caption safe-zone guide */}
@@ -1814,28 +1818,28 @@ export default function Workspace() {
                                         onClick={() => void handleReangleHook(index, "urgent")}
                                         className="flex w-full items-center gap-1.5 rounded-lg px-2 py-1.5 text-left text-xs font-medium text-slate-800 transition hover:bg-slate-100 dark:text-white/80 dark:hover:bg-white/10"
                                       >
-                                        <Zap size={12} className="text-amber-400" /> ⚡ Urgent / FOMO
+                                        <Zap size={12} className="text-amber-400" /> Urgent / FOMO
                                       </button>
                                       <button
                                         type="button"
                                         onClick={() => void handleReangleHook(index, "question")}
                                         className="flex w-full items-center gap-1.5 rounded-lg px-2 py-1.5 text-left text-xs font-medium text-slate-800 transition hover:bg-slate-100 dark:text-white/80 dark:hover:bg-white/10"
                                       >
-                                        <HelpCircle size={12} className="text-cyan-400" /> ❓ Question / Curiosity
+                                        <HelpCircle size={12} className="text-cyan-400" /> Question / Curiosity
                                       </button>
                                       <button
                                         type="button"
                                         onClick={() => void handleReangleHook(index, "contrarian")}
                                         className="flex w-full items-center gap-1.5 rounded-lg px-2 py-1.5 text-left text-xs font-medium text-slate-800 transition hover:bg-slate-100 dark:text-white/80 dark:hover:bg-white/10"
                                       >
-                                        <Flame size={12} className="text-rose-400" /> 🔥 Contrarian Hot Take
+                                        <Flame size={12} className="text-rose-400" /> Contrarian Hot Take
                                       </button>
                                       <button
                                         type="button"
                                         onClick={() => void handleReangleHook(index, "story")}
                                         className="flex w-full items-center gap-1.5 rounded-lg px-2 py-1.5 text-left text-xs font-medium text-slate-800 transition hover:bg-slate-100 dark:text-white/80 dark:hover:bg-white/10"
                                       >
-                                        <BookOpen size={12} className="text-purple-400" /> 📖 Personal Story
+                                        <BookOpen size={12} className="text-purple-400" /> Personal Story
                                       </button>
                                     </div>
                                   )}

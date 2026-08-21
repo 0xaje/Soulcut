@@ -1,6 +1,6 @@
 <div align="center">
 
-# ✂️ SoulCut
+# SoulCut
 
 ### **The AI-Native Creative Director Powered by Minds Persistent Memory**
 
@@ -18,18 +18,18 @@
 [![React](https://img.shields.io/badge/React-18-61dafb.svg?style=flat-square)](https://react.dev/)
 [![tRPC](https://img.shields.io/badge/tRPC-v11-2596be.svg?style=flat-square)](https://trpc.io/)
 [![Groq](https://img.shields.io/badge/Groq-Llama%203.3%2070B-orange.svg?style=flat-square)](https://groq.com/)
-[![Vitest](https://img.shields.io/badge/Tests-89%20Passing-brightgreen.svg?style=flat-square)](https://vitest.dev/)
+[![Vitest](https://img.shields.io/badge/Tests-90%20Passing-brightgreen.svg?style=flat-square)](https://vitest.dev/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-purple.svg?style=flat-square)](https://opensource.org/licenses/MIT)
 
 <br/>
 
-[🚀 **Open Live App**](https://soulcut.onrender.com) • [**60s Judge Walkthrough**](https://soulcut.onrender.com/walkthrough) • [**Pitch Video Script**](./docs/HACKATHON_PITCH_SCRIPT.md) • [**Minds Integration**](#-why-minds-is-the-cognitive-core) • [**Quick Start**](#-quick-start) • [**Architecture**](#-architecture)
+[**Open Live App**](https://soulcut.onrender.com) • [**60s Judge Walkthrough**](https://soulcut.onrender.com/walkthrough) • [**Pitch Video Script**](./docs/HACKATHON_PITCH_SCRIPT.md) • [**Minds Integration**](#why-minds-is-the-cognitive-core-of-soulcut) • [**Quick Start**](#quick-start) • [**Architecture**](#repository-structure)
 
 ---
 
 </div>
 
-## 💡 The Core Problem & The Minds Solution
+## The Core Problem & The Minds Solution
 
 ### The Problem: Stateless AI Has No Memory
 Traditional AI video clippers generate generic, cookie-cutter clips because they operate in a vacuum. Every time you paste a video, the AI starts from scratch with zero memory of:
@@ -46,25 +46,25 @@ Instead of prompt-stuffing, you teach your Creative Mind once. As you review cli
 
 ---
 
-## 🧠 Why Minds is the Cognitive Core of SoulCut
+## Why Minds is the Cognitive Core of SoulCut
 
 SoulCut is deeply integrated with the **Animoca Brands Minds Protocol**:
 
 ```mermaid
 flowchart TD
-    subgraph Creator["🎨 Creator Workflow"]
+    subgraph Creator["Creator Workflow"]
         A[Paste YouTube URL / Sample] --> B[SSE Progress Stream]
         B --> C[Grounded Video Distillation]
         C --> D[Timestamped Clips & AI Hooks]
     end
 
-    subgraph MindsLayer["🧠 Minds API Persistent Cognitive Layer"]
+    subgraph MindsLayer["Minds API Persistent Cognitive Layer"]
         M1[Creative DNA Profile] <--> M2[Evidence Attribution Graph]
         M2 <--> M3[Confidence Rating Engine 1-100%]
         M3 <--> M4[Animoca Minds Client Lib SDK]
     end
 
-    subgraph StudioExports["🎬 Production Studio Output"]
+    subgraph StudioExports["Production Studio Output"]
         E1[Premiere & DaVinci .edl]
         E2[Final Cut Pro .fcpxml]
         E3[CapCut Timeline .json]
@@ -88,7 +88,7 @@ flowchart TD
 
 ---
 
-## ⚡ Official Minds SDK Integration (`@animocabrands/minds-client-lib`)
+## Official Minds SDK Integration (`@animocabrands/minds-client-lib`)
 
 SoulCut connects directly to the Minds builder network using the official SDK:
 
@@ -116,26 +116,26 @@ const builderMind = await getVerifiedBuilderMind(mindsClient);
 
 ---
 
-## 🚀 Key Features
+## Key Features
 
-### 🎬 Grounded Video Distillation
-- **Zero-Dependency YouTube Scraping**: Automatically extracts public transcripts with frame-accurate timestamp alignment.
+### Grounded Video Distillation
+- **Multi-Client YouTube Ingestion**: Extracts public transcripts via Innertube API with frame-accurate timestamp alignment.
 - **Custom Transcript Ingestion**: Drag-and-drop `.srt`, `.vtt`, or `.txt` transcripts for private or unlisted video files.
 - **Anti-Hallucination Grounding**: Timestamps and spoken quotes are strictly validated against verified source evidence.
 
-### ⚡ AI Hook Re-Angle Engine
+### AI Hook Re-Angle Engine
 Instantly reframe any clip opening hook into 4 high-retention formats matched to your Creative DNA:
-- ⚡ **Urgent / FOMO**: High-stakes urgency.
-- ❓ **Question / Curiosity**: Open-loop curiosity hook.
-- 🔥 **Contrarian Hot Take**: Pattern-interrupt contrarian view.
-- 📖 **Personal Story**: Emotionally grounded narrative hook.
+- **Urgent / FOMO**: High-stakes urgency.
+- **Question / Curiosity**: Open-loop curiosity hook.
+- **Contrarian Hot Take**: Pattern-interrupt contrarian view.
+- **Personal Story**: Emotionally grounded narrative hook.
 
-### 📱 9:16 Multi-Platform Safe-Zone Framing & Live Equalizer
+### 9:16 Multi-Platform Safe-Zone Framing & Live Equalizer
 - Segmented viewport switcher for **TikTok**, **Instagram Reels**, and **YouTube Shorts**.
-- Accurately renders right-side UI buttons (❤️, 💬, ↗️, 🎵) and bottom caption boundaries to prevent mobile UI overlap.
+- Accurately renders right-side UI buttons and bottom caption boundaries to prevent mobile UI overlap.
 - Animated 4-bar green equalizer visualizer on active playing clip cards.
 
-### ✂️ Pro Studio NLE Timeline Exports
+### Pro Studio NLE Timeline Exports
 Instead of manually copy-pasting timecodes into editing software, export complete timeline sequences with one click:
 - **CMX 3600 EDL (`.edl`)**: Direct timeline import for **Adobe Premiere Pro** and **DaVinci Resolve**.
 - **Final Cut Pro XML (`.fcpxml`)**: Native multi-clip sequence for **Apple Final Cut Pro**.
@@ -145,15 +145,15 @@ Instead of manually copy-pasting timecodes into editing software, export complet
 
 ---
 
-## 📱 Mobile-First UX
+## Mobile-First UX
 SoulCut features a dedicated responsive mobile interface:
-- **Sticky Segmented Tab Switcher**: Seamlessly switch between `▶️ Video & Brief`, `🧠 Mind & DNA`, and `📁 Briefs Archive`.
+- **Sticky Segmented Tab Switcher**: Seamlessly switch between `Video & Brief`, `Mind & DNA`, and `Briefs Archive`.
 - **1-Click Sample Pills**: Smooth horizontal scrolling for quick sample ingestion on mobile phones.
 - **2x2 Responsive Stats Grid**: Clean, high-density performance cards.
 
 ---
 
-## 🏁 Quick Start
+## Quick Start
 
 ### 1. Clone the Repository
 ```bash
@@ -175,18 +175,18 @@ NODE_ENV=development
 PORT=3000
 VITE_APP_TITLE=SoulCut
 
-# 🧠 Minds API (Animoca Brands Persistent Memory)
+# Minds API (Animoca Brands Persistent Memory)
 MINDS_API_KEY=your_minds_jwt_or_builder_key
 MINDS_BASE_URL=https://api.useminds.com
 MINDS_APP_ID=6732483e-f36b-1410-8466-00039ce7df11
 MINDS_MIND_ID=6732483e-f36b-1410-8466-00039ce7df11
 
-# ⚡ LLM Inference Engine (Groq Cloud)
+# LLM Inference Engine (Groq Cloud)
 BUILT_IN_FORGE_API_URL=https://api.groq.com/openai/v1
 BUILT_IN_FORGE_API_KEY=gsk_your_groq_api_key
 LLM_MODEL=openai/gpt-oss-120b
 
-# 🔐 Session Secret
+# Session Secret
 JWT_SECRET=your_32_character_jwt_secret_key
 ```
 
@@ -198,12 +198,12 @@ Open **`http://localhost:5173`** (or `http://localhost:3000`) in your browser.
 
 ---
 
-## 🧪 Testing & Verification
+## Testing & Verification
 
 SoulCut includes a comprehensive Vitest test suite covering end-to-end user journeys, Minds API integration, worker queues, and NLE timeline exports:
 
 ```bash
-# Run 89 automated tests
+# Run 90 automated tests
 npm test
 
 # Typecheck TypeScript code
@@ -218,7 +218,7 @@ npm run build
 
 ---
 
-## 📁 Repository Structure
+## Repository Structure
 
 ```
 Soulcut/
@@ -248,7 +248,7 @@ Soulcut/
 
 ---
 
-## 🏆 Hackathon Submission Highlights
+## Hackathon Submission Highlights
 
 - **Live Production URL**: [https://soulcut.onrender.com](https://soulcut.onrender.com)
 - **Interactive 60s Walkthrough**: [https://soulcut.onrender.com/walkthrough](https://soulcut.onrender.com/walkthrough)
@@ -257,6 +257,6 @@ Soulcut/
 
 ---
 
-## 📄 License
+## License
 
 This project is licensed under the [MIT License](LICENSE).
