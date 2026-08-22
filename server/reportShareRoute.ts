@@ -1,6 +1,6 @@
 import type { Express, Request, Response } from "express";
 import { getPdfReportShareByToken } from "./db";
-import { storageGet } from "./storage";
+import { getStoredBuffer, storageGet } from "./storage";
 
 type ShareRecord = { storageKey: string; expiresAt: Date | null; revokedAt: Date | null };
 
@@ -37,6 +37,14 @@ export function registerReportShareRoute(app: Express, overrides: Partial<Report
       }
       if (!isActiveReportShare(share)) {
         res.status(404).send("Report link not found.");
+        return;
+      }
+      const localItem = getStoredBuffer(share.storageKey);
+      if (localItem) {
+        res.setHeader("Content-Type", localItem.contentType || "application/pdf");
+        res.setHeader("Content-Disposition", 'inline; filename="SoulCut-Report.pdf"');
+        res.setHeader("Cache-Control", "public, max-age=3600");
+        res.send(localItem.data);
         return;
       }
       const { url } = await dependencies.getReportUrl(share.storageKey);

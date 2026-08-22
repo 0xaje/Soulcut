@@ -1017,7 +1017,7 @@ export default function Workspace() {
 
       <div className="mx-auto grid max-w-7xl gap-6 px-4 py-7 sm:px-6 lg:grid-cols-[275px_minmax(0,1fr)] lg:py-9">
         <aside id="history" className={`order-2 lg:order-1 ${mobileTab === "history" ? "block" : "hidden lg:block"}`}>
-          <div className="sticky top-24 rounded-3xl border border-slate-200 bg-white p-3.5 shadow-sm dark:border-white/9 dark:bg-white/[.025] dark:shadow-none">
+          <div className="sticky top-24 max-h-[calc(100vh-7rem)] overflow-y-auto rounded-3xl border border-slate-200 bg-white p-3.5 shadow-sm dark:border-white/9 dark:bg-white/[.025] dark:shadow-none custom-scrollbar">
             <div className="flex items-center justify-between px-2 pb-3 pt-1">
               <div>
                 <p className="eyebrow text-[9px] text-lime-700 dark:text-[#d8ff83]">Creative evolution</p>
@@ -1061,7 +1061,7 @@ export default function Workspace() {
               </div>
               <label className="flex items-center gap-2 px-1 text-[10px] font-medium text-slate-600 dark:text-white/46"><input type="checkbox" checked={includeArchived} onChange={event => setIncludeArchived(event.target.checked)} className="accent-lime-600 dark:accent-[#c7ff4b]" /> Show archived briefs</label>
             </div>
-            <div className="max-h-[calc(100vh-12rem)] space-y-1.5 overflow-y-auto pr-0.5">
+            <div className="space-y-1.5 pr-0.5">
               {jobsQuery.isLoading && <p className="px-2 py-5 text-xs text-slate-500 dark:text-white/38">Loading your archive…</p>}
               {!jobsQuery.isLoading && jobs.length === 0 && (
                 <div className="rounded-2xl border border-dashed border-slate-300 px-3 py-5 text-center text-xs leading-relaxed text-slate-500 dark:border-white/10 dark:text-white/38">Your completed video briefs will live here.</div>
